@@ -4,75 +4,137 @@
 @section('page-title', 'Admin Dashboard')
 
 @section('content')
-<!-- Statistics Cards -->
+<!-- Key Metrics Cards -->
 <div class="row mb-4">
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ $totalVisitors }}</div>
-            <div class="stats-label">Total Visitors</div>
+    <div class="col-6 col-lg-3 mb-3">
+        <div class="metric-card bg-primary text-white">
+            <div class="metric-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-number">{{ $totalVisitors }}</div>
+                <div class="metric-label">Total Visitors</div>
+            </div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ $totalInteractions }}</div>
-            <div class="stats-label">Total Interactions</div>
+    <div class="col-6 col-lg-3 mb-3">
+        <div class="metric-card bg-success text-white">
+            <div class="metric-icon">
+                <i class="fas fa-handshake"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-number">{{ $totalInteractions }}</div>
+                <div class="metric-label">Total Interactions</div>
+            </div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ $totalUsers }}</div>
-            <div class="stats-label">Total Users</div>
+    <div class="col-6 col-lg-3 mb-3">
+        <div class="metric-card bg-info text-white">
+            <div class="metric-icon">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-number">{{ $totalUsers }}</div>
+                <div class="metric-label">Total Users</div>
+            </div>
         </div>
     </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ $todayInteractions }}</div>
-            <div class="stats-label">Today's Interactions</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3 mb-3">
-        <div class="stats-card">
-            <div class="stats-number">{{ $totalBranches }}</div>
-            <div class="stats-label">Total Branches</div>
+    <div class="col-6 col-lg-3 mb-3">
+        <div class="metric-card bg-warning text-white">
+            <div class="metric-icon">
+                <i class="fas fa-calendar-day"></i>
+            </div>
+            <div class="metric-content">
+                <div class="metric-number">{{ $todayInteractions }}</div>
+                <div class="metric-label">Today's Interactions</div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Quick Actions -->
+<!-- Quick Actions & Today's Activity -->
 <div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
+    <!-- Quick Actions -->
+    <div class="col-12 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">
                     <i class="fas fa-bolt me-2"></i>Quick Actions
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-6 col-md-3 mb-3">
-                        <a href="{{ route('admin.search-mobile') }}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-search me-2"></i><span class="d-none d-md-inline">Search </span>Visitor
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{{ route('admin.search-mobile') }}" class="action-btn btn-primary">
+                            <i class="fas fa-search"></i>
+                            <span>Search Visitor</span>
                         </a>
                     </div>
-                    <div class="col-6 col-md-3 mb-3">
-                        <a href="{{ route('admin.manage-users') }}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-users me-2"></i><span class="d-none d-md-inline">Manage </span>Users
+                    <div class="col-6">
+                        <a href="{{ route('admin.manage-users') }}" class="action-btn btn-success">
+                            <i class="fas fa-users"></i>
+                            <span>Manage Users</span>
                         </a>
                     </div>
-                    <div class="col-6 col-md-3 mb-3">
-                        <a href="{{ route('admin.manage-locations') }}" class="btn btn-outline-info w-100">
-                            <i class="fas fa-map-marker-alt me-2"></i><span class="d-none d-md-inline">Manage </span>Locations
+                    <div class="col-6">
+                        <a href="{{ route('admin.manage-locations') }}" class="action-btn btn-info">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Manage Locations</span>
                         </a>
                     </div>
-                    <div class="col-6 col-md-3 mb-3">
-                        <a href="{{ route('admin.analytics') }}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-chart-bar me-2"></i><span class="d-none d-md-inline">View </span>Analytics
+                    <div class="col-6">
+                        <a href="{{ route('admin.analytics') }}" class="action-btn btn-warning">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>View Analytics</span>
                         </a>
                     </div>
-                    <div class="col-6 col-md-3 mb-3">
-                        <a href="{{ route('admin.manage-branches') }}" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-building me-2"></i><span class="d-none d-md-inline">Manage </span>Branches
+                    <div class="col-12">
+                        <a href="{{ route('admin.manage-branches') }}" class="action-btn btn-secondary">
+                            <i class="fas fa-building"></i>
+                            <span>Manage Branches</span>
                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Activity Summary -->
+    <div class="col-12 col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-day me-2"></i>Today's Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="activity-summary">
+                    <div class="activity-item">
+                        <div class="activity-icon bg-primary">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-number">{{ $todayInteractions }}</div>
+                            <div class="activity-label">Interactions Today</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon bg-warning">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-number">{{ $interactions->filter(function($interaction) { return $interaction->hasPendingRemarks(); })->count() }}</div>
+                            <div class="activity-label">Pending Remarks</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon bg-success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-number">{{ $interactions->filter(function($interaction) { return !$interaction->hasPendingRemarks(); })->count() }}</div>
+                            <div class="activity-label">Completed Today</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,53 +142,63 @@
     </div>
 </div>
 
-<!-- Recent Interactions -->
-<div class="row mb-4">
+<!-- Recent Activity -->
+<div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header bg-info text-white">
                 <h5 class="mb-0">
-                    <i class="fas fa-clock me-2"></i>Recent Interactions
+                    <i class="fas fa-history me-2"></i>Recent Activity
                 </h5>
             </div>
             <div class="card-body">
                 @if($interactions->count() > 0)
                     <!-- Desktop Table View -->
-                    <div class="table-responsive d-none d-md-block">
+                    <div class="table-responsive d-none d-lg-block">
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Visitor Name</th>
-                                    <th>Mobile</th>
-                                    <th>Mode</th>
+                                    <th>Date & Time</th>
+                                    <th>Visitor</th>
                                     <th>Purpose</th>
                                     <th>Meeting With</th>
-                                    <th>Branch</th>
-                                    <th>Address</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($interactions as $interaction)
+                                @foreach($interactions->take(10) as $interaction)
                                     <tr>
-                                        <td>{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at) }}</td>
-                                        <td>{{ $interaction->name_entered }}</td>
-                                        <td>{{ $interaction->visitor->mobile_number }}</td>
                                         <td>
-                                            <span class="badge bg-{{ $interaction->getModeBadgeColor() }}">
+                                            <div>
+                                                <strong>{{ \App\Helpers\DateTimeHelper::formatIndianDate($interaction->created_at) }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianTime($interaction->created_at) }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ $interaction->name_entered }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ $interaction->visitor->mobile_number }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ $interaction->getModeBadgeColor() }} mb-1">
                                                 {{ $interaction->mode }}
                                             </span>
+                                            <br>
+                                            <small>{{ $interaction->purpose }}</small>
                                         </td>
-                                        <td>{{ $interaction->purpose }}</td>
-                                        <td>{{ $interaction->meetingWith->name ?? 'No Data' }}</td>
                                         <td>
-                                            <span class="badge bg-info">
-                                                {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
-                                            </span>
+                                            <div>
+                                                <strong>{{ $interaction->meetingWith->name ?? 'No Data' }}</strong>
+                                                <br>
+                                                <span class="badge bg-info">
+                                                    {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
+                                                </span>
+                                            </div>
                                         </td>
-                                        <td>{{ $interaction->address->address_name ?? 'N/A' }}</td>
                                         <td>
                                             @if($interaction->hasPendingRemarks())
                                                 <span class="badge bg-warning">Pending</span>
@@ -147,9 +219,9 @@
                     </div>
 
                     <!-- Mobile Card View -->
-                    <div class="d-md-none">
-                        @foreach($interactions as $interaction)
-                            <div class="card mb-3 interaction-card">
+                    <div class="d-lg-none">
+                        @foreach($interactions->take(10) as $interaction)
+                            <div class="card mb-3 activity-card">
                                 <div class="card-body">
                                     <!-- Header with Date and Status -->
                                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -157,7 +229,12 @@
                                             <h6 class="card-title mb-1">{{ $interaction->name_entered }}</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar me-1"></i>
-                                                {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at) }}
+                                                {{ \App\Helpers\DateTimeHelper::formatIndianDate($interaction->created_at) }}
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ \App\Helpers\DateTimeHelper::formatIndianTime($interaction->created_at) }}
                                             </small>
                                         </div>
                                         <div class="text-end">
@@ -171,318 +248,272 @@
 
                                     <!-- Visitor Details -->
                                     <div class="row mb-2">
-                                        <div class="col-6">
+                                        <div class="col-12">
                                             <small class="text-muted">Mobile:</small><br>
                                             <strong>{{ $interaction->visitor->mobile_number }}</strong>
                                         </div>
+                                    </div>
+
+                                    <!-- Purpose and Mode -->
+                                    <div class="row mb-2">
                                         <div class="col-6">
                                             <small class="text-muted">Mode:</small><br>
                                             <span class="badge bg-{{ $interaction->getModeBadgeColor() }}">
                                                 {{ $interaction->mode }}
                                             </span>
                                         </div>
-                                    </div>
-
-                                    <!-- Meeting Details -->
-                                    <div class="row mb-2">
-                                        <div class="col-12">
+                                        <div class="col-6">
                                             <small class="text-muted">Purpose:</small><br>
                                             <strong>{{ $interaction->purpose }}</strong>
                                         </div>
                                     </div>
 
-                                    <div class="row mb-2">
-                                        <div class="col-6">
+                                    <!-- Meeting Details -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
                                             <small class="text-muted">Meeting With:</small><br>
                                             <strong>{{ $interaction->meetingWith->name ?? 'No Data' }}</strong>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Branch:</small><br>
+                                            <br>
                                             <span class="badge bg-info">
                                                 {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
                                             </span>
                                         </div>
                                     </div>
 
-                                    <!-- Address -->
-                                    <div class="row mb-3">
-                                        <div class="col-12">
-                                            <small class="text-muted">Address:</small><br>
-                                            <strong>{{ $interaction->address->address_name ?? 'N/A' }}</strong>
-                                        </div>
-                                    </div>
-
                                     <!-- Action Button -->
-                                    <div class="d-flex justify-content-end">
-                                        <a href="{{ route('admin.visitor-profile', $interaction->visitor->visitor_id) }}" 
-                                           class="btn btn-outline-primary btn-sm">
-                                            <i class="fas fa-eye me-1"></i>View Profile
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-center mt-4">
-                        @include('components.pagination', ['paginator' => $interactions])
-                    </div>
-                @else
-                    <div class="text-center py-4">
-                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No interactions found</h5>
-                        <p class="text-muted">Interactions will appear here once they are created.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Branch Overview -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-building me-2"></i>Branch Overview
-                </h5>
-            </div>
-            <div class="card-body">
-                @if($branchStats->count() > 0)
-                    <div class="row">
-                        @foreach($branchStats as $branch)
-                            <div class="col-md-4 mb-3">
-                                <div class="branch-card p-3 border rounded">
-                                    <h6 class="text-primary mb-2">
-                                        <i class="fas fa-building me-2"></i>{{ $branch->branch_name }}
-                                    </h6>
-                                    <div class="row text-center">
-                                        <div class="col-6">
-                                            <div class="text-success">
-                                                <strong>{{ $branch->users_count }}</strong>
-                                                <div class="small text-muted">Users</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="text-info">
-                                                <strong>{{ $branch->interactions_count }}</strong>
-                                                <div class="small text-muted">Interactions</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center py-4">
-                        <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No branches found</h5>
-                        <p class="text-muted">Branches will appear here once they are created.</p>
-                    </div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- User Role Breakdown -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-users me-2"></i>User Role Breakdown
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="role-card p-3 border rounded text-center">
-                            <h6 class="text-danger mb-2">
-                                <i class="fas fa-user-shield me-2"></i>Admins
-                            </h6>
-                            <div class="text-danger">
-                                <strong>{{ $usersByRole['admin'] ?? 0 }}</strong>
-                                <div class="small text-muted">Users</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="role-card p-3 border rounded text-center">
-                            <h6 class="text-info mb-2">
-                                <i class="fas fa-user-tie me-2"></i>Front Desk
-                            </h6>
-                            <div class="text-info">
-                                <strong>{{ $usersByRole['frontdesk'] ?? 0 }}</strong>
-                                <div class="small text-muted">Users</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="role-card p-3 border rounded text-center">
-                            <h6 class="text-success mb-2">
-                                <i class="fas fa-user me-2"></i>Employees
-                            </h6>
-                            <div class="text-success">
-                                <strong>{{ $usersByRole['employee'] ?? 0 }}</strong>
-                                <div class="small text-muted">Users</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Remarks -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-comments me-2"></i>Recent Remarks
-                </h5>
-            </div>
-            <div class="card-body">
-                @if($remarks->count() > 0)
-                    <!-- Desktop Table View -->
-                    <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Visitor</th>
-                                    <th>Remark</th>
-                                    <th>Added By</th>
-                                    <th>Editable By</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($remarks as $remark)
-                                    <tr>
-                                        <td>{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at) }}</td>
-                                        <td>{{ $remark->interaction->visitor->mobile_number }}</td>
-                                        <td>
-                                            <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} text-dark p-2 rounded">
-                                                {{ $remark->remark_text }}
-                                            </div>
-                                        </td>
-                                        <td>{{ $remark->addedBy->name }}</td>
-                                        <td>{{ $remark->isEditableBy->name }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Mobile Card View -->
-                    <div class="d-md-none">
-                        @foreach($remarks as $remark)
-                            <div class="card mb-3 interaction-card">
-                                <div class="card-body">
-                                    <!-- Header with Date -->
-                                    <div class="d-flex justify-content-between align-items-start mb-3">
-                                        <div>
-                                            <h6 class="card-title mb-1">Remark</h6>
-                                            <small class="text-muted">
-                                                <i class="fas fa-calendar me-1"></i>
-                                                {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at) }}
-                                            </small>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }}">
-                                                {{ $remark->remark_text == 'NA' ? 'Pending' : 'Completed' }}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <!-- Remark Details -->
-                                    <div class="row mb-2">
+                                    <div class="row">
                                         <div class="col-12">
-                                            <small class="text-muted">Remark:</small><br>
-                                            <div class="remark-text bg-light text-dark p-2 rounded border">
-                                                {{ $remark->remark_text }}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-2">
-                                        <div class="col-6">
-                                            <small class="text-muted">Visitor:</small><br>
-                                            <strong>{{ $remark->interaction->visitor->mobile_number }}</strong>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Added By:</small><br>
-                                            <strong>{{ $remark->addedBy->name }}</strong>
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-12">
-                                            <small class="text-muted">Editable By:</small><br>
-                                            <strong>{{ $remark->isEditableBy->name }}</strong>
+                                            <a href="{{ route('admin.visitor-profile', $interaction->visitor->visitor_id) }}" 
+                                               class="btn btn-primary w-100">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         @endforeach
                     </div>
-                    
-                    <!-- Pagination -->
-                    <div class="d-flex justify-content-center mt-4">
-                        @include('components.pagination', ['paginator' => $remarks])
-                    </div>
                 @else
                     <div class="text-center py-4">
-                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No remarks found</h5>
-                        <p class="text-muted">Remarks will appear here once they are added.</p>
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No activity found</h5>
+                        <p class="text-muted">No interactions have been recorded yet.</p>
                     </div>
                 @endif
             </div>
         </div>
     </div>
 </div>
-@endsection
 
-@section('styles')
 <style>
-/* Mobile Card Styles */
-.interaction-card {
+/* Metric Cards */
+.metric-card {
+    border-radius: 15px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    min-height: 120px;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.metric-icon {
+    font-size: 2.5rem;
+    margin-right: 1rem;
+    opacity: 0.8;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-number {
+    font-size: 2rem;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    font-weight: 500;
+}
+
+/* Action Buttons */
+.action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s ease;
+    min-height: 80px;
+    border: none;
+}
+
+.action-btn i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.action-btn span {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.action-btn.btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); }
+.action-btn.btn-success { background: linear-gradient(135deg, #28a745, #1e7e34); }
+.action-btn.btn-info { background: linear-gradient(135deg, #17a2b8, #117a8b); }
+.action-btn.btn-warning { background: linear-gradient(135deg, #ffc107, #e0a800); }
+.action-btn.btn-secondary { background: linear-gradient(135deg, #6c757d, #545b62); }
+
+/* Activity Summary */
+.activity-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.activity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #495057;
+    line-height: 1;
+}
+
+.activity-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+/* Activity Cards */
+.activity-card {
     border: 1px solid #e9ecef;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
-.interaction-card:hover {
+.activity-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
 }
 
-.interaction-card .card-body {
+.activity-card .card-body {
     padding: 1rem;
 }
 
-.interaction-card .card-title {
+.activity-card .card-title {
     color: #495057;
     font-weight: 600;
     font-size: 1rem;
 }
 
-.interaction-card .badge {
-    font-size: 0.75rem;
-    padding: 0.4em 0.6em;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .metric-card {
+        min-height: 100px;
+        padding: 1rem;
+    }
+    
+    .metric-icon {
+        font-size: 2rem;
+        margin-right: 0.75rem;
+    }
+    
+    .metric-number {
+        font-size: 1.5rem;
+    }
+    
+    .activity-summary {
+        gap: 0.75rem;
+    }
+    
+    .activity-item {
+        padding: 0.75rem;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .activity-number {
+        font-size: 1.25rem;
+    }
 }
 
-.interaction-card .btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    border-radius: 6px;
+@media (max-width: 576px) {
+    .metric-card {
+        flex-direction: column;
+        text-align: center;
+        min-height: 120px;
+    }
+    
+    .metric-icon {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+    
+    .action-btn {
+        min-height: 70px;
+        padding: 0.75rem;
+    }
+    
+    .action-btn i {
+        font-size: 1.25rem;
+    }
+    
+    .action-btn span {
+        font-size: 0.8rem;
+    }
 }
 </style>
 @endsection

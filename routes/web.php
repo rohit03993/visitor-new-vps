@@ -44,7 +44,10 @@ Route::middleware('auth')->group(function () {
 
     // Front Desk Routes
     Route::prefix('frontdesk')->name('frontdesk.')->middleware('role:frontdesk')->group(function () {
-        Route::get('/dashboard', [FrontDeskController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard', [FrontDeskController::class, 'showGoogleSearch'])->name('dashboard'); // Google search is now default
+        Route::get('/old-dashboard', [FrontDeskController::class, 'dashboard'])->name('old-dashboard'); // Keep old dashboard accessible
+        Route::get('/google-search', [FrontDeskController::class, 'showGoogleSearch'])->name('google-search');
+        Route::post('/search-visitor', [FrontDeskController::class, 'searchVisitor'])->name('search-visitor');
         Route::get('/visitor-form', [FrontDeskController::class, 'showVisitorForm'])->name('visitor-form');
         Route::post('/check-mobile', [FrontDeskController::class, 'checkMobile'])->name('check-mobile');
         Route::post('/add-address', [FrontDeskController::class, 'addAddress'])->name('add-address');

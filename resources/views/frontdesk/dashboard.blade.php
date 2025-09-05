@@ -13,7 +13,10 @@
                 <small class="text-muted">Showing {{ $interactions->count() }} of {{ $interactions->total() }} interactions</small>
             </div>
             <div class="d-flex gap-2">
-                <a href="{{ route('frontdesk.visitor-form') }}" class="btn btn-primary btn-sm">
+                <a href="{{ route('frontdesk.dashboard') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search me-1"></i><span class="d-none d-sm-inline">Search Visitor</span>
+                </a>
+                <a href="{{ route('frontdesk.visitor-form') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">Add Visitor</span>
                 </a>
                 @if(auth()->user()->getAllowedBranchIds('can_download_excel'))

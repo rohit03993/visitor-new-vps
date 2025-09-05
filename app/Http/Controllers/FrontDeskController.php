@@ -43,7 +43,7 @@ class FrontDeskController extends Controller
         return view('frontdesk.dashboard', compact('interactions'));
     }
 
-    public function showVisitorForm()
+    public function showVisitorForm(Request $request)
     {
         // Cache employees and locations for 1 hour (they don't change often)
         // Use a cache key that includes active status to ensure deactivated users are excluded
@@ -54,8 +54,12 @@ class FrontDeskController extends Controller
         $addresses = Cache::remember('addresses_list', 3600, function() {
             return Address::all();
         });
+
+        // Get prefilled data from query parameters
+        $prefilledMobile = $request->get('mobile', '');
+        $prefilledName = $request->get('name', '');
         
-        return view('frontdesk.visitor-form', compact('employees', 'addresses'));
+        return view('frontdesk.visitor-form', compact('employees', 'addresses', 'prefilledMobile', 'prefilledName'));
     }
 
     public function checkMobile(Request $request)
@@ -176,6 +180,11 @@ class FrontDeskController extends Controller
             'is_editable_by' => $request->meeting_with,
         ]);
 
+        // Update visitor's last_updated_by to reflect this interaction creation
+        $visitor->update([
+            'last_updated_by' => $user->user_id,
+        ]);
+
         // Clear relevant caches to ensure fresh data
         Cache::forget('frontdesk_today_interactions_' . $user->user_id);
         Cache::forget('frontdesk_all_interactions_' . $user->user_id . '_page_1');
@@ -199,6 +208,11 @@ class FrontDeskController extends Controller
     public function showSearchForm()
     {
         return view('frontdesk.search-visitors');
+    }
+
+    public function showGoogleSearch()
+    {
+        return view('frontdesk.google-search');
     }
 
     public function searchVisitors(Request $request)
@@ -372,5 +386,49 @@ class FrontDeskController extends Controller
         return response($csvContent)
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    /**
+     * Search for visitor and redirect to appropriate page
+     */
+    public function searchVisitor(Request $request)
+    {
+        try {
+            $request->validate([
+                'mobile_number' => 'required|string|regex:/^[0-9]{10}$/',
+            ]);
+
+            $mobileNumber = $request->input('mobile_number');
+            
+            // Format mobile number with +91 prefix for database search
+            $formattedMobile = '+91' . $mobileNumber;
+            
+            // Search for visitor with both formats
+            $visitor = Visitor::where('mobile_number', $formattedMobile)
+                ->orWhere('mobile_number', $mobileNumber)
+                ->first();
+            
+            if ($visitor) {
+                // Get all interactions for this visitor
+                $interactions = $visitor->interactions()
+                    ->with(['address', 'meetingWith.branch', 'createdBy', 'remarks.addedBy.branch'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+
+                return view('frontdesk.visitor-profile', compact('visitor', 'interactions'));
+            } else {
+                // Visitor not found - redirect to visitor form with prefilled mobile
+                return redirect()->route('frontdesk.visitor-form', ['mobile' => $mobileNumber]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('Error in visitor search', [
+                'mobile_number' => $request->input('mobile_number'),
+                'error' => $e->getMessage()
+            ]);
+
+            return redirect()->route('frontdesk.google-search')
+                ->with('error', 'Error searching for visitor: ' . $e->getMessage());
+        }
     }
 }

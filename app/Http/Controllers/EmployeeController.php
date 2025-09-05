@@ -54,6 +54,14 @@ class EmployeeController extends Controller
             'is_editable_by' => $user->user_id,
         ]);
 
+        // Update visitor's last_updated_by to reflect this remark activity
+        $visitor = $interaction->visitor;
+        if ($visitor) {
+            $visitor->update([
+                'last_updated_by' => $user->user_id,
+            ]);
+        }
+
         return redirect()->route('employee.dashboard')
             ->with('success', 'Remark updated successfully!');
     }

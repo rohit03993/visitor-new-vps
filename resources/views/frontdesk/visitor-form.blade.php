@@ -24,7 +24,7 @@
                                 <span class="input-group-text">+91</span>
                                 <input type="tel" class="form-control" id="mobile_number" name="mobile_number" 
                                        required maxlength="10" placeholder="Enter 10-digit mobile number"
-                                       inputmode="numeric" pattern="[0-9]{10}"
+                                       inputmode="numeric" pattern="[0-9]{10}" value="{{ $prefilledMobile ?? '' }}"
                                        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
                             </div>
                             <div class="form-text">This will be used to identify the visitor</div>
@@ -68,7 +68,7 @@
                         <div class="col-12 col-md-6">
                             <label for="name" class="form-label">Visitor Name *</label>
                             <input type="text" class="form-control" id="name" name="name" 
-                                   required maxlength="255" placeholder="Enter visitor name">
+                                   required maxlength="255" placeholder="Enter visitor name" value="{{ $prefilledName ?? '' }}">
                         </div>
                         <div class="col-12 col-md-6">
                             <label for="meeting_with" class="form-label">Meeting With *</label>

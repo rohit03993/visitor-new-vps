@@ -9,11 +9,13 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
             <h2 class="h4 mb-0">Visitor Profile</h2>
             <div class="d-flex flex-column flex-md-row gap-2">
-                <button onclick="window.print()" class="btn btn-outline-primary">
-                    <i class="fas fa-print me-2"></i>Print Profile
-                </button>
-                <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                @if(auth()->user()->getAllowedBranchIds('can_download_excel'))
+                    <button onclick="window.print()" class="btn btn-outline-primary">
+                        <i class="fas fa-print me-2"></i>Print Profile
+                    </button>
+                @endif
+                <a href="{{ route('frontdesk.dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Search
                 </a>
             </div>
         </div>
@@ -110,22 +112,26 @@
                                         <td>{{ $interaction->address->address_name ?? 'N/A' }}</td>
                                         <td>{{ $interaction->name_entered }}</td>
                                         <td>
-                                            @if($interaction->remarks->count() > 0)
-                                                <div class="remark-timeline">
-                                                    @foreach($interaction->remarks as $remark)
-                                                        <div class="remark-item mb-1">
-                                                            <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}</small>
-                                                            <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded">
-                                                                {{ $remark->remark_text }}
+                                            @if(auth()->user()->canViewRemarksForInteraction($interaction))
+                                                @if($interaction->remarks->count() > 0)
+                                                    <div class="remark-timeline">
+                                                        @foreach($interaction->remarks as $remark)
+                                                            <div class="remark-item mb-1">
+                                                                <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}</small>
+                                                                <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded">
+                                                                    {{ $remark->remark_text }}
+                                                                </div>
+                                                                <small class="text-muted d-block">
+                                                                    by {{ $remark->addedBy->name }} <strong>({{ $remark->addedBy->branch->branch_name ?? 'No Branch' }})</strong>
+                                                                </small>
                                                             </div>
-                                                            <small class="text-muted d-block">
-                                                                by {{ $remark->addedBy->name }} <strong>({{ $remark->addedBy->branch->branch_name ?? 'No Branch' }})</strong>
-                                                            </small>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">No remarks</span>
+                                                @endif
                                             @else
-                                                <span class="text-muted">No remarks</span>
+                                                <span class="text-muted">No access</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -187,27 +193,33 @@
                                     <div class="row">
                                         <div class="col-12">
                                             <small class="text-muted">Remark(s):</small><br>
-                                            @if($interaction->remarks->count() > 0)
-                                                <div class="remark-timeline">
-                                                    @foreach($interaction->remarks as $remark)
-                                                        <div class="remark-item mb-2 p-2 border rounded">
-                                                            <small class="text-muted d-block mb-1">
-                                                                <i class="fas fa-clock me-1"></i>
-                                                                {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}
-                                                            </small>
-                                                            <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded mb-1">
-                                                                {{ $remark->remark_text }}
+                                            @if(auth()->user()->canViewRemarksForInteraction($interaction))
+                                                @if($interaction->remarks->count() > 0)
+                                                    <div class="remark-timeline">
+                                                        @foreach($interaction->remarks as $remark)
+                                                            <div class="remark-item mb-2 p-2 border rounded">
+                                                                <small class="text-muted d-block mb-1">
+                                                                    <i class="fas fa-clock me-1"></i>
+                                                                    {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}
+                                                                </small>
+                                                                <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded mb-1">
+                                                                    {{ $remark->remark_text }}
+                                                                </div>
+                                                                <small class="text-muted d-block">
+                                                                    <i class="fas fa-user me-1"></i>
+                                                                    by {{ $remark->addedBy->name }} <strong>({{ $remark->addedBy->branch->branch_name ?? 'No Branch' }})</strong>
+                                                                </small>
                                                             </div>
-                                                            <small class="text-muted d-block">
-                                                                <i class="fas fa-user me-1"></i>
-                                                                by {{ $remark->addedBy->name }} <strong>({{ $remark->addedBy->branch->branch_name ?? 'No Branch' }})</strong>
-                                                            </small>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
+                                                        @endforeach
+                                                    </div>
+                                                @else
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-comment-slash me-1"></i>No remarks
+                                                    </span>
+                                                @endif
                                             @else
                                                 <span class="text-muted">
-                                                    <i class="fas fa-comment-slash me-1"></i>No remarks
+                                                    <i class="fas fa-lock me-1"></i>No access to remarks
                                                 </span>
                                             @endif
                                         </div>
@@ -219,8 +231,12 @@
                 @else
                     <div class="text-center py-4">
                         <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                                                 <h5 class="text-muted">No interaction history</h5>
+                        <h5 class="text-muted">No interaction history</h5>
                         <p class="text-muted">This visitor has no recorded interactions.</p>
+                        <a href="{{ route('frontdesk.visitor-form', ['mobile' => $visitor->mobile_number, 'name' => $visitor->name]) }}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Add First Visit
+                        </a>
                     </div>
                 @endif
             </div>
