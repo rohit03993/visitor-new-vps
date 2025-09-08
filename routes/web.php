@@ -63,5 +63,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('dashboard');
         Route::post('/update-remark/{interactionId}', [EmployeeController::class, 'updateRemark'])->name('update-remark');
         Route::get('/visitor-history/{visitorId}', [EmployeeController::class, 'getVisitorHistory'])->name('visitor-history');
+        
+        // New visitor entry functionality
+        Route::get('/visitor-search', [EmployeeController::class, 'showVisitorSearch'])->name('visitor-search');
+        Route::post('/search-visitor', [EmployeeController::class, 'searchVisitor'])->name('search-visitor');
+        Route::get('/visitor-form', [EmployeeController::class, 'showVisitorForm'])->name('visitor-form');
+        Route::post('/check-mobile', [EmployeeController::class, 'checkMobile'])->name('check-mobile');
+        Route::post('/add-address', [EmployeeController::class, 'addAddress'])->name('add-address');
+        Route::post('/store-visitor', [EmployeeController::class, 'storeVisitor'])->name('store-visitor');
     });
 });

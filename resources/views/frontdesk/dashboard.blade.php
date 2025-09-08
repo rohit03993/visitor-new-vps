@@ -4,12 +4,11 @@
 @section('page-title', 'Front Desk Dashboard')
 
 @section('content')
-<!-- Mobile-Optimized Header -->
+<!-- Action Buttons -->
 <div class="row mb-3">
     <div class="col-12">
         <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
             <div>
-                <h2 class="h4 mb-1">Branch Interactions</h2>
                 <small class="text-muted">Showing {{ $interactions->count() }} of {{ $interactions->total() }} interactions</small>
             </div>
             <div class="d-flex gap-2">

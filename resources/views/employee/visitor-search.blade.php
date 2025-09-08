@@ -1,17 +1,25 @@
 @extends('layouts.app')
 
 @section('title', 'Visitor Search - VMS')
-@section('page-title', 'Visitor Search')
 
 @section('content')
 <div class="container-fluid">
-    <!-- Action Buttons -->
+    <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="d-flex justify-content-end">
-                <a href="{{ route('frontdesk.old-dashboard') }}" class="btn btn-outline-secondary">
-                    <i class="fas fa-chart-bar me-1"></i><span class="d-none d-sm-inline">View Dashboard</span><span class="d-sm-none">Dashboard</span>
-                </a>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-search text-primary me-2"></i>
+                        Visitor Search
+                    </h2>
+                    <p class="text-muted mb-0">Search for existing visitors or add new ones</p>
+                </div>
+                <div>
+                    <a href="{{ route('employee.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-bar me-1"></i><span class="d-none d-sm-inline">View Dashboard</span><span class="d-sm-none">Dashboard</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -31,7 +39,7 @@
                     </div>
 
                     <!-- Search Form -->
-                    <form action="{{ route('frontdesk.search-visitor') }}" method="POST" class="mb-4">
+                    <form action="{{ route('employee.search-visitor') }}" method="POST" class="mb-4">
                         @csrf
                         <div class="input-group input-group-lg">
                             <span class="input-group-text bg-white border-end-0">
@@ -61,7 +69,27 @@
                             {{ session('error') }}
                         </div>
                     @endif
+
+                    <!-- Success Display -->
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {{ session('success') }}
+                        </div>
+                    @endif
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="text-center">
+                <p class="text-muted mb-3">Or</p>
+                <a href="{{ route('employee.visitor-form') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-plus me-2"></i>Add New Visitor Directly
+                </a>
             </div>
         </div>
     </div>

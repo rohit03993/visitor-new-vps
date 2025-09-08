@@ -9,7 +9,7 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
-                    <i class="fas fa-user-plus me-2"></i>Visitor Entry Form
+                    <i class="fas fa-user-plus me-2"></i>Visitor Details
                 </h5>
             </div>
             <div class="card-body">
@@ -32,7 +32,11 @@
                         <div class="col-12 col-md-6">
                             <label class="form-label">Visitor Status</label>
                             <div id="visitorStatus" class="form-control-plaintext">
-                                <span class="badge bg-secondary">New Visitor</span>
+                                @if($isExistingVisitor)
+                                    <span class="badge bg-success">Existing Visitor</span>
+                                @else
+                                    <span class="badge bg-secondary">New Visitor</span>
+                                @endif
                             </div>
                         </div>
                     </div>

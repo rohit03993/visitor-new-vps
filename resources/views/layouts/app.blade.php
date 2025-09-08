@@ -152,6 +152,62 @@
             justify-content: center;
         }
         
+        /* Modern Page Title Styles */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            letter-spacing: -0.5px;
+        }
+        
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.8) !important;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            font-weight: 400;
+        }
+        
+        /* Mobile responsive page title */
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 1.5rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .page-subtitle {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .page-header {
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.75rem;
+            }
+            
+            .page-subtitle {
+                font-size: 0.85rem;
+            }
+        }
+        
         /* Overlay for mobile sidebar */
         .sidebar-overlay {
             position: fixed;
@@ -541,7 +597,6 @@
                     <!-- Top Navigation (Desktop) -->
                     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm d-none d-md-block">
                         <div class="container-fluid">
-                            <span class="navbar-brand mb-0 h1">@yield('page-title', 'Dashboard')</span>
                             <div class="navbar-nav ms-auto">
                                 <span class="navbar-text">
                                     <i class="fas fa-calendar me-1"></i>
@@ -553,13 +608,17 @@
 
                     <!-- Page Content -->
                     <div class="container-fluid p-3 p-md-4">
-                        <!-- Mobile Page Title -->
-                        <div class="d-md-none mb-3">
-                            <h2 class="h4 mb-0">@yield('page-title', 'Dashboard')</h2>
-                            <small class="text-muted">
-                                <i class="fas fa-calendar me-1"></i>
-                                {{ \App\Helpers\DateTimeHelper::formatIndianDate(now()) }}
-                            </small>
+                        <!-- Modern Page Title -->
+                        <div class="page-header mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h1 class="page-title">@yield('page-title', 'Dashboard')</h1>
+                                    <p class="page-subtitle text-muted mb-0">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ \App\Helpers\DateTimeHelper::formatIndianDate(now()) }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         @if(session('success'))

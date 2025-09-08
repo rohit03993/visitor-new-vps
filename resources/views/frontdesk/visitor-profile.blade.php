@@ -7,8 +7,12 @@
 <div class="row">
     <div class="col-12">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
-            <h2 class="h4 mb-0">Visitor Profile</h2>
+            <div></div>
             <div class="d-flex flex-column flex-md-row gap-2">
+                <a href="{{ route('frontdesk.visitor-form', ['mobile' => $visitor->mobile_number, 'name' => $visitor->name]) }}" 
+                   class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Add Revisit
+                </a>
                 @if(auth()->user()->getAllowedBranchIds('can_download_excel'))
                     <button onclick="window.print()" class="btn btn-outline-primary">
                         <i class="fas fa-print me-2"></i>Print Profile

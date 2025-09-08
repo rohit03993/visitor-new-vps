@@ -17,6 +17,12 @@
                 @endif
             </div>
             <div class="d-flex gap-2">
+                @if(isset($mobileNumber) && $interactions->count() > 0)
+                    <a href="{{ route('frontdesk.visitor-form', ['mobile' => $mobileNumber, 'name' => $interactions->first()->name_entered]) }}" 
+                       class="btn btn-success btn-sm">
+                        <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">Add Revisit</span>
+                    </a>
+                @endif
                 <form method="POST" action="{{ route('frontdesk.search-visitors') }}" class="d-flex gap-2">
                     @csrf
                     <div class="input-group" style="width: 200px;">
@@ -110,15 +116,21 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @if(auth()->user()->canViewRemarksForInteraction($interaction))
-                                                <button class="btn btn-sm btn-outline-primary" 
-                                                        onclick="viewRemarks({{ $interaction->interaction_id }})"
-                                                        title="View Remarks">
-                                                    <i class="fas fa-comments me-1"></i>View
-                                                </button>
-                                            @else
-                                                <span class="text-muted small">No Access</span>
-                                            @endif
+                                            <div class="d-flex gap-1">
+                                                @if(auth()->user()->canViewRemarksForInteraction($interaction))
+                                                    <button class="btn btn-sm btn-outline-primary" 
+                                                            onclick="viewRemarks({{ $interaction->interaction_id }})"
+                                                            title="View Remarks">
+                                                        <i class="fas fa-comments me-1"></i>View
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted small">No Access</span>
+                                                @endif
+                                                <a href="{{ route('frontdesk.visitor-form', ['mobile' => $interaction->visitor->mobile_number, 'name' => $interaction->name_entered]) }}" 
+                                                   class="btn btn-sm btn-success" title="Add Revisit">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -194,8 +206,8 @@
                                         </div>
                                     </div>
 
-                                    <!-- Action Button -->
-                                    <div class="d-flex justify-content-end">
+                                    <!-- Action Buttons -->
+                                    <div class="d-flex justify-content-end gap-2">
                                         @if(auth()->user()->canViewRemarksForInteraction($interaction))
                                             <button class="btn btn-outline-primary btn-sm" 
                                                     onclick="viewRemarks({{ $interaction->interaction_id }})">
@@ -206,6 +218,10 @@
                                                 <i class="fas fa-lock me-1"></i>No Access to Remarks
                                             </span>
                                         @endif
+                                        <a href="{{ route('frontdesk.visitor-form', ['mobile' => $interaction->visitor->mobile_number, 'name' => $interaction->name_entered]) }}" 
+                                           class="btn btn-success btn-sm">
+                                            <i class="fas fa-plus me-1"></i>Add Revisit
+                                        </a>
                                     </div>
                                 </div>
                             </div>

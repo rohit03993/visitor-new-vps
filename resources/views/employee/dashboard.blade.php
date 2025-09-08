@@ -4,12 +4,37 @@
 @section('page-title', 'Employee Dashboard')
 
 @section('content')
-<div class="row">
+<!-- Action Buttons -->
+<div class="row mb-3">
     <div class="col-12">
-        <h2 class="h4">Your Assigned Visitors</h2>
-        <p class="text-muted">Manage visitors assigned to you and update their remarks.</p>
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+            <div>
+                <p class="text-muted mb-0">Manage visitors assigned to you and update their remarks.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ route('employee.visitor-search') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-search me-1"></i><span class="d-none d-sm-inline">Search Visitor</span>
+                </a>
+                <a href="{{ route('employee.visitor-form') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus me-1"></i><span class="d-none d-sm-inline">Add Visitor</span>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Success Message -->
+@if(session('success'))
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show">
+                <i class="fas fa-check-circle me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+@endif
 
 <!-- Pending Interactions -->
 <div class="row mb-4">

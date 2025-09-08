@@ -59,7 +59,17 @@ class FrontDeskController extends Controller
         $prefilledMobile = $request->get('mobile', '');
         $prefilledName = $request->get('name', '');
         
-        return view('frontdesk.visitor-form', compact('employees', 'addresses', 'prefilledMobile', 'prefilledName'));
+        // Check if visitor exists in database
+        $isExistingVisitor = false;
+        if (!empty($prefilledMobile)) {
+            $formattedMobile = '+91' . $prefilledMobile;
+            $visitor = Visitor::where('mobile_number', $formattedMobile)
+                ->orWhere('mobile_number', $prefilledMobile)
+                ->first();
+            $isExistingVisitor = $visitor ? true : false;
+        }
+        
+        return view('frontdesk.visitor-form', compact('employees', 'addresses', 'prefilledMobile', 'prefilledName', 'isExistingVisitor'));
     }
 
     public function checkMobile(Request $request)
