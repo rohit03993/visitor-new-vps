@@ -1,0 +1,633 @@
+/* Paytm Design System - Color Theme and Components */
+
+/* Paytm Color Variables */
+:root {
+  /* Primary Colors */
+  --paytm-primary: #3974FC;
+  --paytm-primary-dark: #002E6E;
+  --paytm-accent: #00B9F1;
+  
+  /* Status Colors */
+  --paytm-success: #28a745;
+  --paytm-warning: #ffc107;
+  --paytm-danger: #dc3545;
+  --paytm-info: #17a2b8;
+  
+  /* Neutral Colors */
+  --paytm-light: #f8f9fa;
+  --paytm-dark: #343a40;
+  --paytm-white: #ffffff;
+  --paytm-gray-100: #f8f9fa;
+  --paytm-gray-200: #e9ecef;
+  --paytm-gray-300: #dee2e6;
+  --paytm-gray-400: #ced4da;
+  --paytm-gray-500: #adb5bd;
+  --paytm-gray-600: #6c757d;
+  --paytm-gray-700: #495057;
+  --paytm-gray-800: #343a40;
+  --paytm-gray-900: #212529;
+  
+  /* Text Colors */
+  --paytm-text-primary: #212529;
+  --paytm-text-secondary: #6c757d;
+  --paytm-text-muted: #adb5bd;
+  
+  /* Background Colors */
+  --paytm-bg-primary: #ffffff;
+  --paytm-bg-secondary: #f8f9fa;
+  --paytm-bg-tertiary: #e9ecef;
+  
+  /* Border Colors */
+  --paytm-border-light: #e9ecef;
+  --paytm-border-medium: #dee2e6;
+  --paytm-border-dark: #adb5bd;
+  
+  /* Shadow Colors */
+  --paytm-shadow-light: rgba(0, 0, 0, 0.08);
+  --paytm-shadow-medium: rgba(0, 0, 0, 0.12);
+  --paytm-shadow-dark: rgba(0, 0, 0, 0.16);
+  
+  /* Paytm Brand Shadow */
+  --paytm-primary-shadow: rgba(57, 116, 252, 0.25);
+  --paytm-primary-shadow-hover: rgba(57, 116, 252, 0.35);
+}
+
+/* Paytm Button System */
+.btn-paytm-primary {
+  background: var(--paytm-primary);
+  border: none;
+  color: var(--paytm-white);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--paytm-primary-shadow);
+}
+
+.btn-paytm-primary:hover {
+  background: var(--paytm-primary-dark);
+  color: var(--paytm-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--paytm-primary-shadow-hover);
+}
+
+.btn-paytm-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px var(--paytm-primary-shadow);
+}
+
+.btn-paytm-secondary {
+  background: transparent;
+  border: 2px solid var(--paytm-primary);
+  color: var(--paytm-primary);
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.btn-paytm-secondary:hover {
+  background: var(--paytm-primary);
+  color: var(--paytm-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--paytm-primary-shadow);
+}
+
+.btn-paytm-success {
+  background: var(--paytm-success);
+  border: none;
+  color: var(--paytm-white);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.25);
+}
+
+.btn-paytm-success:hover {
+  background: #218838;
+  color: var(--paytm-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.35);
+}
+
+.btn-paytm-warning {
+  background: var(--paytm-warning);
+  border: none;
+  color: var(--paytm-dark);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.25);
+}
+
+.btn-paytm-warning:hover {
+  background: #e0a800;
+  color: var(--paytm-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.35);
+}
+
+.btn-paytm-danger {
+  background: var(--paytm-danger);
+  border: none;
+  color: var(--paytm-white);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
+}
+
+.btn-paytm-danger:hover {
+  background: #c82333;
+  color: var(--paytm-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.35);
+}
+
+/* Paytm Card System */
+.card-paytm {
+  background: var(--paytm-white);
+  border: 1px solid var(--paytm-border-light);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--paytm-shadow-light);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card-paytm:hover {
+  box-shadow: 0 4px 16px var(--paytm-shadow-medium);
+  transform: translateY(-2px);
+}
+
+.card-paytm-header {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+  color: var(--paytm-white);
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-paytm-body {
+  padding: 1.5rem;
+}
+
+.card-paytm-footer {
+  background: var(--paytm-bg-secondary);
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--paytm-border-light);
+  border-radius: 0 0 12px 12px;
+}
+
+/* Paytm Badge System */
+.badge-paytm-primary {
+  background: var(--paytm-primary);
+  color: var(--paytm-white);
+  border-radius: 6px;
+  padding: 0.4em 0.8em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-paytm-success {
+  background: var(--paytm-success);
+  color: var(--paytm-white);
+  border-radius: 6px;
+  padding: 0.4em 0.8em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-paytm-warning {
+  background: var(--paytm-warning);
+  color: var(--paytm-dark);
+  border-radius: 6px;
+  padding: 0.4em 0.8em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-paytm-danger {
+  background: var(--paytm-danger);
+  color: var(--paytm-white);
+  border-radius: 6px;
+  padding: 0.4em 0.8em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-paytm-info {
+  background: var(--paytm-info);
+  color: var(--paytm-white);
+  border-radius: 6px;
+  padding: 0.4em 0.8em;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Paytm Form Elements */
+.form-control-paytm {
+  border: 2px solid var(--paytm-border-medium);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: var(--paytm-white);
+}
+
+.form-control-paytm:focus {
+  border-color: var(--paytm-primary);
+  box-shadow: 0 0 0 0.2rem var(--paytm-primary-shadow);
+  outline: none;
+}
+
+.form-control-paytm::placeholder {
+  color: var(--paytm-text-muted);
+}
+
+.form-label-paytm {
+  color: var(--paytm-text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 0.5rem;
+}
+
+/* Paytm Navigation */
+.nav-paytm {
+  background: var(--paytm-white);
+  border-bottom: 1px solid var(--paytm-border-light);
+  box-shadow: 0 2px 4px var(--paytm-shadow-light);
+}
+
+.nav-paytm-link {
+  color: var(--paytm-text-secondary);
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 2px 4px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 14px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.nav-paytm-link:hover {
+  color: var(--paytm-primary);
+  background: rgba(57, 116, 252, 0.1);
+  transform: translateY(-1px);
+}
+
+.nav-paytm-link.active {
+  color: var(--paytm-primary);
+  background: rgba(57, 116, 252, 0.15);
+  border-bottom: 3px solid var(--paytm-primary);
+}
+
+/* Paytm Sidebar */
+.sidebar-paytm {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+  color: var(--paytm-white);
+  min-height: 100vh;
+  box-shadow: 2px 0 8px var(--paytm-shadow-medium);
+}
+
+.sidebar-paytm .nav-link {
+  color: rgba(255, 255, 255, 0.8);
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin: 2px 0;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sidebar-paytm .nav-link:hover,
+.sidebar-paytm .nav-link.active {
+  color: var(--paytm-white);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateX(5px);
+}
+
+/* Paytm Table */
+.table-paytm {
+  background: var(--paytm-white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--paytm-shadow-light);
+}
+
+.table-paytm thead th {
+  background: var(--paytm-bg-secondary);
+  color: var(--paytm-text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 1rem;
+  border-bottom: 2px solid var(--paytm-border-light);
+}
+
+.table-paytm tbody td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--paytm-border-light);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.table-paytm tbody tr:hover {
+  background: rgba(57, 116, 252, 0.05);
+}
+
+/* Paytm Modal */
+.modal-paytm .modal-content {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px var(--paytm-shadow-dark);
+}
+
+.modal-paytm .modal-header {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+  color: var(--paytm-white);
+  border-radius: 12px 12px 0 0;
+  border-bottom: none;
+  padding: 1.5rem;
+}
+
+.modal-paytm .modal-body {
+  padding: 1.5rem;
+}
+
+.modal-paytm .modal-footer {
+  background: var(--paytm-bg-secondary);
+  border-top: 1px solid var(--paytm-border-light);
+  border-radius: 0 0 12px 12px;
+  padding: 1rem 1.5rem;
+}
+
+/* Paytm Alert */
+.alert-paytm-success {
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  color: var(--paytm-success);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.alert-paytm-warning {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  color: #856404;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.alert-paytm-danger {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: var(--paytm-danger);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.alert-paytm-info {
+  background: rgba(23, 162, 184, 0.1);
+  border: 1px solid rgba(23, 162, 184, 0.2);
+  color: var(--paytm-info);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+/* Paytm Stats Cards */
+.stats-card-paytm {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+  color: var(--paytm-white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 16px var(--paytm-primary-shadow);
+  transition: all 0.3s ease;
+}
+
+.stats-card-paytm:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--paytm-primary-shadow-hover);
+}
+
+.stats-card-paytm .stats-number {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stats-card-paytm .stats-label {
+  font-size: 14px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Paytm Mobile Optimizations */
+@media (max-width: 768px) {
+  .btn-paytm-primary,
+  .btn-paytm-secondary,
+  .btn-paytm-success,
+  .btn-paytm-warning,
+  .btn-paytm-danger {
+    min-height: 44px;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+  
+  .card-paytm-body {
+    padding: 1rem;
+  }
+  
+  .table-paytm thead th,
+  .table-paytm tbody td {
+    padding: 0.75rem 0.5rem;
+    font-size: 13px;
+  }
+  
+  .stats-card-paytm {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .stats-card-paytm .stats-number {
+    font-size: 2rem;
+  }
+  
+  .modal-paytm .modal-body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .btn-paytm-primary,
+  .btn-paytm-secondary,
+  .btn-paytm-success,
+  .btn-paytm-warning,
+  .btn-paytm-danger {
+    min-height: 48px;
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+  
+  .card-paytm-body {
+    padding: 0.75rem;
+  }
+  
+  .stats-card-paytm .stats-number {
+    font-size: 1.75rem;
+  }
+}
+
+/* Paytm Animation Classes */
+.paytm-fade-in {
+  animation: paytmFadeIn 0.5s ease-in-out;
+}
+
+.paytm-slide-up {
+  animation: paytmSlideUp 0.3s ease-out;
+}
+
+.paytm-bounce {
+  animation: paytmBounce 0.6s ease-in-out;
+}
+
+@keyframes paytmFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes paytmSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes paytmBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Paytm Loading Spinner */
+.paytm-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--paytm-border-light);
+  border-top: 2px solid var(--paytm-primary);
+  border-radius: 50%;
+  animation: paytmSpin 1s linear infinite;
+}
+
+@keyframes paytmSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Paytm Progress Bar */
+.progress-paytm {
+  height: 8px;
+  background: var(--paytm-bg-tertiary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-paytm {
+  background: linear-gradient(90deg, var(--paytm-primary) 0%, var(--paytm-accent) 100%);
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Paytm Icon Styles */
+.icon-paytm {
+  color: var(--paytm-primary);
+  font-size: 1.2rem;
+}
+
+.icon-paytm-success {
+  color: var(--paytm-success);
+  font-size: 1.2rem;
+}
+
+.icon-paytm-warning {
+  color: var(--paytm-warning);
+  font-size: 1.2rem;
+}
+
+.icon-paytm-danger {
+  color: var(--paytm-danger);
+  font-size: 1.2rem;
+}
+
+/* Paytm Text Utilities */
+.text-paytm-primary {
+  color: var(--paytm-primary) !important;
+}
+
+.text-paytm-success {
+  color: var(--paytm-success) !important;
+}
+
+.text-paytm-warning {
+  color: var(--paytm-warning) !important;
+}
+
+.text-paytm-danger {
+  color: var(--paytm-danger) !important;
+}
+
+.text-paytm-muted {
+  color: var(--paytm-text-muted) !important;
+}
+
+/* Paytm Background Utilities */
+.bg-paytm-primary {
+  background: var(--paytm-primary) !important;
+}
+
+.bg-paytm-light {
+  background: var(--paytm-bg-secondary) !important;
+}
+
+.bg-paytm-gradient {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%) !important;
+}
+
+/* Staff Search Page Styling */
+.input-group-text {
+  background: var(--paytm-primary) !important;
+  color: white !important;
+  border-color: var(--paytm-primary) !important;
+}
+
+.form-control-paytm:focus {
+  border-color: var(--paytm-primary);
+  box-shadow: 0 0 0 0.2rem rgba(57, 116, 252, 0.25);
+}

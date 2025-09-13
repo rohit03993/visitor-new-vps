@@ -7,24 +7,24 @@
 <div class="row">
     <div class="col-12">
         <h2 class="h4">System Analytics</h2>
-        <p class="text-muted">Insights and statistics about your visitor management system.</p>
+        <p class="text-paytm-muted">Insights and statistics about your visitor management system.</p>
     </div>
 </div>
 
 <!-- Frequent Visitors -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
+        <div class="card-paytm paytm-fade-in">
+            <div class="card-paytm-header">
                 <h5 class="mb-0">
                     <i class="fas fa-star me-2"></i>Frequent Visitors
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-paytm-body">
                 @if($frequentVisitors->count() > 0)
                     <!-- Desktop Table View -->
                     <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover">
+                        <table class="table table-paytm">
                             <thead>
                                 <tr>
                                     <th>Rank</th>
@@ -140,7 +140,7 @@
                 @if($topEmployees->count() > 0)
                     <!-- Desktop Table View -->
                     <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover">
+                        <table class="table table-paytm">
                             <thead>
                                 <tr>
                                     <th>Rank</th>

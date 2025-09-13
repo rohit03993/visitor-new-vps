@@ -7,6 +7,7 @@
     <title>@yield('title', 'VMS - Visitor Management System')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('css/paytm-theme.css') }}" rel="stylesheet">
     <style>
         /* Mobile-first responsive design */
         body {
@@ -16,7 +17,7 @@
         
         .sidebar {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
             color: white;
             position: fixed;
             top: 0;
@@ -66,7 +67,7 @@
         }
         
         .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
             color: white;
             border-radius: 15px 15px 0 0 !important;
             border: none;
@@ -78,7 +79,7 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
             border: none;
             border-radius: 8px;
             font-size: 14px;
@@ -87,7 +88,7 @@
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px var(--paytm-primary-shadow-hover);
         }
         
         .navbar-brand {
@@ -96,7 +97,7 @@
         }
         
         .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
             color: white;
             border-radius: 15px;
             padding: 1rem;
@@ -117,7 +118,7 @@
         
         /* Mobile navigation */
         .mobile-nav {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
             color: white;
             padding: 1rem;
             display: flex;
@@ -154,11 +155,11 @@
         
         /* Modern Page Title Styles */
         .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
             border-radius: 15px;
             padding: 2rem;
             margin-bottom: 2rem;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+            box-shadow: 0 8px 25px var(--paytm-primary-shadow);
         }
         
         .page-title {
@@ -504,6 +505,68 @@
                 line-height: 1.3;
             }
         }
+
+        /* Global Pagination Styles */
+        .pagination {
+            --bs-pagination-padding-x: 0.5rem;
+            --bs-pagination-padding-y: 0.375rem;
+            --bs-pagination-font-size: 0.875rem;
+            --bs-pagination-color: #6c757d;
+            --bs-pagination-bg: #fff;
+            --bs-pagination-border-width: 1px;
+            --bs-pagination-border-color: #dee2e6;
+            --bs-pagination-border-radius: 0.375rem;
+            --bs-pagination-hover-color: #495057;
+            --bs-pagination-hover-bg: #e9ecef;
+            --bs-pagination-hover-border-color: #dee2e6;
+            --bs-pagination-focus-color: #495057;
+            --bs-pagination-focus-bg: #e9ecef;
+            --bs-pagination-focus-box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+            --bs-pagination-active-color: #fff;
+            --bs-pagination-active-bg: #0d6efd;
+            --bs-pagination-active-border-color: #0d6efd;
+            --bs-pagination-disabled-color: #6c757d;
+            --bs-pagination-disabled-bg: #fff;
+            --bs-pagination-disabled-border-color: #dee2e6;
+        }
+
+        .pagination .page-link {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            margin: 0 2px;
+            transition: all 0.2s ease;
+        }
+
+        .pagination .page-link:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .pagination .page-item:first-child .page-link,
+        .pagination .page-item:last-child .page-link {
+            border-radius: 0.375rem;
+        }
+
+        /* Make pagination arrows smaller and more subtle */
+        .pagination .page-link i {
+            font-size: 0.75rem;
+        }
+
+        /* Mobile pagination adjustments */
+        @media (max-width: 768px) {
+            .pagination {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .pagination .page-link {
+                padding: 0.5rem 0.75rem;
+                margin: 2px;
+                min-width: 40px;
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -560,22 +623,30 @@
                             <a class="nav-link {{ request()->routeIs('admin.manage-locations') ? 'active' : '' }}" href="{{ route('admin.manage-locations') }}" onclick="closeSidebar()">
                                 <i class="fas fa-map-marker-alt me-2"></i> Manage Locations
                             </a>
+                            <a class="nav-link {{ request()->routeIs('admin.manage-branches') ? 'active' : '' }}" href="{{ route('admin.manage-branches') }}" onclick="closeSidebar()">
+                                <i class="fas fa-building me-2"></i> Manage Branches
+                            </a>
+                <a class="nav-link {{ request()->routeIs('admin.manage-tags') ? 'active' : '' }}" href="{{ route('admin.manage-tags') }}" onclick="closeSidebar()">
+                    <i class="fas fa-tags me-2"></i> Edit Purpose
+                </a>
+                <a class="nav-link {{ request()->routeIs('admin.manage-courses') ? 'active' : '' }}" href="{{ route('admin.manage-courses') }}" onclick="closeSidebar()">
+                    <i class="fas fa-graduation-cap me-2"></i> Manage Courses
+                </a>
+                            <a class="nav-link {{ request()->routeIs('admin.filter-visitors') ? 'active' : '' }}" href="{{ route('admin.filter-visitors') }}" onclick="closeSidebar()">
+                                <i class="fas fa-filter me-2"></i> Filter Visitors
+                            </a>
+                            <a class="nav-link {{ request()->routeIs('admin.filter-interactions') ? 'active' : '' }}" href="{{ route('admin.filter-interactions') }}" onclick="closeSidebar()">
+                                <i class="fas fa-search me-2"></i> Filter Interactions
+                            </a>
                             <a class="nav-link {{ request()->routeIs('admin.analytics') ? 'active' : '' }}" href="{{ route('admin.analytics') }}" onclick="closeSidebar()">
                                 <i class="fas fa-chart-bar me-2"></i> Analytics
                             </a>
-                        @elseif(auth()->user()->isFrontDesk())
-                            <a class="nav-link {{ request()->routeIs('frontdesk.dashboard') ? 'active' : '' }}" href="{{ route('frontdesk.dashboard') }}" onclick="closeSidebar()">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        @elseif(auth()->user()->isStaff())
+                            <a class="nav-link {{ request()->routeIs('staff.visitor-search') ? 'active' : '' }}" href="{{ route('staff.visitor-search') }}" onclick="closeSidebar()">
+                                <i class="fas fa-search me-2"></i> Search Visitor
                             </a>
-                            <a class="nav-link {{ request()->routeIs('frontdesk.visitor-form') ? 'active' : '' }}" href="{{ route('frontdesk.visitor-form') }}" onclick="closeSidebar()">
-                                <i class="fas fa-plus me-2"></i> Add Visitor
-                            </a>
-                            <a class="nav-link {{ request()->routeIs('frontdesk.search-visitors') ? 'active' : '' }}" href="{{ route('frontdesk.search-visitors') }}" onclick="closeSidebar()">
-                                <i class="fas fa-search me-2"></i> Search Visitors
-                            </a>
-                        @elseif(auth()->user()->isEmployee())
-                            <a class="nav-link {{ request()->routeIs('employee.dashboard') ? 'active' : '' }}" href="{{ route('employee.dashboard') }}" onclick="closeSidebar()">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            <a class="nav-link {{ request()->routeIs('staff.assigned-to-me') ? 'active' : '' }}" href="{{ route('staff.assigned-to-me') }}" onclick="closeSidebar()">
+                                <i class="fas fa-user-check me-2"></i> Assigned to Me
                             </a>
                         @endif
                         

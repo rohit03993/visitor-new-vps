@@ -3,8 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\FrontDeskController;
-use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\StaffController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -28,6 +27,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/manage-users', [AdminController::class, 'manageUsers'])->name('manage-users');
         Route::post('/create-user', [AdminController::class, 'createUser'])->name('create-user');
         Route::put('/users/{userId}', [AdminController::class, 'updateUser'])->name('update-user');
+        Route::get('/users/{userId}/current-password', [AdminController::class, 'getCurrentPassword'])->name('get-current-password');
         Route::get('/users/{userId}/branch-permissions', [AdminController::class, 'getBranchPermissions'])->name('get-branch-permissions');
         Route::post('/users/{userId}/branch-permissions', [AdminController::class, 'saveBranchPermissions'])->name('save-branch-permissions');
         Route::get('/users/{userId}/deactivate-stats', [AdminController::class, 'getUserDeactivateStats'])->name('get-user-deactivate-stats');
@@ -38,38 +38,50 @@ Route::middleware('auth')->group(function () {
         Route::delete('/locations/{addressId}', [AdminController::class, 'deleteLocation'])->name('delete-location');
         Route::get('/manage-branches', [AdminController::class, 'manageBranches'])->name('manage-branches');
         Route::post('/create-branch', [AdminController::class, 'createBranch'])->name('create-branch');
+        Route::put('/update-branch/{branchId}', [AdminController::class, 'updateBranch'])->name('update-branch');
         Route::delete('/branches/{branchId}', [AdminController::class, 'deleteBranch'])->name('delete-branch');
         Route::get('/analytics', [AdminController::class, 'analytics'])->name('analytics');
-    });
-
-    // Front Desk Routes
-    Route::prefix('frontdesk')->name('frontdesk.')->middleware('role:frontdesk')->group(function () {
-        Route::get('/dashboard', [FrontDeskController::class, 'showGoogleSearch'])->name('dashboard'); // Google search is now default
-        Route::get('/old-dashboard', [FrontDeskController::class, 'dashboard'])->name('old-dashboard'); // Keep old dashboard accessible
-        Route::get('/google-search', [FrontDeskController::class, 'showGoogleSearch'])->name('google-search');
-        Route::post('/search-visitor', [FrontDeskController::class, 'searchVisitor'])->name('search-visitor');
-        Route::get('/visitor-form', [FrontDeskController::class, 'showVisitorForm'])->name('visitor-form');
-        Route::post('/check-mobile', [FrontDeskController::class, 'checkMobile'])->name('check-mobile');
-        Route::post('/add-address', [FrontDeskController::class, 'addAddress'])->name('add-address');
-        Route::post('/store-visitor', [FrontDeskController::class, 'storeVisitor'])->name('store-visitor');
-        Route::get('/search-visitors', [FrontDeskController::class, 'showSearchForm'])->name('search-visitors');
-        Route::post('/search-visitors', [FrontDeskController::class, 'searchVisitors']);
-        Route::get('/interactions/{interactionId}/remarks', [FrontDeskController::class, 'getInteractionRemarks'])->name('get-interaction-remarks');
-        Route::get('/download/today-excel', [FrontDeskController::class, 'downloadTodayExcel'])->name('download-today-excel');
-    });
-
-    // Employee Routes
-    Route::prefix('employee')->name('employee.')->middleware('role:employee')->group(function () {
-        Route::get('/dashboard', [EmployeeController::class, 'dashboard'])->name('dashboard');
-        Route::post('/update-remark/{interactionId}', [EmployeeController::class, 'updateRemark'])->name('update-remark');
-        Route::get('/visitor-history/{visitorId}', [EmployeeController::class, 'getVisitorHistory'])->name('visitor-history');
         
-        // New visitor entry functionality
-        Route::get('/visitor-search', [EmployeeController::class, 'showVisitorSearch'])->name('visitor-search');
-        Route::post('/search-visitor', [EmployeeController::class, 'searchVisitor'])->name('search-visitor');
-        Route::get('/visitor-form', [EmployeeController::class, 'showVisitorForm'])->name('visitor-form');
-        Route::post('/check-mobile', [EmployeeController::class, 'checkMobile'])->name('check-mobile');
-        Route::post('/add-address', [EmployeeController::class, 'addAddress'])->name('add-address');
-        Route::post('/store-visitor', [EmployeeController::class, 'storeVisitor'])->name('store-visitor');
+        // Detailed Views
+        Route::get('/all-visitors', [AdminController::class, 'allVisitors'])->name('all-visitors');
+        Route::get('/all-interactions', [AdminController::class, 'allInteractions'])->name('all-interactions');
+        Route::get('/today-interactions', [AdminController::class, 'todayInteractions'])->name('today-interactions');
+        
+        // Tag Management
+        Route::get('/manage-tags', [AdminController::class, 'manageTags'])->name('manage-tags');
+        Route::post('/create-tag', [AdminController::class, 'createTag'])->name('create-tag');
+        Route::put('/update-tag/{tagId}', [AdminController::class, 'updateTag'])->name('update-tag');
+        Route::delete('/delete-tag/{tagId}', [AdminController::class, 'deleteTag'])->name('delete-tag');
+        Route::patch('/toggle-tag-status/{tagId}', [AdminController::class, 'toggleTagStatus'])->name('toggle-tag-status');
+        
+        // Advanced Filtering
+        Route::get('/filter-visitors', [AdminController::class, 'filterVisitors'])->name('filter-visitors');
+        Route::get('/filter-interactions', [AdminController::class, 'filterInteractions'])->name('filter-interactions');
+        
+        // Course Management Routes
+        Route::get('/manage-courses', [AdminController::class, 'manageCourses'])->name('manage-courses');
+        Route::post('/create-course', [AdminController::class, 'createCourse'])->name('create-course');
+        Route::put('/update-course/{courseId}', [AdminController::class, 'updateCourse'])->name('update-course');
+        Route::delete('/delete-course/{courseId}', [AdminController::class, 'deleteCourse'])->name('delete-course');
+    });
+
+
+    // Staff Routes (Combined Front Desk + Employee functionality)
+    Route::prefix('staff')->name('staff.')->middleware('role:staff')->group(function () {
+        Route::get('/dashboard', [StaffController::class, 'dashboard'])->name('dashboard');
+        Route::get('/visitor-search', [StaffController::class, 'showVisitorSearch'])->name('visitor-search');
+        Route::get('/assigned-to-me', [StaffController::class, 'showAssignedToMe'])->name('assigned-to-me');
+        Route::post('/search-visitor', [StaffController::class, 'searchVisitor'])->name('search-visitor');
+        Route::get('/visitor-form', [StaffController::class, 'showVisitorForm'])->name('visitor-form');
+        Route::post('/check-mobile', [StaffController::class, 'checkMobile'])->name('check-mobile');
+        Route::post('/add-address', [StaffController::class, 'addAddress'])->name('add-address');
+        Route::post('/store-visitor', [StaffController::class, 'storeVisitor'])->name('store-visitor');
+        Route::post('/update-remark/{interactionId}', [StaffController::class, 'updateRemark'])->name('update-remark');
+        Route::post('/mark-completed/{interactionId}', [StaffController::class, 'markAsCompleted'])->name('mark-completed');
+        Route::get('/interactions/{interactionId}/remarks', [StaffController::class, 'getInteractionRemarks'])->name('get-interaction-remarks');
+        
+        // Session Management Routes
+        Route::post('/complete-session/{sessionId}', [StaffController::class, 'completeSession'])->name('complete-session');
+        Route::get('/session/{sessionId}/modal', [StaffController::class, 'showCompleteSessionModal'])->name('session-modal');
     });
 });

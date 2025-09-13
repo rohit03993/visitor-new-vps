@@ -11,12 +11,19 @@ class InteractionHistory extends Model
 
     protected $fillable = [
         'visitor_id',
+        'session_id',
         'name_entered',
+        'mobile_number',
         'mode',
         'purpose',
+        'initial_notes',
         'address_id',
         'meeting_with',
         'created_by',
+        'created_by_role',
+        'is_completed',
+        'completed_at',
+        'completed_by',
     ];
 
     // Visit mode constants
@@ -34,6 +41,8 @@ class InteractionHistory extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'is_completed' => 'boolean',
     ];
 
     // Relationships
@@ -57,6 +66,19 @@ class InteractionHistory extends Model
         return $this->belongsTo(VmsUser::class, 'created_by');
     }
 
+    public function completedBy()
+    {
+        return $this->belongsTo(VmsUser::class, 'completed_by');
+    }
+
+    /**
+     * Get the student session this interaction belongs to
+     */
+    public function studentSession()
+    {
+        return $this->belongsTo(StudentSession::class, 'session_id', 'session_id');
+    }
+
     public function remarks()
     {
         return $this->hasMany(Remark::class, 'interaction_id');
@@ -76,7 +98,16 @@ class InteractionHistory extends Model
 
     public function isCompleted()
     {
-        return !$this->hasPendingRemarks();
+        return $this->is_completed;
+    }
+
+    public function markAsCompleted($userId = null)
+    {
+        $this->update([
+            'is_completed' => true,
+            'completed_at' => now(),
+            'completed_by' => $userId ?? auth()->id(),
+        ]);
     }
 
     // Get badge color for mode display

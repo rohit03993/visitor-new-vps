@@ -10,6 +10,8 @@ use App\Models\Address;
 use App\Models\VmsUser;
 use App\Models\Branch;
 use App\Models\UserBranchPermission;
+use App\Models\Tag;
+use App\Models\Course;
 use App\Helpers\DateTimeHelper;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -107,6 +109,9 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // Load tags for the visitor
+        $visitor->load('tags');
+
         return view('admin.visitor-profile', compact('visitor', 'interactions', 'mobileNumber'));
     }
 
@@ -144,7 +149,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:vms_users,username',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,frontdesk,employee',
+            'role' => 'required|in:admin,staff',
             'mobile_number' => 'nullable|string|max:15',
             'branch_id' => 'required|exists:branches,branch_id',
             'can_view_remarks' => 'boolean',
@@ -155,6 +160,7 @@ class AdminController extends Controller
             'name' => $request->name,
             'username' => $request->username,
             'password' => bcrypt($request->password),
+            'temp_password' => $request->password, // Store original password for admin convenience
             'role' => $request->role,
             'mobile_number' => $request->mobile_number,
             'branch_id' => $request->branch_id,
@@ -174,7 +180,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:vms_users,username,' . $userId . ',user_id',
             'password' => 'nullable|string|min:6',
-            'role' => 'required|in:admin,frontdesk,employee',
+            'role' => 'required|in:admin,staff',
             'mobile_number' => 'nullable|string|max:15',
             'branch_id' => 'required|exists:branches,branch_id',
             'can_view_remarks' => 'boolean',
@@ -194,12 +200,35 @@ class AdminController extends Controller
         // Only update password if provided
         if ($request->filled('password')) {
             $updateData['password'] = bcrypt($request->password);
+            $updateData['temp_password'] = $request->password; // Store original password for admin convenience
         }
 
         $user->update($updateData);
 
         return redirect()->route('admin.manage-users')
             ->with('success', 'User updated successfully!');
+    }
+
+    public function getCurrentPassword($userId)
+    {
+        $user = VmsUser::findOrFail($userId);
+        
+        // Check if we have a temporary password stored (for admin convenience)
+        $tempPassword = $user->temp_password ?? null;
+        
+        if ($tempPassword) {
+            return response()->json([
+                'success' => true,
+                'password' => $tempPassword,
+                'message' => 'Current password retrieved successfully.'
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'password' => '',
+                'message' => 'No temporary password stored. Password was set before this feature was added. To reset password, enter a new one above.'
+            ]);
+        }
     }
 
     public function manageBranches()
@@ -211,17 +240,79 @@ class AdminController extends Controller
 
     public function createBranch(Request $request)
     {
+        try {
+            $request->validate([
+                'branch_name' => 'required|string|max:255|unique:branches,branch_name',
+                'branch_code' => 'nullable|string|max:50|unique:branches,branch_code',
+                'address' => 'nullable|string|max:500',
+            ]);
+
+            // Generate branch code if not provided
+            $branchCode = $request->branch_code;
+            if (empty($branchCode)) {
+                $branchCode = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $request->branch_name), 0, 10));
+                
+                // Ensure uniqueness
+                $counter = 1;
+                $originalCode = $branchCode;
+                while (Branch::where('branch_code', $branchCode)->exists()) {
+                    $branchCode = $originalCode . $counter;
+                    $counter++;
+                }
+            }
+
+            Branch::create([
+                'branch_name' => $request->branch_name,
+                'branch_code' => $branchCode,
+                'address' => $request->address,
+                'created_by' => auth()->user()->user_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Branch created successfully!'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while creating the branch: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateBranch(Request $request, $branchId)
+    {
         $request->validate([
-            'branch_name' => 'required|string|max:255|unique:branches,branch_name',
+            'branch_name' => 'required|string|max:255|unique:branches,branch_name,' . $branchId . ',branch_id',
+            'branch_code' => 'nullable|string|max:50|unique:branches,branch_code,' . $branchId . ',branch_id',
+            'address' => 'nullable|string|max:500',
         ]);
 
-        Branch::create([
-            'branch_name' => $request->branch_name,
-            'created_by' => auth()->user()->user_id,
-        ]);
+        try {
+            $branch = Branch::findOrFail($branchId);
+            $branch->update([
+                'branch_name' => $request->branch_name,
+                'branch_code' => $request->branch_code,
+                'address' => $request->address,
+            ]);
 
-        return redirect()->route('admin.manage-branches')
-            ->with('success', 'Branch created successfully!');
+            return response()->json([
+                'success' => true,
+                'message' => 'Branch updated successfully!',
+                'branch' => $branch
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update branch: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function deleteBranch($branchId)
@@ -302,7 +393,7 @@ class AdminController extends Controller
             ->get();
 
         // Top employees by assigned interactions
-        $topEmployees = VmsUser::where('role', 'employee')
+        $topEmployees = VmsUser::where('role', 'staff')
             ->withCount('assignedInteractions')
             ->orderBy('assigned_interactions_count', 'desc')
             ->get();
@@ -511,7 +602,7 @@ class AdminController extends Controller
             $user->update(['is_active' => false]);
 
             // Clear the employees cache to update meeting dropdowns
-            Cache::forget('active_employees_list');
+            Cache::forget('active_staff_list');
 
             \Log::info('User deactivation completed successfully', [
                 'user_id' => $userId,
@@ -569,7 +660,7 @@ class AdminController extends Controller
             $user->update(['is_active' => true]);
 
             // Clear the employees cache to update meeting dropdowns
-            Cache::forget('active_employees_list');
+            Cache::forget('active_staff_list');
 
             \Log::info('User reactivation completed successfully', [
                 'user_id' => $userId,
@@ -593,4 +684,298 @@ class AdminController extends Controller
             ], 500);
         }
     }
+
+    public function allVisitors()
+    {
+        $visitors = Visitor::with(['interactions', 'lastUpdatedBy'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(10);
+
+        return view('admin.all-visitors', compact('visitors'));
+    }
+
+    public function allInteractions()
+    {
+        $interactions = InteractionHistory::with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'createdBy'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('admin.all-interactions', compact('interactions'));
+    }
+
+    public function todayInteractions()
+    {
+        $interactions = InteractionHistory::with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'createdBy'])
+            ->whereDate('created_at', DateTimeHelper::today())
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('admin.today-interactions', compact('interactions'));
+    }
+
+    public function manageTags()
+    {
+        $tags = \App\Models\Tag::withCount('visitors')
+            ->orderBy('name')
+            ->paginate(20);
+
+        return view('admin.manage-tags', compact('tags'));
+    }
+
+    public function createTag(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:tags,name',
+            'color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        \App\Models\Tag::create([
+            'name' => $request->name,
+            'color' => $request->color ?? '#007bff',
+            'description' => $request->description,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tag created successfully!'
+        ]);
+    }
+
+    public function updateTag(Request $request, $tagId)
+    {
+        try {
+            $tag = \App\Models\Tag::findOrFail($tagId);
+
+            // Log the incoming request data
+            \Log::info('UpdateTag request data', [
+                'tagId' => $tagId,
+                'request_data' => $request->all(),
+                'request_method' => $request->method()
+            ]);
+
+            $request->validate([
+                'name' => 'required|string|max:255|unique:tags,name,' . $tagId,
+                'color' => 'nullable|string|regex:/^#[0-9A-Fa-f]{6}$/',
+                'description' => 'nullable|string|max:500',
+            ]);
+
+            $oldName = $tag->name;
+            
+            $tag->update([
+                'name' => $request->name,
+                'color' => $request->color ?? $tag->color,
+                'description' => $request->description,
+            ]);
+
+            // Update all historical interaction purposes that use this tag
+            if ($oldName !== $request->name) {
+                \App\Models\InteractionHistory::where('purpose', $oldName)
+                    ->update(['purpose' => $request->name]);
+            }
+
+            \Log::info('Tag updated successfully', [
+                'tagId' => $tagId,
+                'old_name' => $oldName,
+                'new_name' => $request->name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Tag updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error updating tag', [
+                'tagId' => $tagId,
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the tag: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteTag($tagId)
+    {
+        $tag = \App\Models\Tag::findOrFail($tagId);
+
+        if (!$tag->canBeDeleted()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete tag. It is being used by ' . $tag->visitors()->count() . ' visitor(s).'
+            ], 400);
+        }
+
+        $tag->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tag deleted successfully!'
+        ]);
+    }
+
+    public function toggleTagStatus($tagId)
+    {
+        $tag = \App\Models\Tag::findOrFail($tagId);
+        $tag->update(['is_active' => !$tag->is_active]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tag status updated successfully!'
+        ]);
+    }
+
+    public function filterVisitors(Request $request)
+    {
+        $query = Visitor::with(['tags', 'interactions', 'lastUpdatedBy']);
+
+        // Filter by tags - simple OR logic (any selected tag)
+        if ($request->has('tags') && !empty($request->tags)) {
+            $tagIds = $request->tags;
+            $query->whereHas('tags', function($q) use ($tagIds) {
+                $q->whereIn('tags.id', $tagIds);
+            });
+        }
+
+        $visitors = $query->orderBy('updated_at', 'desc')->paginate(20);
+
+        // Get all tags for filter dropdown
+        $allTags = \App\Models\Tag::active()->orderBy('name')->get();
+
+        return view('admin.filtered-visitors', compact('visitors', 'allTags'));
+    }
+
+    public function filterInteractions(Request $request)
+    {
+        $query = InteractionHistory::with(['visitor.tags', 'meetingWith.branch', 'address', 'remarks', 'createdBy']);
+
+        // Filter by visitor tags - simple OR logic (any selected tag)
+        if ($request->has('tags') && !empty($request->tags)) {
+            $tagIds = $request->tags;
+            $query->whereHas('visitor.tags', function($q) use ($tagIds) {
+                $q->whereIn('tags.id', $tagIds);
+            });
+        }
+
+        $interactions = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        // Get all tags for filter dropdown
+        $allTags = \App\Models\Tag::active()->orderBy('name')->get();
+
+        return view('admin.filtered-interactions', compact('interactions', 'allTags'));
+    }
+
+    // ==================== COURSE MANAGEMENT ====================
+
+    public function manageCourses()
+    {
+        $courses = Course::with('creator')->orderBy('course_name')->paginate(20);
+        return view('admin.manage-courses', compact('courses'));
+    }
+
+    public function createCourse(Request $request)
+    {
+        $request->validate([
+            'course_name' => 'required|string|max:255|unique:courses,course_name',
+            'course_code' => 'nullable|string|max:50|unique:courses,course_code',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        // Generate course code if not provided
+        $courseCode = $request->course_code;
+        if (empty($courseCode)) {
+            $courseCode = strtoupper(substr(preg_replace('/[^a-zA-Z0-9]/', '', $request->course_name), 0, 10));
+            
+            // Ensure uniqueness
+            $counter = 1;
+            $originalCode = $courseCode;
+            while (Course::where('course_code', $courseCode)->exists()) {
+                $courseCode = $originalCode . $counter;
+                $counter++;
+            }
+        }
+
+        Course::create([
+            'course_name' => $request->course_name,
+            'course_code' => $courseCode,
+            'description' => $request->description,
+            'created_by' => auth()->user()->user_id,
+        ]);
+
+        // Clear cache
+        Cache::forget('active_courses_list');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Course created successfully!'
+        ]);
+    }
+
+    public function updateCourse(Request $request, $courseId)
+    {
+        $request->validate([
+            'course_name' => 'required|string|max:255|unique:courses,course_name,' . $courseId . ',course_id',
+            'course_code' => 'nullable|string|max:50|unique:courses,course_code,' . $courseId . ',course_id',
+            'description' => 'nullable|string|max:500',
+            'is_active' => 'boolean',
+        ]);
+
+        try {
+            $course = Course::findOrFail($courseId);
+            $course->update([
+                'course_name' => $request->course_name,
+                'course_code' => $request->course_code,
+                'description' => $request->description,
+                'is_active' => $request->has('is_active') ? $request->is_active : $course->is_active,
+            ]);
+
+            // Clear cache
+            Cache::forget('active_courses_list');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Course updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while updating the course.'
+            ], 500);
+        }
+    }
+
+    public function deleteCourse($courseId)
+    {
+        try {
+            $course = Course::findOrFail($courseId);
+            
+            // Check if course is being used by any visitors
+            $visitorCount = $course->visitors()->count();
+            if ($visitorCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Cannot delete course. It is being used by {$visitorCount} visitor(s)."
+                ], 400);
+            }
+
+            $course->delete();
+
+            // Clear cache
+            Cache::forget('active_courses_list');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Course deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while deleting the course.'
+            ], 500);
+        }
+    }
+
 }

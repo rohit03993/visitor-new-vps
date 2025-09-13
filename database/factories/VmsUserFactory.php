@@ -25,7 +25,7 @@ class VmsUserFactory extends Factory
      */
     public function definition(): array
     {
-        $roles = ['admin', 'frontdesk', 'employee'];
+        $roles = ['admin', 'staff'];
         
         return [
             'name' => fake()->name(),
@@ -57,23 +57,4 @@ class VmsUserFactory extends Factory
         ]);
     }
 
-    /**
-     * Create a frontdesk user
-     */
-    public function frontdesk(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'frontdesk',
-        ]);
-    }
-
-    /**
-     * Create an employee user
-     */
-    public function employee(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'role' => 'employee',
-        ]);
-    }
 }

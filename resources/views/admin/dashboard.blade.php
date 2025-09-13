@@ -7,48 +7,56 @@
 <!-- Key Metrics Cards -->
 <div class="row mb-4">
     <div class="col-6 col-lg-3 mb-3">
-        <div class="metric-card bg-primary text-white">
-            <div class="metric-icon">
-                <i class="fas fa-users"></i>
+        <a href="{{ route('admin.all-visitors') }}" class="text-decoration-none">
+            <div class="metric-card stats-card-paytm clickable-card">
+                <div class="metric-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-number">{{ $totalVisitors }}</div>
+                    <div class="metric-label">Total Visitors</div>
+                </div>
             </div>
-            <div class="metric-content">
-                <div class="metric-number">{{ $totalVisitors }}</div>
-                <div class="metric-label">Total Visitors</div>
-            </div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-lg-3 mb-3">
-        <div class="metric-card bg-success text-white">
-            <div class="metric-icon">
-                <i class="fas fa-handshake"></i>
+        <a href="{{ route('admin.all-interactions') }}" class="text-decoration-none">
+            <div class="metric-card stats-card-paytm clickable-card" style="background: linear-gradient(135deg, var(--paytm-success) 0%, #1e7e34 100%);">
+                <div class="metric-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-number">{{ $totalInteractions }}</div>
+                    <div class="metric-label">Total Interactions</div>
+                </div>
             </div>
-            <div class="metric-content">
-                <div class="metric-number">{{ $totalInteractions }}</div>
-                <div class="metric-label">Total Interactions</div>
-            </div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-lg-3 mb-3">
-        <div class="metric-card bg-info text-white">
-            <div class="metric-icon">
-                <i class="fas fa-user-tie"></i>
+        <a href="{{ route('admin.manage-users') }}" class="text-decoration-none">
+            <div class="metric-card stats-card-paytm clickable-card" style="background: linear-gradient(135deg, var(--paytm-info) 0%, #138496 100%);">
+                <div class="metric-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-number">{{ $totalUsers }}</div>
+                    <div class="metric-label">Total Users</div>
+                </div>
             </div>
-            <div class="metric-content">
-                <div class="metric-number">{{ $totalUsers }}</div>
-                <div class="metric-label">Total Users</div>
-            </div>
-        </div>
+        </a>
     </div>
     <div class="col-6 col-lg-3 mb-3">
-        <div class="metric-card bg-warning text-white">
-            <div class="metric-icon">
-                <i class="fas fa-calendar-day"></i>
+        <a href="{{ route('admin.today-interactions') }}" class="text-decoration-none">
+            <div class="metric-card stats-card-paytm clickable-card" style="background: linear-gradient(135deg, var(--paytm-warning) 0%, #e0a800 100%);">
+                <div class="metric-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="metric-content">
+                    <div class="metric-number">{{ $todayInteractions }}</div>
+                    <div class="metric-label">Today's Interactions</div>
+                </div>
             </div>
-            <div class="metric-content">
-                <div class="metric-number">{{ $todayInteractions }}</div>
-                <div class="metric-label">Today's Interactions</div>
-            </div>
-        </div>
+        </a>
     </div>
 </div>
 
@@ -123,8 +131,8 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="activity-content">
-                            <div class="activity-number">{{ $interactions->filter(function($interaction) { return $interaction->hasPendingRemarks(); })->count() }}</div>
-                            <div class="activity-label">Pending Remarks</div>
+                            <div class="activity-number">{{ $interactions->filter(function($interaction) { return !$interaction->is_completed; })->count() }}</div>
+                            <div class="activity-label">Pending Interactions</div>
                         </div>
                     </div>
                     <div class="activity-item">
@@ -132,7 +140,7 @@
                             <i class="fas fa-check-circle"></i>
                         </div>
                         <div class="activity-content">
-                            <div class="activity-number">{{ $interactions->filter(function($interaction) { return !$interaction->hasPendingRemarks(); })->count() }}</div>
+                            <div class="activity-number">{{ $interactions->filter(function($interaction) { return $interaction->is_completed; })->count() }}</div>
                             <div class="activity-label">Completed Today</div>
                         </div>
                     </div>
@@ -200,10 +208,10 @@
                                             </div>
                                         </td>
                                         <td>
-                                            @if($interaction->hasPendingRemarks())
-                                                <span class="badge bg-warning">Pending</span>
-                                            @else
+                                            @if($interaction->is_completed)
                                                 <span class="badge bg-success">Completed</span>
+                                            @else
+                                                <span class="badge bg-warning">Pending</span>
                                             @endif
                                         </td>
                                         <td>
@@ -238,10 +246,10 @@
                                             </small>
                                         </div>
                                         <div class="text-end">
-                                            @if($interaction->hasPendingRemarks())
-                                                <span class="badge bg-warning">Pending</span>
-                                            @else
+                                            @if($interaction->is_completed)
                                                 <span class="badge bg-success">Completed</span>
+                                            @else
+                                                <span class="badge bg-warning">Pending</span>
                                             @endif
                                         </div>
                                     </div>
@@ -514,6 +522,25 @@
     .action-btn span {
         font-size: 0.8rem;
     }
+}
+</style>
+@endsection
+
+@section('styles')
+<style>
+/* Clickable Cards */
+.clickable-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.clickable-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.clickable-card:active {
+    transform: translateY(-2px);
 }
 </style>
 @endsection

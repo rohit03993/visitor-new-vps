@@ -8,7 +8,7 @@
     <div class="col-12">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
             <h2 class="h4 mb-0">User Management</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <button class="btn btn-paytm-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
                 <i class="fas fa-plus me-2"></i>Create New User
             </button>
         </div>
@@ -18,17 +18,17 @@
 <!-- Users Table -->
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
+        <div class="card-paytm paytm-fade-in">
+            <div class="card-paytm-header">
                 <h5 class="mb-0">
                     <i class="fas fa-users me-2"></i>All Users
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-paytm-body">
                 @if($users->count() > 0)
                     <!-- Desktop Table View -->
                     <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover">
+                        <table class="table table-paytm">
                             <thead>
                                 <tr>
                                     <th>Name</th>
@@ -80,12 +80,8 @@
                                         <td>{{ $user->updated_at->format('M d, Y') }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary" 
-                                                    onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}', '{{ $user->can_view_remarks }}', '{{ $user->can_download_excel }}')">
+                                                    onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}')">
                                                 <i class="fas fa-edit me-1"></i>Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-success" 
-                                                    onclick="manageBranchPermissions({{ $user->user_id }}, '{{ $user->name }}')">
-                                                <i class="fas fa-shield-alt me-1"></i>Permissions
                                             </button>
                                             @if($user->user_id != auth()->id())
                                                 @if($user->is_active)
@@ -180,12 +176,8 @@
                                     <!-- Action Buttons -->
                                     <div class="d-flex justify-content-end gap-2">
                                         <button class="btn btn-outline-primary btn-sm" 
-                                                onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}', '{{ $user->can_view_remarks }}', '{{ $user->can_download_excel }}')">
+                                                onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}')">
                                             <i class="fas fa-edit me-1"></i>Edit
-                                        </button>
-                                        <button class="btn btn-outline-success btn-sm" 
-                                                onclick="manageBranchPermissions({{ $user->user_id }}, '{{ $user->name }}')">
-                                            <i class="fas fa-shield-alt me-1"></i>Permissions
                                         </button>
                                         @if($user->user_id != auth()->id())
                                             @if($user->is_active)
@@ -238,15 +230,19 @@
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Password *</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="role" class="form-label">Role *</label>
                         <select class="form-select" id="role" name="role" required>
                             <option value="">Select Role</option>
                             <option value="admin">Admin</option>
-                            <option value="frontdesk">Front Desk</option>
-                            <option value="employee">Employee</option>
+                            <option value="staff">Staff</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -261,21 +257,6 @@
                     <div class="mb-3">
                         <label for="mobile_number" class="form-label">Mobile Number</label>
                         <input type="text" class="form-control" id="mobile_number" name="mobile_number" placeholder="10-digit mobile number">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Permissions</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="can_view_remarks" name="can_view_remarks" value="1">
-                            <label class="form-check-label" for="can_view_remarks">
-                                Can View Remarks
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="can_download_excel" name="can_download_excel" value="1">
-                            <label class="form-check-label" for="can_download_excel">
-                                Can Download Excel Reports
-                            </label>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -309,14 +290,21 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit_password" class="form-label">New Password (leave blank to keep current)</label>
-                        <input type="password" class="form-control" id="edit_password" name="password">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="edit_password" name="password" placeholder="Click 'Show Current' to see existing password">
+                            <button class="btn btn-outline-info" type="button" id="showCurrentPassword" title="Show current password">
+                                <i class="fas fa-key"></i> Show Current
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" id="toggleEditPassword">
+                                <i class="fas fa-eye" id="editPasswordIcon"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="edit_role" class="form-label">Role *</label>
                         <select class="form-select" id="edit_role" name="role" required>
                             <option value="admin">Admin</option>
-                            <option value="frontdesk">Front Desk</option>
-                            <option value="employee">Employee</option>
+                            <option value="staff">Staff</option>
                         </select>
                     </div>
                     <div class="mb-3">
@@ -332,21 +320,6 @@
                         <label for="edit_mobile_number" class="form-label">Mobile Number</label>
                         <input type="text" class="form-control" id="edit_mobile_number" name="mobile_number" placeholder="10-digit mobile number">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Permissions</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="edit_can_view_remarks" name="can_view_remarks" value="1">
-                            <label class="form-check-label" for="edit_can_view_remarks">
-                                Can View Remarks
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="edit_can_download_excel" name="can_download_excel" value="1">
-                            <label class="form-check-label" for="edit_can_download_excel">
-                                Can Download Excel Reports
-                            </label>
-                        </div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -357,47 +330,6 @@
     </div>
 </div>
 
-<!-- Branch Permissions Modal -->
-<div class="modal fade" id="branchPermissionsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Manage Branch Permissions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <h6>User: <span id="permissionUserName"></span></h6>
-                    <p class="text-muted">Grant permissions for specific branches. Users can view remarks and download Excel only for branches they have permission for.</p>
-                </div>
-                
-                <form id="branchPermissionsForm">
-                    @csrf
-                    <input type="hidden" id="permission_user_id" name="user_id">
-                    
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Branch</th>
-                                    <th class="text-center">View Remarks</th>
-                                    <th class="text-center">Download Excel</th>
-                                </tr>
-                            </thead>
-                            <tbody id="branchPermissionsTable">
-                                <!-- Will be populated by JavaScript -->
-                            </tbody>
-                        </table>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveBranchPermissions()">Save Permissions</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Delete User Confirmation Modal -->
 <div class="modal fade" id="deleteUserModal" tabindex="-1" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
@@ -612,136 +544,23 @@
 
 @section('scripts')
 <script>
-function editUser(userId, name, username, role, branchId, mobileNumber, canViewRemarks, canDownloadExcel) {
+function editUser(userId, name, username, role, branchId, mobileNumber) {
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_username').value = username;
     document.getElementById('edit_role').value = role;
     document.getElementById('edit_branch_id').value = branchId || '';
     document.getElementById('edit_mobile_number').value = mobileNumber || '';
-    document.getElementById('edit_can_view_remarks').checked = canViewRemarks === '1' || canViewRemarks === true;
-    document.getElementById('edit_can_download_excel').checked = canDownloadExcel === '1' || canDownloadExcel === true;
+    document.getElementById('edit_password').value = ''; // Clear password field
     document.getElementById('editUserForm').action = '/admin/users/' + userId;
+    
+    // Store the current user ID for the show password functionality
+    document.getElementById('showCurrentPassword').setAttribute('data-user-id', userId);
     
     const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     editModal.show();
 }
 
-function manageBranchPermissions(userId, userName) {
-    document.getElementById('permission_user_id').value = userId;
-    document.getElementById('permissionUserName').textContent = userName;
-    
-    // Fetch current permissions and branches
-    fetch(`/admin/users/${userId}/branch-permissions`)
-        .then(response => response.json())
-        .then(data => {
-            populateBranchPermissionsTable(data.branches, data.permissions);
-            new bootstrap.Modal(document.getElementById('branchPermissionsModal')).show();
-        })
-        .catch(error => {
-            console.error('Error fetching branch permissions:', error);
-            alert('Error loading branch permissions');
-        });
-}
 
-function populateBranchPermissionsTable(branches, permissions) {
-    const tbody = document.getElementById('branchPermissionsTable');
-    tbody.innerHTML = '';
-    
-    branches.forEach(branch => {
-        const permission = permissions.find(p => p.branch_id == branch.branch_id) || {
-            branch_id: branch.branch_id,
-            can_view_remarks: false,
-            can_download_excel: false
-        };
-        
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>
-                <strong>${branch.branch_name}</strong>
-                <input type="hidden" name="branch_ids[]" value="${branch.branch_id}">
-            </td>
-            <td class="text-center">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" 
-                           name="can_view_remarks_${branch.branch_id}" 
-                           id="view_remarks_${branch.branch_id}"
-                           ${permission.can_view_remarks ? 'checked' : ''}>
-                    <label class="form-check-label" for="view_remarks_${branch.branch_id}"></label>
-                </div>
-            </td>
-            <td class="text-center">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" 
-                           name="can_download_excel_${branch.branch_id}" 
-                           id="download_excel_${branch.branch_id}"
-                           ${permission.can_download_excel ? 'checked' : ''}>
-                    <label class="form-check-label" for="download_excel_${branch.branch_id}"></label>
-                </div>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function saveBranchPermissions() {
-    const userId = document.getElementById('permission_user_id').value;
-    console.log('Saving permissions for user ID:', userId);
-    
-    const formData = new FormData();
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    console.log('CSRF Token:', csrfToken);
-    
-    if (!csrfToken) {
-        alert('CSRF token not found. Please refresh the page and try again.');
-        return;
-    }
-    
-    formData.append('_token', csrfToken);
-    
-    // Collect all branch permissions
-    const branchIds = document.querySelectorAll('input[name="branch_ids[]"]');
-    const permissions = [];
-    
-    branchIds.forEach(input => {
-        const branchId = input.value;
-        const canViewRemarks = document.getElementById(`view_remarks_${branchId}`).checked;
-        const canDownloadExcel = document.getElementById(`download_excel_${branchId}`).checked;
-        
-        permissions.push({
-            branch_id: branchId,
-            can_view_remarks: canViewRemarks,
-            can_download_excel: canDownloadExcel
-        });
-    });
-    
-    console.log('Permissions to save:', permissions);
-    formData.append('permissions', JSON.stringify(permissions));
-    
-    const url = `/admin/users/${userId}/branch-permissions`;
-    console.log('Making request to:', url);
-    
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-            alert('Branch permissions updated successfully!');
-            location.reload(); // Refresh the page to show updated permissions
-        } else {
-            alert('Error updating permissions: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error saving branch permissions:', error);
-        alert('Error saving branch permissions: ' + error.message);
-    });
-}
 
 function deactivateUser(userId, userName, userRole) {
     // Store user data for deactivation
@@ -1036,5 +855,86 @@ function confirmDeactivateUser() {
         document.getElementById('deleteConfirmationText').value = '';
     });
 }
+
+// Password visibility toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility for create user modal
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const passwordIcon = document.getElementById('passwordIcon');
+    
+    if (togglePasswordBtn && passwordInput && passwordIcon) {
+        togglePasswordBtn.addEventListener('click', function() {
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                passwordIcon.classList.remove('fa-eye');
+                passwordIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                passwordIcon.classList.remove('fa-eye-slash');
+                passwordIcon.classList.add('fa-eye');
+            }
+        });
+    }
+    
+    // Toggle password visibility for edit user modal
+    const toggleEditPasswordBtn = document.getElementById('toggleEditPassword');
+    const editPasswordInput = document.getElementById('edit_password');
+    const editPasswordIcon = document.getElementById('editPasswordIcon');
+    
+    if (toggleEditPasswordBtn && editPasswordInput && editPasswordIcon) {
+        toggleEditPasswordBtn.addEventListener('click', function() {
+            if (editPasswordInput.type === 'password') {
+                editPasswordInput.type = 'text';
+                editPasswordIcon.classList.remove('fa-eye');
+                editPasswordIcon.classList.add('fa-eye-slash');
+            } else {
+                editPasswordInput.type = 'password';
+                editPasswordIcon.classList.remove('fa-eye-slash');
+                editPasswordIcon.classList.add('fa-eye');
+            }
+        });
+    }
+    
+    // Show current password functionality
+    const showCurrentPasswordBtn = document.getElementById('showCurrentPassword');
+    if (showCurrentPasswordBtn) {
+        showCurrentPasswordBtn.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            if (!userId) {
+                alert('User ID not found. Please try again.');
+                return;
+            }
+            
+            // Show loading state
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+            this.disabled = true;
+            
+            // Fetch current password
+            fetch(`/admin/users/${userId}/current-password`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show the password in the input field
+                        document.getElementById('edit_password').value = data.password;
+                        // Show a message to the user
+                        alert(data.message);
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to get password'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching password:', error);
+                    alert('Error fetching password. Please try again.');
+                })
+                .finally(() => {
+                    // Reset button state
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                });
+        });
+    }
+});
 </script>
 @endsection

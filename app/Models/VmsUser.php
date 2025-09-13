@@ -17,6 +17,7 @@ class VmsUser extends Authenticatable
         'name',
         'username',
         'password',
+        'temp_password',
         'role',
         'branch_id',
         'mobile_number',
@@ -82,14 +83,10 @@ class VmsUser extends Authenticatable
         return $this->role === 'admin';
     }
 
-    public function isFrontDesk()
-    {
-        return $this->role === 'frontdesk';
-    }
 
-    public function isEmployee()
+    public function isStaff()
     {
-        return $this->role === 'employee';
+        return $this->role === 'staff';
     }
 
     // Permission checking methods
@@ -159,6 +156,17 @@ class VmsUser extends Authenticatable
         }
         
         return false;
+    }
+
+    public function canViewRemark($remark)
+    {
+        // Admin can view all remarks
+        if ($this->isAdmin()) {
+            return true;
+        }
+        
+        // Check if user can view remarks for this interaction
+        return $this->canViewRemarksForInteraction($remark->interaction);
     }
 
     public function getAllowedBranchIds($permissionType = 'can_view_remarks')

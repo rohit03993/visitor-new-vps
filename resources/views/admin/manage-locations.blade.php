@@ -8,7 +8,7 @@
     <div class="col-12">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
             <h2 class="h4 mb-0">Location Management</h2>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createLocationModal">
+            <button class="btn btn-paytm-primary" data-bs-toggle="modal" data-bs-target="#createLocationModal">
                 <i class="fas fa-plus me-2"></i>Add New Location
             </button>
         </div>
@@ -18,17 +18,17 @@
 <!-- Locations Table -->
 <div class="row">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
+        <div class="card-paytm paytm-fade-in">
+            <div class="card-paytm-header">
                 <h5 class="mb-0">
                     <i class="fas fa-map-marker-alt me-2"></i>All Locations
                 </h5>
             </div>
-            <div class="card-body">
+            <div class="card-paytm-body">
                 @if($addresses->count() > 0)
                     <!-- Desktop Table View -->
                     <div class="table-responsive d-none d-md-block">
-                        <table class="table table-hover">
+                        <table class="table table-paytm">
                             <thead>
                                 <tr>
                                     <th>Location Name</th>
@@ -45,7 +45,7 @@
                                             <strong>{{ $address->address_name }}</strong>
                                             <br><small class="text-muted">{{ $address->full_address }}</small>
                                         </td>
-                                        <td>{{ $address->createdBy->name }}</td>
+                                        <td>{{ $address->createdBy?->name ?? 'Unknown' }}</td>
                                         <td>{{ $address->created_at->format('M d, Y') }}</td>
                                         <td>
                                             <span class="badge bg-primary">{{ $address->interactions->count() }}</span>
@@ -85,7 +85,7 @@
                                     <div class="row mb-2">
                                         <div class="col-6">
                                             <small class="text-muted">Created By:</small><br>
-                                            <strong>{{ $address->createdBy->name }}</strong>
+                                            <strong>{{ $address->createdBy?->name ?? 'Unknown' }}</strong>
                                         </div>
                                         <div class="col-6">
                                             <small class="text-muted">Created Date:</small><br>
