@@ -457,13 +457,13 @@
                             <!-- Quick Stats -->
                             <div class="col-md-3 mb-4">
                                 <div class="stats-card-paytm paytm-bounce">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
                                             <div class="stats-number">{{ $allInteractions->total() }}</div>
                                             <div class="stats-label">Total Visitors</div>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-users fa-2x"></i>
+                                            </div>
+                                            <div class="align-self-center">
+                                                <i class="fas fa-users fa-2x"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -471,13 +471,13 @@
                             
                             <div class="col-md-3 mb-4">
                                 <div class="stats-card-paytm paytm-bounce" style="background: linear-gradient(135deg, var(--paytm-success) 0%, #1e7e34 100%);">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
                                             <div class="stats-number">{{ $assignedInteractions->total() }}</div>
                                             <div class="stats-label">My Assigned</div>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-user-check fa-2x"></i>
+                                            </div>
+                                            <div class="align-self-center">
+                                                <i class="fas fa-user-check fa-2x"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -485,13 +485,13 @@
                             
                             <div class="col-md-3 mb-4">
                                 <div class="stats-card-paytm paytm-bounce" style="background: linear-gradient(135deg, var(--paytm-warning) 0%, #e0a800 100%);">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
                                             <div class="stats-number">{{ $assignedInteractions->where('created_at', '>=', now()->startOfDay())->count() }}</div>
                                             <div class="stats-label">Today's Visits</div>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-calendar-day fa-2x"></i>
+                                            </div>
+                                            <div class="align-self-center">
+                                                <i class="fas fa-calendar-day fa-2x"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -499,13 +499,13 @@
                             
                             <div class="col-md-3 mb-4">
                                 <div class="stats-card-paytm paytm-bounce" style="background: linear-gradient(135deg, var(--paytm-info) 0%, #138496 100%);">
-                                    <div class="d-flex justify-content-between">
-                                        <div>
+                                        <div class="d-flex justify-content-between">
+                                            <div>
                                             <div class="stats-number">{{ $assignedInteractions->where('mode', 'In-Campus')->count() }}</div>
                                             <div class="stats-label">In-Campus</div>
-                                        </div>
-                                        <div class="align-self-center">
-                                            <i class="fas fa-building fa-2x"></i>
+                                            </div>
+                                            <div class="align-self-center">
+                                                <i class="fas fa-building fa-2x"></i>
                                         </div>
                                     </div>
                                 </div>
