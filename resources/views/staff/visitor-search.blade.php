@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Visitor Search - VMS')
+@section('title', 'Visitor Search - Log Book')
 @section('page-title', 'Visitor Search')
 
 @section('content')
@@ -21,7 +21,7 @@
                             <span class="input-group-text" style="background: var(--paytm-primary); color: white; border-color: var(--paytm-primary);">+91</span>
                             <input type="tel" class="form-control-paytm" id="mobile_number" name="mobile_number" 
                                    required maxlength="10" placeholder="Enter 10-digit mobile number" 
-                                   value="{{ old('mobile_number') }}"
+                                   value="{{ old('mobile_number', $prefilledMobile ?? '') }}"
                                    inputmode="numeric" pattern="[0-9]{10}"
                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
                         </div>
@@ -31,10 +31,7 @@
                         @enderror
                     </div>
                     
-                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
-                        <a href="{{ route('staff.dashboard') }}" class="btn btn-paytm-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                        </a>
+                    <div class="d-flex justify-content-end">
                         <button type="submit" class="btn btn-paytm-primary">
                             <i class="fas fa-search me-2"></i>Search Visitor
                         </button>

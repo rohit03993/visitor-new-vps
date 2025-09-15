@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Assigned to Me - VMS')
+@section('title', 'Assigned to Me - Log Book')
 @section('page-title', 'Assigned to Me')
 
 @section('content')
@@ -27,62 +27,57 @@
                     </div>
                 </div>
             </div>
-            <div class="card-paytm-body p-0">
+            <div class="card-paytm-body">
                 @if($assignedInteractions->count() > 0)
                     <!-- Desktop Table View -->
-                    <div class="table-responsive d-none d-md-block">
-                        <table class="table table-paytm table-hover">
-                            <thead class="table-light">
+                    <div class="table-responsive d-none d-lg-block">
+                        <table class="table table-hover">
+                            <thead>
                                 <tr>
-                                    <th style="min-width: 200px;">Visitor & Details</th>
-                                    <th style="min-width: 120px;">Purpose & Mode</th>
-                                    <th style="min-width: 100px;">Notes</th>
-                                    <th style="min-width: 80px;">Status</th>
-                                    <th style="min-width: 150px;">Action</th>
+                                    <th>Date & Time</th>
+                                    <th>Visitor</th>
+                                    <th>Purpose</th>
+                                    <th>Meeting With</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($assignedInteractions as $interaction)
                                     <tr>
                                         <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-circle-sm" style="background: var(--paytm-primary); color: white;" class="me-3">
-                                                    <i class="fas fa-user"></i>
-                                                </div>
-                                                <div>
-                                                    <div class="fw-medium">{{ $interaction->name_entered }}</div>
-                                                    <small class="text-paytm-muted">{{ $interaction->visitor->mobile_number }}</small>
-                                                    <br>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-calendar me-1"></i>
-                                                        {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'M d, Y g:i A') }}
-                                                    </small>
-                                                </div>
+                                            <div>
+                                                <strong>{{ \App\Helpers\DateTimeHelper::formatIndianDate($interaction->created_at) }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianTime($interaction->created_at) }}</small>
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="mb-1">
-                                                <span class="badge bg-primary">{{ $interaction->purpose }}</span>
-                                            </div>
                                             <div>
-                                                <span class="badge bg-{{ $interaction->getModeBadgeColor() }}">
-                                                    <i class="fas fa-{{ $interaction->mode === 'In-Campus' ? 'building' : 'phone' }} me-1"></i>
-                                                    {{ $interaction->mode }}
+                                                <strong>{{ $interaction->name_entered }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ $interaction->visitor->mobile_number }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ $interaction->getModeBadgeColor() }} mb-1">
+                                                {{ $interaction->mode }}
+                                            </span>
+                                            <br>
+                                            <small>{{ $interaction->purpose }}</small>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ $interaction->meetingWith->name ?? 'No Data' }}</strong>
+                                                <br>
+                                                <span class="badge bg-info">
+                                                    {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
                                                 </span>
                                             </div>
                                         </td>
                                         <td>
-                                            @if($interaction->initial_notes)
-                                                <div class="text-truncate" style="max-width: 150px;" title="{{ $interaction->initial_notes }}">
-                                                    {{ $interaction->initial_notes }}
-                                                </div>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
                                             @if($interaction->remarks->count() > 0)
-                                            @if($interaction->is_completed)
+                                                @if($interaction->is_completed)
                                                     @php
                                                         $latestRemark = $interaction->remarks->last();
                                                         $outcome = $latestRemark->outcome ?? 'in_process';
@@ -102,34 +97,11 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <div class="d-flex flex-column gap-2">
-                                                @if($interaction->remarks->count() > 0)
-                                                    <div class="remark-timeline">
-                                                        @foreach($interaction->remarks as $remark)
-                                                            <div class="remark-item mb-1">
-                                                                <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}</small>
-                                                                <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded">
-                                                                    {{ $remark->remark_text }}
-                                                                </div>
-                                                                <small class="text-muted d-block">
-                                                                    by {{ $remark->addedBy?->name ?? 'Unknown' }} <strong>({{ $remark->addedBy?->branch?->branch_name ?? 'No Branch' }})</strong>
-                                                                </small>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                @else
-                                                    <span class="text-muted">No remarks</span>
-                                                @endif
-                                                
-                                                <!-- Add Remark Button for Pending Interactions -->
-                                                @if($interaction->remarks->count() == 0)
-                                                    <button class="btn btn-primary btn-sm" 
-                                                            onclick="showAddRemarkModal({{ $interaction->interaction_id }}, '{{ $interaction->name_entered }}')"
-                                                            title="Add Remark">
-                                                        <i class="fas fa-plus me-1"></i>Add Remark
-                                                    </button>
-                                                @endif
-                                            </div>
+                                            <a href="{{ route('staff.visitor-profile', $interaction->visitor->visitor_id) }}" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="View Profile">
+                                                <i class="fas fa-eye me-1"></i>View
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -138,24 +110,49 @@
                     </div>
 
                     <!-- Mobile Card View -->
-                    <div class="d-md-none">
+                    <div class="d-lg-none">
                         @foreach($assignedInteractions as $interaction)
-                            <div class="card mb-3 interaction-card">
+                            <div class="card mb-3 activity-card">
                                 <div class="card-body">
-                                    <!-- Header with Date, Time, and Status -->
+                                    <!-- Header with Date and Status -->
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div>
                                             <h6 class="card-title mb-1">{{ $interaction->name_entered }}</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar me-1"></i>
                                                 {{ \App\Helpers\DateTimeHelper::formatIndianDate($interaction->created_at) }}
-                                                <i class="fas fa-clock ms-2 me-1"></i>
+                                            </small>
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
                                                 {{ \App\Helpers\DateTimeHelper::formatIndianTime($interaction->created_at) }}
                                             </small>
                                         </div>
                                         <div class="text-end">
                                             @if($interaction->remarks->count() > 0)
-                                                <span class="badge bg-info">Remark Updated</span>
+                                                @php
+                                                    $hasOnlyTransferRemark = $interaction->remarks->count() === 1 && 
+                                                        (strpos($interaction->remarks->first()->remark_text, '🔄 **Transferred from') !== false ||
+                                                         strpos($interaction->remarks->first()->remark_text, 'Transferred from') !== false);
+                                                @endphp
+                                                
+                                                @if($hasOnlyTransferRemark)
+                                                    <span class="badge bg-warning">Remark Pending</span>
+                                                @elseif($interaction->is_completed)
+                                                    @php
+                                                        $latestRemark = $interaction->remarks->last();
+                                                        $outcome = $latestRemark->outcome ?? 'in_process';
+                                                    @endphp
+                                                    @if($outcome === 'closed_positive')
+                                                        <span class="badge bg-success">Closed (Positive)</span>
+                                                    @elseif($outcome === 'closed_negative')
+                                                        <span class="badge bg-danger">Closed (Negative)</span>
+                                                    @else
+                                                        <span class="badge bg-info">Remark Updated</span>
+                                                    @endif
+                                                @else
+                                                    <span class="badge bg-info">Remark Updated</span>
+                                                @endif
                                             @else
                                                 <span class="badge bg-warning">Remark Pending</span>
                                             @endif
@@ -164,82 +161,47 @@
 
                                     <!-- Visitor Details -->
                                     <div class="row mb-2">
-                                        <div class="col-6">
+                                        <div class="col-12">
                                             <small class="text-muted">Mobile:</small><br>
                                             <strong>{{ $interaction->visitor->mobile_number }}</strong>
                                         </div>
+                                    </div>
+
+                                    <!-- Purpose and Mode -->
+                                    <div class="row mb-2">
                                         <div class="col-6">
                                             <small class="text-muted">Mode:</small><br>
                                             <span class="badge bg-{{ $interaction->getModeBadgeColor() }}">
                                                 {{ $interaction->mode }}
                                             </span>
                                         </div>
-                                    </div>
-
-                                    <!-- Meeting Details -->
-                                    <div class="row mb-2">
-                                        <div class="col-12">
+                                        <div class="col-6">
                                             <small class="text-muted">Purpose:</small><br>
                                             <strong>{{ $interaction->purpose }}</strong>
                                         </div>
                                     </div>
 
-                                    <div class="row mb-2">
-                                        <div class="col-6">
-                                            <small class="text-muted">Branch:</small><br>
+                                    <!-- Meeting Details -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <small class="text-muted">Meeting With:</small><br>
+                                            <strong>{{ $interaction->meetingWith->name ?? 'No Data' }}</strong>
+                                            <br>
                                             <span class="badge bg-info">
                                                 {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
                                             </span>
                                         </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Address:</small><br>
-                                            <strong>{{ $interaction->address->address_name ?? 'N/A' }}</strong>
-                                        </div>
                                     </div>
 
-                                    <!-- Initial Notes -->
-                                    <div class="row mb-3">
+                                    <!-- Action Button -->
+                                    <div class="row">
                                         <div class="col-12">
-                                            <small class="text-muted">Initial Notes:</small><br>
-                                            @if($interaction->initial_notes)
-                                                <small class="text-muted">{{ $interaction->initial_notes }}</small>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
+                                            <a href="{{ route('staff.visitor-profile', $interaction->visitor->visitor_id) }}" 
+                                               class="btn btn-primary w-100"
+                                               title="View Profile">
+                                                <i class="fas fa-eye me-1"></i>View Profile
+                                            </a>
                                         </div>
-                                    </div>
-
-                                    <!-- Remarks Section -->
-                                    <div class="mt-3">
-                                        <h6 class="text-muted mb-2">Remarks:</h6>
-                                        @if($interaction->remarks->count() > 0)
-                                            <div class="remark-timeline">
-                                                @foreach($interaction->remarks as $remark)
-                                                    <div class="remark-item mb-2">
-                                                        <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}</small>
-                                                        <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded">
-                                                            {{ $remark->remark_text }}
-                                                        </div>
-                                                        <small class="text-muted d-block">
-                                                            by {{ $remark->addedBy?->name ?? 'Unknown' }} <strong>({{ $remark->addedBy?->branch?->branch_name ?? 'No Branch' }})</strong>
-                                                        </small>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <span class="text-muted">No remarks available</span>
-                                        @endif
-                                        
-                                        <!-- Add Remark Button for Pending Interactions -->
-                                        @if($interaction->remarks->count() == 0)
-                                            <div class="mt-3">
-                                                <button class="btn btn-primary btn-sm w-100" 
-                                                        onclick="showAddRemarkModal({{ $interaction->interaction_id }}, '{{ $interaction->name_entered }}')"
-                                                        title="Add Remark">
-                                                    <i class="fas fa-plus me-1"></i>Add Remark
-                                                </button>
-                                            </div>
-                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -262,35 +224,6 @@
     </div>
 </div>
 
-<!-- Add Remark Modal -->
-<div class="modal fade" id="addRemarkModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Remark</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="addRemarkForm" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="visitorName" class="form-label">Visitor:</label>
-                        <input type="text" class="form-control" id="visitorName" readonly>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="remarkText" class="form-label">Remark/Note <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="remarkText" name="remark_text" rows="3" required placeholder="Enter your remark/note about the meeting..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Remark</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 @endsection
 
@@ -307,38 +240,32 @@
     font-size: 16px;
 }
 
-/* Mobile Card Styles */
-.interaction-card {
+/* Activity Cards (matching admin style) */
+.activity-card {
     border: 1px solid #e9ecef;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
 }
 
-.interaction-card:hover {
+.activity-card:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: translateY(-2px);
 }
 
-.interaction-card .card-body {
+.activity-card .card-body {
     padding: 1rem;
 }
 
-.interaction-card .card-title {
+.activity-card .card-title {
     color: #495057;
     font-weight: 600;
     font-size: 1rem;
 }
 
-.interaction-card .badge {
+.activity-card .badge {
     font-size: 0.75rem;
     padding: 0.4em 0.6em;
-}
-
-.interaction-card .btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    border-radius: 6px;
 }
 
 /* Mobile-optimized table styles (Desktop only) */
@@ -438,42 +365,7 @@
 
 @section('scripts')
 <script>
-// Show Add Remark Modal
-function showAddRemarkModal(interactionId, visitorName) {
-    document.getElementById('visitorName').value = visitorName;
-    document.getElementById('addRemarkForm').action = `/staff/update-remark/${interactionId}`;
-    
-    new bootstrap.Modal(document.getElementById('addRemarkModal')).show();
-}
-
-// Handle form submission
-document.getElementById('addRemarkForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const action = this.action;
-    
-    fetch(action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
-    })
-    .then(response => {
-        if (response.ok) {
-            // Close modal and reload page
-            bootstrap.Modal.getInstance(document.getElementById('addRemarkModal')).hide();
-            window.location.reload();
-        } else {
-            alert('Error adding remark. Please try again.');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error adding remark. Please try again.');
-    });
-});
+// No JavaScript needed for this simple table view
+// The View button will navigate to the visitor profile page
 </script>
 @endsection

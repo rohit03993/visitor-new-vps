@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Visitor Profile - VMS')
+@section('title', 'Visitor Profile - Log Book')
 @section('page-title', 'Visitor Profile')
 
 @section('content')
@@ -42,9 +42,15 @@
                                 <td>{{ $visitor->mobile_number }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Latest Name:</strong></td>
+                                <td><strong>Contact Person:</strong></td>
                                 <td>{{ $visitor->name }}</td>
                             </tr>
+                            @if($visitor->student_name)
+                            <tr>
+                                <td><strong>Student Name:</strong></td>
+                                <td>{{ $visitor->student_name }}</td>
+                            </tr>
+                            @endif
                             <tr>
                                 <td><strong>Total Interactions:</strong></td>
                                 <td><span class="badge bg-primary">{{ $interactions->count() }}</span></td>
@@ -146,7 +152,7 @@
                                                             <div class="d-flex align-items-center gap-2">
                                                                 <span class="badge bg-warning">Pending</span>
                                                                 <button class="btn btn-primary btn-sm"
-                                                                        onclick="showAddRemarkModal({{ $interaction->interaction_id }}, '{{ $interaction->name_entered }}')"
+                                                                        onclick="showAddRemarkModal({{ $interaction->interaction_id }}, '{{ $interaction->name_entered }}', '{{ $visitor->student_name }}')"
                                                                         title="Add Remark">
                                                                     <i class="fas fa-plus me-1"></i>Add Remark
                                                                 </button>
@@ -288,7 +294,7 @@
                                                                     <i class="fas fa-clock me-1"></i>Pending
                                                                 </span>
                                                                 <button class="btn btn-primary btn-sm"
-                                                                        onclick="showAddRemarkModal({{ $interaction->interaction_id }}, '{{ $interaction->name_entered }}')"
+                                                                        onclick="showAddRemarkModal({{ $interaction->interaction_id }}, '{{ $interaction->name_entered }}', '{{ $visitor->student_name }}')"
                                                                         title="Add Remark">
                                                                     <i class="fas fa-plus me-1"></i>Add Remark
                                                                 </button>
@@ -351,7 +357,7 @@
 
 <!-- Add Remark Modal -->
 <div class="modal fade" id="addRemarkModal" tabindex="-1" aria-labelledby="addRemarkModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addRemarkModalLabel">
@@ -387,8 +393,10 @@
 
 <script>
 // Show Add Remark Modal
-function showAddRemarkModal(interactionId, visitorName) {
-    document.getElementById('visitorName').value = visitorName;
+function showAddRemarkModal(interactionId, visitorName, studentName) {
+    // Use student name if available, otherwise use visitor name
+    const displayName = studentName && studentName.trim() !== '' ? studentName : visitorName;
+    document.getElementById('visitorName').value = displayName;
     document.getElementById('addRemarkForm').action = `/staff/update-remark/${interactionId}`;
     new bootstrap.Modal(document.getElementById('addRemarkModal')).show();
 }
@@ -444,9 +452,8 @@ function completeSession(sessionId) {
             document.getElementById('session_id').value = data.session.session_id;
             document.getElementById('sessionDetails').innerHTML = `
                 <strong>Purpose:</strong> ${data.session.purpose}<br>
-                <strong>Student:</strong> ${data.session.visitor_name}<br>
+                <strong>Student:</strong> ${data.session.student_name || data.session.visitor_name}<br>
                 <strong>Started:</strong> ${data.session.started_at}<br>
-                <strong>Started by:</strong> ${data.session.started_by}<br>
                 <strong>Interactions:</strong> ${data.session.interaction_count}
             `;
             
@@ -496,7 +503,7 @@ document.getElementById('completeSessionForm').addEventListener('submit', functi
 
 <!-- Session Completion Modal -->
 <div class="modal fade" id="completeSessionModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -519,7 +526,6 @@ document.getElementById('completeSessionForm').addEventListener('submit', functi
                             <option value="">Select Outcome</option>
                             <option value="success">Success - Goal Achieved</option>
                             <option value="failed">Failed - Goal Not Achieved</option>
-                            <option value="pending">Pending - Follow-up Required</option>
                         </select>
                         <div class="form-text">Select the final outcome of this student session</div>
                     </div>

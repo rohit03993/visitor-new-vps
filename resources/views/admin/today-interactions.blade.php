@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', "Today's Interactions - VMS")
+@section('title', "Today's Interactions - Log Book")
 @section('page-title', "Today's Interactions")
 
 @section('content')

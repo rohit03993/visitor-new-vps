@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'VMS - Visitor Management System')</title>
+    <title>@yield('title', 'Log Book - Visitor Management System')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/paytm-theme.css') }}" rel="stylesheet">
@@ -596,7 +596,7 @@
                 <div class="sidebar" id="sidebar">
                     <div class="p-3">
                         <h4 class="text-center mb-4">
-                            <i class="fas fa-users"></i> VMS
+                            <i class="fas fa-users"></i> Log Book
                         </h4>
                         <div class="text-center mb-4 d-none d-md-block">
                             <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">

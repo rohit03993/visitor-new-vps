@@ -15,6 +15,7 @@ class Visitor extends Model
         'purpose',
         'address_id',
         'course_id',
+        'student_name',
         'father_name',
         'created_by',
         'last_updated_by',

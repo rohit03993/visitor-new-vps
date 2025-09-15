@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Visitor Profile - VMS')
+@section('title', 'Visitor Profile - Log Book')
 @section('page-title', 'Visitor Profile')
 
 @section('content')
@@ -42,7 +42,7 @@
                                 <td>{{ $visitor->mobile_number }}</td>
                             </tr>
                             <tr>
-                                <td><strong>Latest Name:</strong></td>
+                                <td><strong>Contact Person:</strong></td>
                                 <td>{{ $visitor->name }}</td>
                             </tr>
                             <tr>

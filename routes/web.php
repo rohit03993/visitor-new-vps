@@ -79,9 +79,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/update-remark/{interactionId}', [StaffController::class, 'updateRemark'])->name('update-remark');
         Route::post('/mark-completed/{interactionId}', [StaffController::class, 'markAsCompleted'])->name('mark-completed');
         Route::get('/interactions/{interactionId}/remarks', [StaffController::class, 'getInteractionRemarks'])->name('get-interaction-remarks');
+        Route::get('/interaction-details/{interactionId}', [StaffController::class, 'getInteractionDetails'])->name('interaction-details');
+        Route::get('/visitor-profile/{visitorId}', [StaffController::class, 'showVisitorProfile'])->name('visitor-profile');
         
         // Session Management Routes
         Route::post('/complete-session/{sessionId}', [StaffController::class, 'completeSession'])->name('complete-session');
         Route::get('/session/{sessionId}/modal', [StaffController::class, 'showCompleteSessionModal'])->name('session-modal');
+        
+        // Assignment Routes
+        Route::post('/assign-interaction/{interactionId}', [StaffController::class, 'assignInteraction'])->name('assign-interaction');
     });
 });

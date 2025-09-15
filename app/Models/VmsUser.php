@@ -169,6 +169,30 @@ class VmsUser extends Authenticatable
         return $this->canViewRemarksForInteraction($remark->interaction);
     }
 
+    public function canViewInteraction($interaction)
+    {
+        // Admin can view all interactions
+        if ($this->isAdmin()) {
+            return true;
+        }
+        
+        // Staff can view interactions assigned to them or in their allowed branches
+        if ($this->isStaff()) {
+            // Check if interaction is assigned to this user
+            if ($interaction->meeting_with == $this->user_id) {
+                return true;
+            }
+            
+            // Check if user can view interactions for this branch
+            $branchId = $interaction->meetingWith?->branch_id;
+            if ($branchId && $this->canViewRemarksForBranch($branchId)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     public function getAllowedBranchIds($permissionType = 'can_view_remarks')
     {
         // Admin can access all branches

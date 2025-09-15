@@ -97,24 +97,86 @@ class StaffController extends Controller
         return view('staff.dashboard', compact('assignedInteractions', 'allInteractions'));
     }
 
-    public function showVisitorSearch()
+    public function showVisitorSearch(Request $request)
     {
-        return view('staff.visitor-search');
+        $prefilledMobile = $request->get('mobile', '');
+        
+        // If mobile number is provided, auto-search
+        if (!empty($prefilledMobile)) {
+            // Clean the mobile number (remove +91 if present)
+            $cleanMobile = preg_replace('/^\+91/', '', $prefilledMobile);
+            
+            // Search for visitor
+            $visitor = Visitor::where('mobile_number', '+91' . $cleanMobile)
+                ->orWhere('mobile_number', $cleanMobile)
+                ->first();
+            
+            if ($visitor) {
+                // Load visitor with course and session relationships
+                $visitor->load(['course', 'studentSessions', 'activeSessions']);
+                
+                // Get interactions for this visitor
+                $interactions = InteractionHistory::where('visitor_id', $visitor->visitor_id)
+                    ->with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'studentSession', 'createdBy'])
+                    ->orderBy('created_at', 'desc')
+                    ->paginate(5);
+                
+                // Store original mobile number for "Add Revisit" functionality
+                $originalMobileNumber = $visitor->mobile_number;
+                
+                // Mask mobile number for staff privacy (display only)
+                $visitor->mobile_number = $this->maskMobileNumber($visitor->mobile_number);
+                
+                return view('staff.search-results-timeline', compact('visitor', 'interactions', 'cleanMobile', 'originalMobileNumber'));
+            }
+        }
+        
+        return view('staff.visitor-search', compact('prefilledMobile'));
     }
 
     public function showAssignedToMe()
     {
         $user = auth()->user();
         
-        // Get assigned visitors (visitors assigned to this staff member) - only those without remarks
+        // Get assigned visitors (visitors assigned to this staff member) - show only pending interactions
         $assignedInteractions = InteractionHistory::where('meeting_with', $user->user_id)
-            ->whereDoesntHave('remarks') // Only show interactions without remarks
+            ->where('is_completed', false) // Only show interactions that are not completed
             ->with(['visitor', 'meetingWith.branch', 'address', 'remarks'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->get()
+            ->filter(function($interaction) {
+                // If interaction has no remarks, show it (truly pending)
+                if ($interaction->remarks->count() === 0) {
+                    return true;
+                }
+                
+                // If interaction has only 1 remark and it's a transfer remark, show it (transferred interaction)
+                if ($interaction->remarks->count() === 1) {
+                    $remark = $interaction->remarks->first();
+                    return strpos($remark->remark_text, '🔄 **Transferred from') !== false ||
+                           strpos($remark->remark_text, 'Transferred from') !== false;
+                }
+                
+                // If interaction has multiple remarks, don't show it (already worked on)
+                return false;
+            })
+            ->values(); // Reset array keys
+        
+        // Convert back to paginated collection
+        $assignedInteractions = new \Illuminate\Pagination\LengthAwarePaginator(
+            $assignedInteractions,
+            $assignedInteractions->count(),
+            20,
+            1,
+            ['path' => request()->url()]
+        );
         
         // Debug: Log the count for troubleshooting
         \Log::info('Assigned interactions for user ' . $user->user_id . ': ' . $assignedInteractions->count());
+        
+        // Debug: Log visitor IDs
+        foreach($assignedInteractions as $interaction) {
+            \Log::info('Interaction ID: ' . $interaction->interaction_id . ', Visitor ID: ' . $interaction->visitor_id . ', Visitor Name: ' . $interaction->visitor->name);
+        }
         
         // Mask mobile numbers for staff privacy (display only)
         foreach ($assignedInteractions as $interaction) {
@@ -227,6 +289,7 @@ class StaffController extends Controller
                 if ($lastInteraction) {
                     $lastInteractionDetails = [
                         'course_id' => $visitor->course_id,
+                        'student_name' => $visitor->student_name,
                         'father_name' => $visitor->father_name,
                         'mode' => $lastInteraction->mode,
                         'meeting_with' => $lastInteraction->meeting_with,
@@ -247,9 +310,9 @@ class StaffController extends Controller
             'mobile_number' => 'required|string|regex:/^[0-9]{10}$/',
             'name' => 'required|string|max:255',
             'course_id' => 'required|exists:courses,course_id',
+            'student_name' => 'nullable|string|max:255',
             'father_name' => 'nullable|string|max:255',
-            'tags' => 'required|array|min:1',
-            'tags.*' => 'exists:tags,id',
+            'purpose' => 'required|exists:tags,id',
             'address_id' => 'nullable|exists:addresses,address_id',
             'address_input' => 'nullable|string|max:255',
             'meeting_with' => 'required|exists:vms_users,user_id',
@@ -257,10 +320,15 @@ class StaffController extends Controller
             'initial_notes' => 'nullable|string|max:500',
         ]);
 
-        // Custom validation: If course is not "None", father_name is required
+        // Custom validation: If course is not "None", student_name and father_name are required
         $selectedCourse = Course::find($request->course_id);
-        if ($selectedCourse && $selectedCourse->course_code !== 'NONE' && empty($request->father_name)) {
-            return back()->withErrors(['father_name' => 'Father\'s name is required when selecting a course.'])->withInput();
+        if ($selectedCourse && $selectedCourse->course_code !== 'NONE') {
+            if (empty($request->student_name)) {
+                return back()->withErrors(['student_name' => 'Student name is required when selecting a course.'])->withInput();
+            }
+            if (empty($request->father_name)) {
+                return back()->withErrors(['father_name' => 'Father\'s name is required when selecting a course.'])->withInput();
+            }
         }
 
         // Custom validation: Either address_id or address_input must be provided
@@ -292,6 +360,7 @@ class StaffController extends Controller
                 'mobile_number' => $formattedMobile,
                 'name' => $request->name,
                 'course_id' => $request->course_id,
+                'student_name' => $request->student_name,
                 'father_name' => $request->father_name,
                 'last_updated_by' => $user->user_id,
             ]);
@@ -305,6 +374,9 @@ class StaffController extends Controller
             if ($visitor->course_id != $request->course_id) {
                 $updateData['course_id'] = $request->course_id;
             }
+            if ($visitor->student_name !== $request->student_name) {
+                $updateData['student_name'] = $request->student_name;
+            }
             if ($visitor->father_name !== $request->father_name) {
                 $updateData['father_name'] = $request->father_name;
             }
@@ -314,16 +386,16 @@ class StaffController extends Controller
             }
         }
 
-        // Assign tags to visitor
-        if ($request->has('tags')) {
-            $visitor->tags()->sync($request->tags);
+        // Assign single purpose tag to visitor
+        if ($request->has('purpose')) {
+            $visitor->tags()->sync([$request->purpose]);
             
-        // Create purpose string from selected tags
-        $selectedTags = \App\Models\Tag::whereIn('id', $request->tags)->pluck('name')->toArray();
-        $purpose = implode(', ', $selectedTags);
-    } else {
-        $purpose = 'General Visit';
-    }
+            // Get purpose name from selected tag
+            $selectedTag = \App\Models\Tag::find($request->purpose);
+            $purpose = $selectedTag ? $selectedTag->name : 'General Visit';
+        } else {
+            $purpose = 'General Visit';
+        }
 
     // Check if this purpose should create a student session
     $shouldCreateSession = $this->shouldCreateStudentSession($purpose, $selectedCourse);
@@ -627,6 +699,7 @@ class StaffController extends Controller
                     'session_id' => $session->session_id,
                     'purpose' => $session->purpose,
                     'visitor_name' => $session->visitor->name,
+                    'student_name' => $session->visitor->student_name,
                     'started_at' => $session->started_at->format('M d, Y H:i A'),
                     'started_by' => $session->starter->name ?? 'Unknown',
                     'interaction_count' => $session->interactions->count(),
@@ -637,6 +710,244 @@ class StaffController extends Controller
                 'success' => false,
                 'message' => 'Session not found.'
             ], 404);
+        }
+    }
+
+    /**
+     * Get interaction details for modal display
+     */
+    public function getInteractionDetails($interactionId)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Get interaction with all related data
+            $interaction = InteractionHistory::with([
+                'visitor',
+                'meetingWith.branch',
+                'address',
+                'remarks.addedBy.branch',
+                'course',
+                'tags'
+            ])->findOrFail($interactionId);
+            
+            // Check if user has permission to view this interaction
+            if (!$user->canViewInteraction($interaction)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to view this interaction.'
+                ], 403);
+            }
+            
+            // Filter remarks based on user permissions
+            $filteredRemarks = $interaction->remarks->filter(function($remark) use ($user) {
+                return $user->canViewRemark($remark);
+            });
+            
+            // Generate HTML content for the modal
+            $html = view('staff.partials.interaction-details', [
+                'interaction' => $interaction,
+                'remarks' => $filteredRemarks,
+                'user' => $user
+            ])->render();
+            
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading interaction details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Show visitor profile for staff
+     */
+    public function showVisitorProfile($visitorId)
+    {
+        try {
+            $user = Auth::user();
+            \Log::info('=== METHOD CALLED: showVisitorProfile with ID: ' . $visitorId . ' ===');
+            
+            // Get visitor with basic relationships
+            $visitor = Visitor::with(['course', 'tags'])->findOrFail($visitorId);
+            \Log::info('Visitor found: ' . $visitor->name);
+            
+            // Get all interactions for this visitor
+            $interactions = InteractionHistory::where('visitor_id', $visitorId)
+                ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+            \Log::info('Interactions found: ' . $interactions->count());
+            
+            // Show ALL interactions for this visitor (staff can view all interactions)
+            $filteredInteractions = $interactions;
+            
+            // Group interactions by purpose
+            $groupedInteractions = $filteredInteractions->groupBy('purpose');
+            
+            // Get assigned interactions for this user
+            $assignedInteractions = $filteredInteractions->filter(function($interaction) use ($user) {
+                return $interaction->meeting_with == $user->user_id;
+            });
+            
+            // Store original mobile number for "Add Revisit" functionality
+            $originalMobileNumber = $visitor->mobile_number;
+            
+            // Mask mobile number for staff privacy (display only)
+            $visitor->mobile_number = $this->maskMobileNumber($visitor->mobile_number);
+            
+            \Log::info('About to return view with visitor: ' . $visitor->name);
+            
+            return view('staff.visitor-profile', [
+                'visitor' => $visitor,
+                'interactions' => $filteredInteractions,
+                'groupedInteractions' => $groupedInteractions,
+                'assignedInteractions' => $assignedInteractions,
+                'user' => $user,
+                'originalMobileNumber' => $originalMobileNumber
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('showVisitorProfile Error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return redirect()->route('staff.assigned-to-me')
+                ->with('error', 'Visitor not found or you do not have permission to view this profile.');
+        }
+    }
+
+    /**
+     * Assign interaction to another team member
+     */
+    public function assignInteraction(Request $request, $interactionId)
+    {
+        try {
+            $user = Auth::user();
+            \Log::info('assignInteraction called with interaction ID: ' . $interactionId);
+            \Log::info('Request data: ' . json_encode($request->all()));
+            
+            // Validate the request
+            $request->validate([
+                'team_member_id' => 'required|exists:vms_users,user_id',
+                'assignment_notes' => 'nullable|string|max:500',
+            ]);
+            
+            // Get the interaction
+            $interaction = InteractionHistory::findOrFail($interactionId);
+            \Log::info('Found interaction: ' . json_encode($interaction->toArray()));
+            
+            // Check if the current user has permission to assign this interaction
+            if ($interaction->meeting_with != $user->user_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only assign interactions that are assigned to you.'
+                ], 403);
+            }
+            
+            // Check if the target team member is active and is a staff member
+            $targetMember = VmsUser::where('user_id', $request->team_member_id)
+                ->where('role', 'staff')
+                ->where('is_active', true)
+                ->first();
+                
+            if (!$targetMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Selected team member is not available or not a staff member.'
+                ], 400);
+            }
+            
+            // Step 1: Add transfer remark to Y's original interaction
+            $assignmentNotes = $request->assignment_notes ? trim($request->assignment_notes) : '';
+            $transferContext = "✅ **Completed & Transferred to {$targetMember->name}**";
+            
+            $remarkText = $transferContext;
+            if (!empty($assignmentNotes)) {
+                $remarkText .= "\n\n**Transfer Notes:**\n" . $assignmentNotes;
+            } else {
+                $remarkText .= "\n\n**Transfer Notes:**\nNo additional notes provided.";
+            }
+            
+            // Create remark on Y's original interaction
+            $remark = \App\Models\Remark::create([
+                'interaction_id' => $interactionId,
+                'remark_text' => $remarkText,
+                'added_by' => $user->user_id,
+                'added_by_name' => $user->name,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // Step 2: Mark Y's interaction as completed to remove it from "Assigned to Me"
+            // This makes it disappear from Y's assigned list but keeps the interaction record
+            $interaction->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+                'completed_by' => $user->user_id,
+                'updated_at' => now(),
+            ]);
+            
+            // Step 3: Create new interaction for X with transfer context
+            $newInteraction = InteractionHistory::create([
+                'visitor_id' => $interaction->visitor_id,
+                'session_id' => $interaction->session_id, // Keep same session_id to stay in same purpose group
+                'purpose' => $interaction->purpose,
+                'meeting_with' => $request->team_member_id, // Assign to X
+                'mode' => $interaction->mode,
+                'address_id' => $interaction->address_id,
+                'initial_notes' => $interaction->initial_notes,
+                'name_entered' => $interaction->name_entered,
+                'mobile_number' => $interaction->mobile_number, // Include mobile_number
+                'created_by' => $user->user_id, // Y created this new interaction for X
+                'created_by_role' => $user->role, // Include role
+                'is_completed' => false, // New interaction is not completed
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // Step 4: Add transfer context remark to X's new interaction
+            $transferContextForX = "🔄 **Transferred from {$user->name}**";
+            $contextForX = $transferContextForX;
+            if (!empty($assignmentNotes)) {
+                $contextForX .= "\n\n**Previous Staff Notes:**\n" . $assignmentNotes;
+            } else {
+                $contextForX .= "\n\n**Previous Staff Notes:**\nNo additional notes provided.";
+            }
+            
+            \App\Models\Remark::create([
+                'interaction_id' => $newInteraction->interaction_id,
+                'remark_text' => $contextForX,
+                'added_by' => $user->user_id,
+                'added_by_name' => $user->name,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // Log the assignment
+            \Log::info("Interaction {$interactionId} transferred from user {$user->user_id} to user {$request->team_member_id}. New interaction ID: {$newInteraction->interaction_id}");
+            \Log::info("New interaction details: " . json_encode($newInteraction->toArray()));
+            
+            return response()->json([
+                'success' => true,
+                'message' => "Interaction successfully transferred to {$targetMember->name}. New interaction created with transfer context.",
+                'assigned_to' => $targetMember->name,
+                'new_interaction_id' => $newInteraction->interaction_id,
+                'original_interaction_id' => $interactionId
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('assignInteraction Error: ' . $e->getMessage());
+            \Log::error('assignInteraction Stack Trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to transfer interaction: ' . $e->getMessage()
+            ], 500);
         }
     }
 }
