@@ -46,7 +46,7 @@
                                 @foreach($assignedInteractions as $interaction)
                                     <tr>
                                         <td>
-                                            <div>
+                                                <div>
                                                 <strong>{{ \App\Helpers\DateTimeHelper::formatIndianDate($interaction->created_at) }}</strong>
                                                 <br>
                                                 <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianTime($interaction->created_at) }}</small>
@@ -73,11 +73,11 @@
                                                 <span class="badge bg-info">
                                                     {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
                                                 </span>
-                                            </div>
+                                                </div>
                                         </td>
                                         <td>
                                             @if($interaction->remarks->count() > 0)
-                                                @if($interaction->is_completed)
+                                            @if($interaction->is_completed)
                                                     @php
                                                         $latestRemark = $interaction->remarks->last();
                                                         $outcome = $latestRemark->outcome ?? 'in_process';
@@ -151,7 +151,7 @@
                                                         <span class="badge bg-info">Remark Updated</span>
                                                     @endif
                                                 @else
-                                                    <span class="badge bg-info">Remark Updated</span>
+                                                <span class="badge bg-info">Remark Updated</span>
                                                 @endif
                                             @else
                                                 <span class="badge bg-warning">Remark Pending</span>

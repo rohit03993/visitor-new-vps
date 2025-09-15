@@ -327,7 +327,7 @@ class StaffController extends Controller
                 return back()->withErrors(['student_name' => 'Student name is required when selecting a course.'])->withInput();
             }
             if (empty($request->father_name)) {
-                return back()->withErrors(['father_name' => 'Father\'s name is required when selecting a course.'])->withInput();
+            return back()->withErrors(['father_name' => 'Father\'s name is required when selecting a course.'])->withInput();
             }
         }
 
@@ -393,9 +393,9 @@ class StaffController extends Controller
             // Get purpose name from selected tag
             $selectedTag = \App\Models\Tag::find($request->purpose);
             $purpose = $selectedTag ? $selectedTag->name : 'General Visit';
-        } else {
-            $purpose = 'General Visit';
-        }
+    } else {
+        $purpose = 'General Visit';
+    }
 
     // Check if this purpose should create a student session
     $shouldCreateSession = $this->shouldCreateStudentSession($purpose, $selectedCourse);
