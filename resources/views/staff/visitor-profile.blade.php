@@ -11,11 +11,8 @@
             <div class="d-flex flex-column flex-md-row gap-2">
                 <a href="{{ route('staff.visitor-form', ['mobile' => $originalMobileNumber, 'name' => $visitor->name]) }}" 
                    class="btn btn-paytm-success">
-                    <i class="fas fa-plus me-2"></i>Add Revisit
+                    <i class="fas fa-plus me-2"></i>Add Interaction
                 </a>
-                <button onclick="window.print()" class="btn btn-paytm-secondary">
-                    <i class="fas fa-print me-2"></i>Print Profile
-                </button>
                 <a href="{{ route('staff.assigned-to-me') }}" class="btn btn-paytm-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Assigned
                 </a>
@@ -233,6 +230,9 @@
                                                                                 <div class="fw-bold interaction-date" style="white-space: nowrap !important; font-family: monospace !important; display: inline-block !important;">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'Md g:iA') }}</div>
                                                                                 <small class="text-muted interaction-meeting">
                                                                                     with {{ $interaction->meetingWith->name ?? 'Unknown' }}
+                                                                                    @if($interaction->meetingWith && $interaction->meetingWith->branch)
+                                                                                        <span class="text-muted">({{ $interaction->meetingWith->branch->branch_name }})</span>
+                                                                                    @endif
                                                                                 </small>
                                                                             </div>
                                                                         </div>
@@ -241,6 +241,25 @@
                                                                                 <i class="fas fa-{{ $interaction->mode === 'In-Campus' ? 'building' : 'phone' }} me-1"></i>
                                                                                 <span>{{ $interaction->mode }}</span>
                                                                             </span>
+                                                                            
+                                                                            @php
+                                                                                // Check if this is a transfer interaction
+                                                                                $isTransferInteraction = false;
+                                                                                foreach($interaction->remarks as $remark) {
+                                                                                    if (strpos($remark->remark_text, 'Transferred from') !== false || 
+                                                                                        strpos($remark->remark_text, 'Transferred to') !== false) {
+                                                                                        $isTransferInteraction = true;
+                                                                                        break;
+                                                                                    }
+                                                                                }
+                                                                            @endphp
+                                                                            
+                                                                            @if($isTransferInteraction)
+                                                                                <span class="badge bg-danger px-2 py-1">
+                                                                                    <i class="fas fa-exchange-alt me-1"></i>Transfer
+                                                                                </span>
+                                                                            @endif
+                                                                            
                                                                             @if($interaction->remarks->count() > 0)
                                                                                 @if($interaction->is_completed)
                                                                                     @php
@@ -256,14 +275,44 @@
                                                                                             <i class="fas fa-times-circle me-1"></i>Closed (Negative)
                                                                                         </span>
                                                                                     @else
+                                                                                        @php
+                                                                                            $hasWorkRemark = false;
+                                                                                            foreach($interaction->remarks as $remark) {
+                                                                                                if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                                                                    $hasWorkRemark = true;
+                                                                                                    break;
+                                                                                                }
+                                                                                            }
+                                                                                        @endphp
+                                                                                        @if($hasWorkRemark)
+                                                                                            <span class="badge bg-info px-2 py-1">
+                                                                                                <i class="fas fa-comment me-1"></i>Remark Updated
+                                                                                            </span>
+                                                                                        @else
+                                                                                            <span class="badge bg-warning px-2 py-1">
+                                                                                                <i class="fas fa-clock me-1"></i>Remark Pending
+                                                                                            </span>
+                                                                                        @endif
+                                                                                    @endif
+                                                                                @else
+                                                                                    @php
+                                                                                        $hasWorkRemark = false;
+                                                                                        foreach($interaction->remarks as $remark) {
+                                                                                            if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                                                                $hasWorkRemark = true;
+                                                                                                break;
+                                                                                            }
+                                                                                        }
+                                                                                    @endphp
+                                                                                    @if($hasWorkRemark)
                                                                                         <span class="badge bg-info px-2 py-1">
                                                                                             <i class="fas fa-comment me-1"></i>Remark Updated
                                                                                         </span>
+                                                                                    @else
+                                                                                        <span class="badge bg-warning px-2 py-1">
+                                                                                            <i class="fas fa-clock me-1"></i>Remark Pending
+                                                                                        </span>
                                                                                     @endif
-                                                                                @else
-                                                                                    <span class="badge bg-info px-2 py-1">
-                                                                                        <i class="fas fa-comment me-1"></i>Remark Updated
-                                                                                    </span>
                                                                                 @endif
                                                                             @else
                                                                                 <span class="badge bg-warning px-2 py-1">
@@ -289,6 +338,9 @@
                                                                                         <div class="staff-name">
                                                                                             <i class="fas fa-user-circle me-2"></i>
                                                                                             <strong>{{ $interaction->createdBy->name ?? 'Unknown' }}</strong>
+                                                                                            @if($interaction->createdBy && $interaction->createdBy->branch)
+                                                                                                <small class="text-muted d-block">({{ $interaction->createdBy->branch->branch_name }})</small>
+                                                                                            @endif
                                                                                         </div>
                                                                                         <div class="visit-datetime">
                                                                                             <i class="fas fa-calendar-alt me-2"></i>
@@ -334,6 +386,9 @@
                                                                                                     <div class="remark-author">
                                                                                                         <i class="fas fa-user-circle me-1"></i>
                                                                                                         {{ $remark->addedBy?->name ?? 'Unknown' }}
+                                                                                                        @if($remark->addedBy && $remark->addedBy->branch)
+                                                                                                            <small class="text-muted">({{ $remark->addedBy->branch->branch_name }})</small>
+                                                                                                        @endif
                                                                                                     </div>
                                                                                                     <div class="remark-time">
                                                                                                         <i class="fas fa-clock me-1"></i>
@@ -343,13 +398,26 @@
                                                                                             </div>
                                                                                         @endforeach
                                                                                         
-                                                                                        <!-- Show Add Remark button if assigned to current user and not completed -->
+                                                                                        <!-- Show Add Remark button for transferred interactions (only if no work remarks exist) -->
                                                                                         @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
-                                                                                            <div class="mt-2">
-                                                                                                <button class="btn btn-primary btn-sm" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                    <i class="fas fa-plus me-1"></i>Add Remark
-                                                                                                </button>
-                                                                                            </div>
+                                                                                            @php
+                                                                                                // Check if all existing remarks are just transfer remarks
+                                                                                                $hasWorkRemark = false;
+                                                                                                foreach($interaction->remarks as $remark) {
+                                                                                                    if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                                                                        $hasWorkRemark = true;
+                                                                                                        break;
+                                                                                                    }
+                                                                                                }
+                                                                                            @endphp
+                                                                                            
+                                                                                            @if(!$hasWorkRemark)
+                                                                                                <div class="mt-2">
+                                                                                                    <button class="btn btn-primary btn-sm" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                        <i class="fas fa-plus me-1"></i>Add Remark
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            @endif
                                                                                         @endif
                                                                                     @else
                                                                                         <div class="highlighted-box remarks-highlight empty">
@@ -572,6 +640,18 @@
     
     .row .col-md-4 {
         margin-bottom: 1rem;
+    }
+    
+    /* Ensure badges don't overlap on mobile */
+    .d-flex.flex-column.gap-1 .badge {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+        white-space: nowrap !important;
+    }
+    
+    /* Ensure transfer tag doesn't overlap on mobile */
+    .badge.bg-danger {
+        margin-bottom: 2px !important;
     }
 }
 
