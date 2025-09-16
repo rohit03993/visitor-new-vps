@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\StaffController;
+use App\Http\Controllers\NotificationController;
 
 // Redirect root to login
 Route::get('/', function () {
@@ -88,5 +89,27 @@ Route::middleware('auth')->group(function () {
         
         // Assignment Routes
         Route::post('/assign-interaction/{interactionId}', [StaffController::class, 'assignInteraction'])->name('assign-interaction');
+        
+        // Smart refresh API
+        Route::get('/check-assigned-changes', [StaffController::class, 'checkAssignedChanges'])->name('check-assigned-changes');
+        
+        // Notification Routes (Available to staff)
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            // Route::get('/stream', [NotificationController::class, 'stream'])->name('stream'); // Disabled for now
+            Route::post('/send', [NotificationController::class, 'sendNotification'])->name('send');
+            Route::get('/get', [NotificationController::class, 'getNotifications'])->name('get');
+        });
     });
+
+    // Simple test route to check if routes work
+    Route::get('/test-api', function () {
+        $user = auth()->user();
+        return response()->json([
+            'success' => true,
+            'message' => 'API is working',
+            'user' => $user ? $user->name : 'Not logged in',
+            'timestamp' => now()->toISOString()
+        ]);
+    })->name('test-api');
+
 });

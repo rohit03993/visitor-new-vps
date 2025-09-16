@@ -134,7 +134,7 @@
                                                             <span class="text-paytm-muted small">No Access</span>
                                                         @endif
                                                         <a href="{{ route('staff.visitor-form', ['mobile' => $interaction->visitor->original_mobile_number, 'name' => $interaction->name_entered]) }}" 
-                                                           class="btn btn-sm btn-paytm-success" title="Add Revisit">
+                                                           class="btn btn-sm btn-paytm-success" title="Add Interaction">
                                                             <i class="fas fa-plus"></i>
                                                         </a>
                                                     </div>
@@ -227,7 +227,7 @@
                                                 @endif
                                                 <a href="{{ route('staff.visitor-form', ['mobile' => $interaction->visitor->original_mobile_number, 'name' => $interaction->name_entered]) }}" 
                                                    class="btn btn-success btn-sm">
-                                                    <i class="fas fa-plus me-1"></i>Add Revisit
+                                                    <i class="fas fa-plus me-1"></i>Add Interaction
                                                 </a>
                                             </div>
                                         </div>

@@ -4,10 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @auth
+    <meta name="user-id" content="{{ auth()->id() }}">
+    @endauth
     <title>@yield('title', 'Log Book - Visitor Management System')</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/paytm-theme.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/notifications.css') }}" rel="stylesheet">
     <style>
         /* Mobile-first responsive design */
         body {
@@ -153,61 +157,6 @@
             justify-content: center;
         }
         
-        /* Modern Page Title Styles */
-        .page-header {
-            background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
-            border-radius: 15px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 8px 25px var(--paytm-primary-shadow);
-        }
-        
-        .page-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: white;
-            margin: 0;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            letter-spacing: -0.5px;
-        }
-        
-        .page-subtitle {
-            color: rgba(255, 255, 255, 0.8) !important;
-            font-size: 1rem;
-            margin-top: 0.5rem;
-            font-weight: 400;
-        }
-        
-        /* Mobile responsive page title */
-        @media (max-width: 768px) {
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 1.5rem;
-            }
-            
-            .page-title {
-                font-size: 2rem;
-            }
-            
-            .page-subtitle {
-                font-size: 0.9rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .page-header {
-                padding: 1.5rem;
-                margin-bottom: 1rem;
-            }
-            
-            .page-title {
-                font-size: 1.75rem;
-            }
-            
-            .page-subtitle {
-                font-size: 0.85rem;
-            }
-        }
         
         /* Overlay for mobile sidebar */
         .sidebar-overlay {
@@ -569,7 +518,7 @@
         }
     </style>
 </head>
-<body>
+<body class="{{ auth()->check() ? 'authenticated' : '' }}">
     <!-- Mobile Navigation -->
     <div class="mobile-nav d-md-none">
         <button class="mobile-menu-btn" onclick="toggleSidebar()">
@@ -615,7 +564,7 @@
                                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                             </a>
                             <a class="nav-link {{ request()->routeIs('admin.search-mobile') ? 'active' : '' }}" href="{{ route('admin.search-mobile') }}" onclick="closeSidebar()">
-                                <i class="fas fa-search me-2"></i> Search Visitor
+                                <i class="fas fa-search me-2"></i> Search Log
                             </a>
                             <a class="nav-link {{ request()->routeIs('admin.manage-users') ? 'active' : '' }}" href="{{ route('admin.manage-users') }}" onclick="closeSidebar()">
                                 <i class="fas fa-users me-2"></i> Manage Users
@@ -643,10 +592,10 @@
                             </a>
                         @elseif(auth()->user()->isStaff())
                             <a class="nav-link {{ request()->routeIs('staff.visitor-search') ? 'active' : '' }}" href="{{ route('staff.visitor-search') }}" onclick="closeSidebar()">
-                                <i class="fas fa-search me-2"></i> Search Visitor
+                                <i class="fas fa-search me-2"></i> Search Log
                             </a>
                             <a class="nav-link {{ request()->routeIs('staff.assigned-to-me') ? 'active' : '' }}" href="{{ route('staff.assigned-to-me') }}" onclick="closeSidebar()">
-                                <i class="fas fa-user-check me-2"></i> Assigned to Me
+                                <i class="fas fa-user-check me-2"></i> Assigned Logs
                             </a>
                         @endif
                         
@@ -679,18 +628,6 @@
 
                     <!-- Page Content -->
                     <div class="container-fluid p-3 p-md-4">
-                        <!-- Modern Page Title -->
-                        <div class="page-header mb-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h1 class="page-title">@yield('page-title', 'Dashboard')</h1>
-                                    <p class="page-subtitle text-muted mb-0">
-                                        <i class="fas fa-calendar me-1"></i>
-                                        {{ \App\Helpers\DateTimeHelper::formatIndianDate(now()) }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
 
                         @if(session('success'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -769,6 +706,10 @@
             }
         });
     </script>
+    
+    <!-- Notification System -->
+    <script src="{{ asset('js/notifications.js') }}"></script>
+    
     @yield('scripts')
 </body>
 </html>

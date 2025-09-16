@@ -112,22 +112,8 @@ class StaffController extends Controller
                 ->first();
             
             if ($visitor) {
-                // Load visitor with course and session relationships
-                $visitor->load(['course', 'studentSessions', 'activeSessions']);
-                
-                // Get interactions for this visitor
-                $interactions = InteractionHistory::where('visitor_id', $visitor->visitor_id)
-                    ->with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'studentSession', 'createdBy'])
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(5);
-                
-                // Store original mobile number for "Add Revisit" functionality
-                $originalMobileNumber = $visitor->mobile_number;
-                
-                // Mask mobile number for staff privacy (display only)
-                $visitor->mobile_number = $this->maskMobileNumber($visitor->mobile_number);
-                
-                return view('staff.search-results-timeline', compact('visitor', 'interactions', 'cleanMobile', 'originalMobileNumber'));
+                // Redirect to the visitor profile page (single source of truth)
+                return redirect()->route('staff.visitor-profile', $visitor->visitor_id);
             }
         }
         
@@ -152,8 +138,7 @@ class StaffController extends Controller
                 // If interaction has only 1 remark and it's a transfer remark, show it (transferred interaction)
                 if ($interaction->remarks->count() === 1) {
                     $remark = $interaction->remarks->first();
-                    return strpos($remark->remark_text, '🔄 **Transferred from') !== false ||
-                           strpos($remark->remark_text, 'Transferred from') !== false;
+                    return strpos($remark->remark_text, 'Transferred from') !== false;
                 }
                 
                 // If interaction has multiple remarks, don't show it (already worked on)
@@ -191,6 +176,73 @@ class StaffController extends Controller
         return view('staff.assigned-to-me', compact('assignedInteractions'));
     }
 
+    /**
+     * Check for changes in assigned interactions (lightweight API)
+     */
+    public function checkAssignedChanges(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            
+            // Get current assigned interactions count and latest update time
+            $assignedInteractions = InteractionHistory::where('meeting_with', $user->user_id)
+                ->where('is_completed', false)
+                ->with(['visitor', 'remarks'])
+                ->get()
+                ->filter(function($interaction) {
+                    // Same filtering logic as showAssignedToMe
+                    if ($interaction->remarks->count() === 0) {
+                        return true;
+                    }
+                    
+                    if ($interaction->remarks->count() === 1) {
+                        $remark = $interaction->remarks->first();
+                        return strpos($remark->remark_text, '🔄 **Transferred from') !== false ||
+                               strpos($remark->remark_text, 'Transferred from') !== false;
+                    }
+                    
+                    return false;
+                });
+
+            $currentCount = $assignedInteractions->count();
+            $lastUpdate = $assignedInteractions->max('updated_at') ?: $assignedInteractions->max('created_at');
+            
+            // Get client's last known state
+            $clientCount = $request->input('last_count', 0);
+            $clientLastUpdate = $request->input('last_update', '');
+            
+            // Check if there are changes
+            $hasChanges = ($currentCount != $clientCount) || 
+                         ($lastUpdate && $lastUpdate->toISOString() !== $clientLastUpdate);
+            
+            return response()->json([
+                'success' => true,
+                'has_changes' => $hasChanges,
+                'current_count' => $currentCount,
+                'last_update' => $lastUpdate ? $lastUpdate->toISOString() : null,
+                'message' => $hasChanges ? 'Changes detected' : 'No changes'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Check assigned changes error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to check changes'], 500);
+        }
+    }
+
+    /**
+     * Check if interaction has actual work remarks (not just transfer remarks)
+     */
+    private function hasWorkRemarks($interaction)
+    {
+        foreach($interaction->remarks as $remark) {
+            // If remark doesn't contain transfer indicators, it's a work remark
+            if (strpos($remark->remark_text, 'Transferred from') === false) {
+                return true; // Found a work remark
+            }
+        }
+        return false; // Only transfer remarks or no remarks
+    }
+
     public function searchVisitor(Request $request)
     {
         $request->validate([
@@ -210,22 +262,8 @@ class StaffController extends Controller
             ->first();
         
         if ($visitor) {
-            // Load visitor with course and session relationships
-            $visitor->load(['course', 'studentSessions', 'activeSessions']);
-            
-            // Visitor found - show their history (ALL interactions, no branch filtering)
-            $interactions = InteractionHistory::where('visitor_id', $visitor->visitor_id)
-                ->with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'studentSession', 'createdBy'])
-                ->orderBy('created_at', 'desc')
-                ->paginate(5);
-            
-            // Store original mobile number for "Add Revisit" functionality
-            $originalMobileNumber = $visitor->mobile_number;
-            
-            // Mask mobile number for staff privacy (display only)
-            $visitor->mobile_number = $this->maskMobileNumber($visitor->mobile_number);
-            
-            return view('staff.search-results-timeline', compact('visitor', 'interactions', 'mobileNumber', 'originalMobileNumber'));
+            // Redirect to the visitor profile page (single source of truth)
+            return redirect()->route('staff.visitor-profile', $visitor->visitor_id);
         } else {
             // Visitor not found - redirect to visitor form
             return redirect()->route('staff.visitor-form', [
@@ -439,11 +477,38 @@ class StaffController extends Controller
             'is_completed' => false, // PENDING - will be completed after meeting
         ]);
 
+        // Send notification to assigned staff member
+        $assignedUser = VmsUser::find($request->meeting_with);
+        if ($assignedUser) {
+            // Send notification to assigned staff member (including self for testing)
+            $notificationController = new \App\Http\Controllers\NotificationController();
+            $success = $notificationController->sendVisitAssignmentNotification(
+                $interaction->interaction_id,
+                $assignedUser->user_id,
+                $request->name,
+                $purpose
+            );
+            
+            // Log notification status for debugging
+            \Log::info("Notification sent for interaction {$interaction->interaction_id} to user {$assignedUser->user_id}: " . ($success ? 'SUCCESS' : 'FAILED'));
+        }
+
         // Clear cache
         Cache::forget('active_staff_list');
 
+        $successMessage = 'Visitor entry created successfully!';
+        
+        // Add notification info to success message
+        if ($assignedUser) {
+            if ($assignedUser->user_id == $user->user_id) {
+                $successMessage .= ' 🔔 You should receive a notification within 15 seconds.';
+            } else {
+                $successMessage .= " 🔔 Notification sent to {$assignedUser->name}.";
+            }
+        }
+        
         return redirect()->route('staff.visitor-search')
-            ->with('success', 'Visitor entry created successfully!');
+            ->with('success', $successMessage);
     }
 
     public function updateRemark(Request $request, $interactionId)
@@ -864,13 +929,11 @@ class StaffController extends Controller
             
             // Step 1: Add transfer remark to Y's original interaction
             $assignmentNotes = $request->assignment_notes ? trim($request->assignment_notes) : '';
-            $transferContext = "✅ **Completed & Transferred to {$targetMember->name}**";
+            $transferContext = "Completed & Transferred to {$targetMember->name}";
             
             $remarkText = $transferContext;
             if (!empty($assignmentNotes)) {
-                $remarkText .= "\n\n**Transfer Notes:**\n" . $assignmentNotes;
-            } else {
-                $remarkText .= "\n\n**Transfer Notes:**\nNo additional notes provided.";
+                $remarkText .= "\nNotes: " . $assignmentNotes;
             }
             
             // Create remark on Y's original interaction
@@ -911,12 +974,10 @@ class StaffController extends Controller
             ]);
             
             // Step 4: Add transfer context remark to X's new interaction
-            $transferContextForX = "🔄 **Transferred from {$user->name}**";
+            $transferContextForX = "Transferred from {$user->name}";
             $contextForX = $transferContextForX;
             if (!empty($assignmentNotes)) {
-                $contextForX .= "\n\n**Previous Staff Notes:**\n" . $assignmentNotes;
-            } else {
-                $contextForX .= "\n\n**Previous Staff Notes:**\nNo additional notes provided.";
+                $contextForX .= "\nNotes: " . $assignmentNotes;
             }
             
             \App\Models\Remark::create([
@@ -928,6 +989,18 @@ class StaffController extends Controller
                 'updated_at' => now(),
             ]);
             
+            // Send notification to assigned staff member
+            $visitor = \App\Models\Visitor::find($interaction->visitor_id);
+            if ($visitor) {
+                $notificationController = new \App\Http\Controllers\NotificationController();
+                $notificationController->sendVisitAssignmentNotification(
+                    $newInteraction->interaction_id,
+                    $targetMember->user_id,
+                    $visitor->name,
+                    $interaction->purpose
+                );
+            }
+
             // Log the assignment
             \Log::info("Interaction {$interactionId} transferred from user {$user->user_id} to user {$request->team_member_id}. New interaction ID: {$newInteraction->interaction_id}");
             \Log::info("New interaction details: " . json_encode($newInteraction->toArray()));

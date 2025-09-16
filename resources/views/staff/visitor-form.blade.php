@@ -151,8 +151,8 @@
                                 <div class="field-content">
                                     <div class="d-flex align-items-center gap-3">
                                         <input type="text" class="form-control modern-input flex-grow-1" id="father_name" name="father_name" 
-                                               maxlength="255" placeholder="Enter father's name"
-                                               value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['father_name'] : '' }}">
+                                   maxlength="255" placeholder="Enter father's name"
+                                   value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['father_name'] : '' }}">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="copy_visitor_name" 
                                                    onchange="toggleFatherNameCopy()">
@@ -161,9 +161,9 @@
                                             </label>
                                         </div>
                                     </div>
-                                    @error('father_name')
+                            @error('father_name')
                                         <div class="text-danger mt-2">{{ $message }}</div>
-                                    @enderror
+                            @enderror
                                 </div>
                             </div>
                         </div>
@@ -176,19 +176,19 @@
                                     <div class="field-title">
                                         <h6 class="mb-1">Visit Mode</h6>
                                         <small class="text-muted">How is the visitor meeting with you?</small>
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
                                 <div class="field-content">
                                     <select class="form-select modern-input" id="mode" name="mode" required>
-                                        <option value="">Select Mode</option>
-                                        <option value="In-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'In-Campus') ? 'selected' : '' }}>In-Campus</option>
-                                        <option value="Out-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Out-Campus') ? 'selected' : '' }}>Out-Campus</option>
-                                        <option value="Telephonic" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Telephonic') ? 'selected' : '' }}>Telephonic</option>
-                                    </select>
-                                    @error('mode')
+                                <option value="">Select Mode</option>
+                                <option value="In-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'In-Campus') ? 'selected' : '' }}>In-Campus</option>
+                                <option value="Out-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Out-Campus') ? 'selected' : '' }}>Out-Campus</option>
+                                <option value="Telephonic" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Telephonic') ? 'selected' : '' }}>Telephonic</option>
+                            </select>
+                            @error('mode')
                                         <div class="text-danger mt-2">{{ $message }}</div>
-                                    @enderror
-                                </div>
+                            @enderror
+                        </div>
                             </div>
 
                             <!-- Assign To -->
@@ -197,23 +197,23 @@
                                     <div class="field-title">
                                         <h6 class="mb-1">Assign To</h6>
                                         <small class="text-muted">You can assign this visitor to yourself or any other employee</small>
-                                    </div>
-                                </div>
+                        </div>
+                    </div>
                                 <div class="field-content">
                                     <select class="form-select modern-input" id="meeting_with" name="meeting_with" required>
-                                        <option value="">Select Employee</option>
-                                        @foreach($employees as $employee)
-                                            <option value="{{ $employee->user_id }}" 
-                                                    {{ (isset($lastInteractionDetails) && $lastInteractionDetails['meeting_with'] == $employee->user_id) ? 'selected' : ($employee->user_id == auth()->user()->user_id ? 'selected' : '') }}>
-                                                {{ $employee->name }} ({{ $employee->branch->branch_name ?? 'No Branch' }})
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('meeting_with')
+                                <option value="">Select Employee</option>
+                                @foreach($employees as $employee)
+                                    <option value="{{ $employee->user_id }}" 
+                                            {{ (isset($lastInteractionDetails) && $lastInteractionDetails['meeting_with'] == $employee->user_id) ? 'selected' : ($employee->user_id == auth()->user()->user_id ? 'selected' : '') }}>
+                                        {{ $employee->name }} ({{ $employee->branch->branch_name ?? 'No Branch' }})
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('meeting_with')
                                         <div class="text-danger mt-2">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+                            @enderror
+                        </div>
+                    </div>
 
                             <!-- Address -->
                             <div class="form-field mb-4">
@@ -225,13 +225,13 @@
                                 </div>
                                 <div class="field-content">
                                     <input type="text" class="form-control modern-input" id="address" name="address_input"
-                                           placeholder="Type to search or add new address" autocomplete="off" required
-                                           value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['address_name'] : '' }}">
-                                    <input type="hidden" id="address_id" name="address_id" value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['address_id'] : '' }}">
-                                    <div id="addressSuggestions" class="list-group mt-2" style="display: none;"></div>
-                                    @error('address_id')
+                                   placeholder="Type to search or add new address" autocomplete="off" required
+                                   value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['address_name'] : '' }}">
+                            <input type="hidden" id="address_id" name="address_id" value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['address_id'] : '' }}">
+                            <div id="addressSuggestions" class="list-group mt-2" style="display: none;"></div>
+                            @error('address_id')
                                         <div class="text-danger mt-2">{{ $message }}</div>
-                                    @enderror
+                            @enderror
                                 </div>
                             </div>
                         </div>
@@ -753,7 +753,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobileInput = document.getElementById('mobile_number');
     const originalMobileField = document.getElementById('original_mobile_number');
     
-    // If we have an original mobile number (from "Add Revisit"), mask the display
+    // If we have an original mobile number (from "Add Interaction"), mask the display
     if (originalMobileField && originalMobileField.value) {
         const originalMobile = originalMobileField.value;
         const maskedMobile = maskMobileNumber(originalMobile);
@@ -875,11 +875,11 @@ function handleCourseSelection() {
         
         setTimeout(() => {
             studentNameContainer.style.display = 'none';
-            fatherNameContainer.style.display = 'none';
+        fatherNameContainer.style.display = 'none';
             studentNameInput.value = '';
-            fatherNameInput.value = '';
+        fatherNameInput.value = '';
             studentNameInput.required = false;
-            fatherNameInput.required = false;
+        fatherNameInput.required = false;
         }, 300);
     } else {
         // Show both student name and father's name fields with smooth animation
@@ -979,7 +979,7 @@ document.getElementById('visitorForm').addEventListener('submit', function(e) {
     const meetingWith = document.getElementById('meeting_with').value;
     const addressId = document.getElementById('address_id').value;
     
-    // Use original mobile number if available (for "Add Revisit" functionality)
+    // Use original mobile number if available (for "Add Interaction" functionality)
     const originalMobileField = document.getElementById('original_mobile_number');
     const finalMobileNumber = originalMobileField && originalMobileField.value ? 
         originalMobileField.value.replace('+91', '') : mobileNumber;
@@ -1014,10 +1014,10 @@ document.getElementById('visitorForm').addEventListener('submit', function(e) {
             return false;
         }
         if (!fatherName) {
-            e.preventDefault();
-            alert('Father\'s name is required when selecting a course.');
-            document.getElementById('father_name').focus();
-            return false;
+        e.preventDefault();
+        alert('Father\'s name is required when selecting a course.');
+        document.getElementById('father_name').focus();
+        return false;
         }
     }
 

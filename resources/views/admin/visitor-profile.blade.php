@@ -11,11 +11,8 @@
             <div class="d-flex flex-column flex-md-row gap-2">
                 <a href="{{ route('staff.visitor-form', ['mobile' => $visitor->mobile_number, 'name' => $visitor->name]) }}" 
                    class="btn btn-paytm-success">
-                    <i class="fas fa-plus me-2"></i>Add Revisit
+                    <i class="fas fa-plus me-2"></i>Add Interaction
                 </a>
-                <button onclick="window.print()" class="btn btn-paytm-secondary">
-                    <i class="fas fa-print me-2"></i>Print Profile
-                </button>
                 <a href="{{ route('admin.dashboard') }}" class="btn btn-paytm-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                 </a>
@@ -45,17 +42,19 @@
                                 <td><strong>Contact Person:</strong></td>
                                 <td>{{ $visitor->name }}</td>
                             </tr>
+                            @if($visitor->student_name)
                             <tr>
-                                <td><strong>Total Interactions:</strong></td>
-                                <td><span class="badge-paytm-primary">{{ $interactions->count() }}</span></td>
+                                <td><strong>Student Name:</strong></td>
+                                <td>{{ $visitor->student_name }}</td>
                             </tr>
+                            @endif
                         </table>
                     </div>
                     <div class="col-lg-6 col-md-12">
                         <table class="table table-borderless">
                             @if($visitor->course)
                             <tr>
-                                <td><strong>Course Interest:</strong></td>
+                                <td><strong>Course:</strong></td>
                                 <td><span class="badge bg-info">{{ $visitor->course->course_name }}</span></td>
                             </tr>
                             @endif
@@ -66,18 +65,8 @@
                             </tr>
                             @endif
                             <tr>
-                                <td><strong>Tags:</strong></td>
-                                <td>
-                                    @if($visitor->tags->count() > 0)
-                                        @foreach($visitor->tags as $tag)
-                                            <span class="badge me-1" style="background-color: {{ $tag->color }}; color: white;">
-                                                {{ $tag->name }}
-                                            </span>
-                                        @endforeach
-                                    @else
-                                        <span class="text-muted">No tags assigned</span>
-                                    @endif
-                                </td>
+                                <td><strong>Total Interactions:</strong></td>
+                                <td><span class="badge-paytm-primary">{{ $interactions->count() }}</span></td>
                             </tr>
                         </table>
                     </div>

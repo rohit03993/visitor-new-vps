@@ -21,9 +21,9 @@
                             <div class="h4 mb-0">{{ $assignedInteractions->total() }}</div>
                             <small class="opacity-75">Pending</small>
                         </div>
-                        <a href="{{ route('staff.visitor-search') }}" class="btn btn-paytm-secondary btn-sm">
-                            <i class="fas fa-search me-1"></i>Search
-                        </a>
+                        <button onclick="refreshAssignedList()" class="btn btn-outline-success btn-sm" title="Refresh list">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
                     </div>
                 </div>
             </div>
@@ -77,7 +77,7 @@
                                         </td>
                                         <td>
                                             @if($interaction->remarks->count() > 0)
-                                            @if($interaction->is_completed)
+                                                @if($interaction->is_completed)
                                                     @php
                                                         $latestRemark = $interaction->remarks->last();
                                                         $outcome = $latestRemark->outcome ?? 'in_process';
@@ -90,7 +90,22 @@
                                                         <span class="badge bg-info">Remark Updated</span>
                                                     @endif
                                                 @else
-                                                    <span class="badge bg-info">Remark Updated</span>
+                                                    @php
+                                                        // Check if interaction has actual work remarks (not just transfer remarks)
+                                                        $hasWorkRemark = false;
+                                                        foreach($interaction->remarks as $remark) {
+                                                            if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                                $hasWorkRemark = true;
+                                                                break;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    
+                                                    @if($hasWorkRemark)
+                                                        <span class="badge bg-info">Remark Updated</span>
+                                                    @else
+                                                        <span class="badge bg-warning">Remark Pending</span>
+                                                    @endif
                                                 @endif
                                             @else
                                                 <span class="badge bg-warning">Remark Pending</span>
