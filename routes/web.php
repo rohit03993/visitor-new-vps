@@ -73,6 +73,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/visitor-search', [StaffController::class, 'showVisitorSearch'])->name('visitor-search');
         Route::get('/assigned-to-me', [StaffController::class, 'showAssignedToMe'])->name('assigned-to-me');
         Route::post('/search-visitor', [StaffController::class, 'searchVisitor'])->name('search-visitor');
+        Route::post('/advanced-search', [StaffController::class, 'advancedSearch'])->name('advanced-search');
         Route::get('/visitor-form', [StaffController::class, 'showVisitorForm'])->name('visitor-form');
         Route::post('/check-mobile', [StaffController::class, 'checkMobile'])->name('check-mobile');
         Route::post('/add-address', [StaffController::class, 'addAddress'])->name('add-address');

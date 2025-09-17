@@ -117,7 +117,11 @@ class StaffController extends Controller
             }
         }
         
-        return view('staff.visitor-search', compact('prefilledMobile'));
+        // Get dropdown data for advanced search
+        $tags = \App\Models\Tag::active()->orderBy('name')->get();
+        $courses = Course::active()->orderByRaw("CASE WHEN course_name = 'None' THEN 0 ELSE 1 END, course_name")->get();
+        
+        return view('staff.visitor-search', compact('prefilledMobile', 'tags', 'courses'));
     }
 
     public function showAssignedToMe()
@@ -270,6 +274,95 @@ class StaffController extends Controller
                 'mobile' => $mobileNumber
             ]);
         }
+    }
+
+    public function advancedSearch(Request $request)
+    {
+        $request->validate([
+            'student_name' => 'nullable|string|max:255',
+            'father_name' => 'nullable|string|max:255',
+            'contact_person' => 'nullable|string|max:255',
+            'purpose' => 'nullable|exists:tags,id',
+            'course_id' => 'nullable|exists:courses,course_id',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
+        ]);
+
+        // Get search parameters
+        $studentName = $request->input('student_name');
+        $fatherName = $request->input('father_name');
+        $contactPerson = $request->input('contact_person');
+        $purpose = $request->input('purpose');
+        $courseId = $request->input('course_id');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+
+        // Build the search query
+        $query = Visitor::with(['interactions' => function($q) {
+            $q->orderBy('created_at', 'desc');
+        }, 'course', 'interactions.meetingWith.branch']);
+
+        // Apply search filters
+        if (!empty($studentName)) {
+            $query->where('student_name', 'LIKE', "%{$studentName}%");
+        }
+
+        if (!empty($fatherName)) {
+            $query->where('father_name', 'LIKE', "%{$fatherName}%");
+        }
+
+        if (!empty($contactPerson)) {
+            $query->where('name', 'LIKE', "%{$contactPerson}%");
+        }
+
+        if (!empty($courseId)) {
+            $query->where('course_id', $courseId);
+        }
+
+        // Search by purpose in interactions
+        if (!empty($purpose)) {
+            $query->whereHas('interactions', function($q) use ($purpose) {
+                $q->where('purpose', $purpose);
+            });
+        }
+
+        // Date range filter on interactions
+        if (!empty($dateFrom) || !empty($dateTo)) {
+            $query->whereHas('interactions', function($q) use ($dateFrom, $dateTo) {
+                if (!empty($dateFrom)) {
+                    $q->whereDate('created_at', '>=', $dateFrom);
+                }
+                if (!empty($dateTo)) {
+                    $q->whereDate('created_at', '<=', $dateTo);
+                }
+            });
+        }
+
+        // Get results with pagination
+        $visitors = $query->orderBy('updated_at', 'desc')->paginate(15);
+
+        // Mask mobile numbers for staff privacy
+        foreach ($visitors as $visitor) {
+            $visitor->original_mobile_number = $visitor->mobile_number;
+            $visitor->mobile_number = $this->maskMobileNumber($visitor->mobile_number);
+        }
+
+        // Get dropdown data for the search form
+        $tags = \App\Models\Tag::active()->orderBy('name')->get();
+        $courses = Course::active()->orderByRaw("CASE WHEN course_name = 'None' THEN 0 ELSE 1 END, course_name")->get();
+
+        return view('staff.advanced-search-results', compact(
+            'visitors', 
+            'tags', 
+            'courses',
+            'studentName',
+            'fatherName', 
+            'contactPerson',
+            'purpose',
+            'courseId',
+            'dateFrom',
+            'dateTo'
+        ));
     }
 
     public function showVisitorForm(Request $request)
