@@ -297,49 +297,100 @@ class StaffController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        // Build the search query
+        // Build the search query with OR logic
         $query = Visitor::with(['interactions' => function($q) {
             $q->orderBy('created_at', 'desc');
         }, 'course', 'interactions.meetingWith.branch']);
 
-        // Apply search filters
-        if (!empty($studentName)) {
-            $query->where('student_name', 'LIKE', "%{$studentName}%");
-        }
+        // Apply OR search filters - if ANY criteria matches, show the result
+        $query->where(function($q) use ($studentName, $fatherName, $contactPerson, $courseId, $purpose, $dateFrom, $dateTo) {
+            $hasConditions = false;
 
-        if (!empty($fatherName)) {
-            $query->where('father_name', 'LIKE', "%{$fatherName}%");
-        }
+            // Student name search
+            if (!empty($studentName)) {
+                $q->where('student_name', 'LIKE', "%{$studentName}%");
+                $hasConditions = true;
+            }
 
-        if (!empty($contactPerson)) {
-            $query->where('name', 'LIKE', "%{$contactPerson}%");
-        }
-
-        if (!empty($courseId)) {
-            $query->where('course_id', $courseId);
-        }
-
-        // Search by purpose in interactions
-        if (!empty($purpose)) {
-            $query->whereHas('interactions', function($q) use ($purpose) {
-                $q->where('purpose', $purpose);
-            });
-        }
-
-        // Date range filter on interactions
-        if (!empty($dateFrom) || !empty($dateTo)) {
-            $query->whereHas('interactions', function($q) use ($dateFrom, $dateTo) {
-                if (!empty($dateFrom)) {
-                    $q->whereDate('created_at', '>=', $dateFrom);
+            // Father name search
+            if (!empty($fatherName)) {
+                if ($hasConditions) {
+                    $q->orWhere('father_name', 'LIKE', "%{$fatherName}%");
+                } else {
+                    $q->where('father_name', 'LIKE', "%{$fatherName}%");
+                    $hasConditions = true;
                 }
-                if (!empty($dateTo)) {
-                    $q->whereDate('created_at', '<=', $dateTo);
-                }
-            });
-        }
+            }
 
-        // Get results with pagination
-        $visitors = $query->orderBy('updated_at', 'desc')->paginate(15);
+            // Contact person search
+            if (!empty($contactPerson)) {
+                if ($hasConditions) {
+                    $q->orWhere('name', 'LIKE', "%{$contactPerson}%");
+                } else {
+                    $q->where('name', 'LIKE', "%{$contactPerson}%");
+                    $hasConditions = true;
+                }
+            }
+
+            // Course search
+            if (!empty($courseId)) {
+                if ($hasConditions) {
+                    $q->orWhere('course_id', $courseId);
+                } else {
+                    $q->where('course_id', $courseId);
+                    $hasConditions = true;
+                }
+            }
+
+            // Purpose search in interactions
+            if (!empty($purpose)) {
+                if ($hasConditions) {
+                    $q->orWhereHas('interactions', function($subQ) use ($purpose) {
+                        $subQ->where('purpose', $purpose);
+                    });
+                } else {
+                    $q->whereHas('interactions', function($subQ) use ($purpose) {
+                        $subQ->where('purpose', $purpose);
+                    });
+                    $hasConditions = true;
+                }
+            }
+
+            // Date range search in interactions
+            if (!empty($dateFrom) || !empty($dateTo)) {
+                if ($hasConditions) {
+                    $q->orWhereHas('interactions', function($subQ) use ($dateFrom, $dateTo) {
+                        if (!empty($dateFrom)) {
+                            $subQ->whereDate('created_at', '>=', $dateFrom);
+                        }
+                        if (!empty($dateTo)) {
+                            if (!empty($dateFrom)) {
+                                $subQ->whereDate('created_at', '<=', $dateTo);
+                            } else {
+                                $subQ->whereDate('created_at', '<=', $dateTo);
+                            }
+                        }
+                    });
+                } else {
+                    $q->whereHas('interactions', function($subQ) use ($dateFrom, $dateTo) {
+                        if (!empty($dateFrom)) {
+                            $subQ->whereDate('created_at', '>=', $dateFrom);
+                        }
+                        if (!empty($dateTo)) {
+                            if (!empty($dateFrom)) {
+                                $subQ->whereDate('created_at', '<=', $dateTo);
+                            } else {
+                                $subQ->whereDate('created_at', '<=', $dateTo);
+                            }
+                        }
+                    });
+                    $hasConditions = true;
+                }
+            }
+        });
+
+        // Get results with pagination (10 per page)
+        $visitors = $query->orderBy('updated_at', 'desc')->paginate(10);
 
         // Mask mobile numbers for staff privacy
         foreach ($visitors as $visitor) {
