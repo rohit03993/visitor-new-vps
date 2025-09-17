@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Log Book - Login</title>
+    <title>LogBook - Create | Manage | Track</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -15,13 +17,14 @@
         
         body {
             background: linear-gradient(135deg, #3974FC 0%, #002E6E 100%);
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             align-items: center;
+            justify-content: center;
             padding: 1rem;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
         }
         
         /* Animated background elements */
@@ -48,8 +51,7 @@
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 450px;
-            margin: 0 auto;
+            max-width: 420px;
         }
         
         .login-card {
@@ -70,7 +72,7 @@
         .login-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 2rem 1.5rem;
+            padding: 1.5rem 1.5rem;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -89,11 +91,12 @@
         }
         
         .login-header h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.3rem;
             position: relative;
             z-index: 1;
+            letter-spacing: 2px;
         }
         
         .login-header p {
@@ -104,11 +107,11 @@
         }
         
         .login-body {
-            padding: 2rem 1.5rem;
+            padding: 1.5rem 1.5rem;
         }
         
         .form-group {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.2rem;
             position: relative;
         }
         
@@ -242,18 +245,23 @@
         @media (max-width: 576px) {
             body {
                 padding: 0.5rem;
+                height: 100vh;
+            }
+            .login-container {
+                max-width: 100%;
             }
             .login-header {
-                padding: 1.5rem 1rem;
+                padding: 1.2rem 1rem;
             }
             .login-body {
-                padding: 1.5rem 1rem;
+                padding: 1.2rem 1rem;
             }
             .login-header h1 {
-                font-size: 2rem;
+                font-size: 1.8rem;
+                letter-spacing: 1px;
             }
             .login-header p {
-                font-size: 1rem;
+                font-size: 0.95rem;
             }
             .form-control {
                 padding: 12px 15px 12px 45px;
@@ -261,6 +269,9 @@
             }
             .input-icon {
                 left: 15px;
+            }
+            .form-group {
+                margin-bottom: 1rem;
             }
         }
         
@@ -294,7 +305,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1><i class="fas fa-building me-3"></i>Log Book</h1>
+                <h1><i class="fas fa-book me-3"></i>LOG BOOK</h1>
                 <p>Create | Manage | Track</p>
             </div>
             <div class="login-body">

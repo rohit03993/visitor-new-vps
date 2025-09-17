@@ -7,7 +7,9 @@
     @auth
     <meta name="user-id" content="{{ auth()->id() }}">
     @endauth
-    <title>@yield('title', 'Log Book - Visitor Management System')</title>
+    <title>@yield('title', 'LogBook - Create | Manage | Track')</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/paytm-theme.css') }}" rel="stylesheet">
