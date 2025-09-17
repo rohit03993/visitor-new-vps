@@ -88,6 +88,11 @@
                             $groupedInteractions = $interactions->groupBy(function($interaction) {
                                 return $interaction->studentSession ? $interaction->studentSession->session_id : 'no-session';
                             });
+                            
+                            // Sort each group by created_at desc (newest first)
+                            foreach($groupedInteractions as $sessionId => $sessionInteractions) {
+                                $groupedInteractions[$sessionId] = $sessionInteractions->sortByDesc('created_at');
+                            }
                         @endphp
                         
                         @foreach($groupedInteractions as $sessionId => $sessionInteractions)
@@ -218,11 +223,11 @@
                                                 </div>
                                             </div>
                                             <div class="card-body">
-                                                <div class="accordion" id="sessionAccordion{{ $session->session_id }}">
-                                                    @foreach($sessionInteractions as $index => $interaction)
-                                                        <div class="accordion-item">
-                                                            <h2 class="accordion-header" id="heading{{ $interaction->interaction_id }}">
-                                                                <button class="accordion-button interaction-header {{ $index === 0 ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $interaction->interaction_id }}" aria-expanded="{{ $index === 0 ? 'true' : 'false' }}" aria-controls="collapse{{ $interaction->interaction_id }}">
+                                <div class="accordion accordion-paytm" id="sessionAccordion{{ $session->session_id }}">
+                                    @foreach($sessionInteractions as $index => $interaction)
+                                        <div class="accordion-item accordion-paytm-item">
+                                                            <h2 class="accordion-header accordion-paytm-header" id="heading{{ $interaction->interaction_id }}">
+                                                                <button class="accordion-button accordion-paytm-button {{ $index === 0 ? '' : 'collapsed' }}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ $interaction->interaction_id }}" aria-expanded="{{ $index === 0 ? 'true' : 'false' }}" aria-controls="collapse{{ $interaction->interaction_id }}">
                                                                     <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                                                         <div class="d-flex align-items-center flex-grow-1">
                                                                             <i class="fas fa-{{ $interaction->mode === 'In-Campus' ? 'building' : 'phone' }} me-2 text-primary"></i>
@@ -237,10 +242,10 @@
                                                                             </div>
                                                                         </div>
                                                                         <div class="d-flex flex-column gap-1 flex-shrink-0 align-items-end">
-                                                                            <span class="badge bg-{{ $interaction->getModeBadgeColor() }} px-2 py-1 mode-badge">
-                                                                                <i class="fas fa-{{ $interaction->mode === 'In-Campus' ? 'building' : 'phone' }} me-1"></i>
-                                                                                <span>{{ $interaction->mode }}</span>
-                                                                            </span>
+                                                            <span class="badge bg-{{ $interaction->getModeBadgeColor() }} badge-paytm-enhanced px-2 py-1 mode-badge">
+                                                                <i class="fas fa-{{ $interaction->mode === 'In-Campus' ? 'building' : 'phone' }} me-1"></i>
+                                                                <span>{{ $interaction->mode }}</span>
+                                                            </span>
                                                                             
                                                                             @php
                                                                                 // Check if this is a transfer interaction
@@ -254,11 +259,11 @@
                                                                                 }
                                                                             @endphp
                                                                             
-                                                                            @if($isTransferInteraction)
-                                                                                <span class="badge bg-danger px-2 py-1">
-                                                                                    <i class="fas fa-exchange-alt me-1"></i>Transfer
-                                                                                </span>
-                                                                            @endif
+                                            @if($isTransferInteraction)
+                                                                <span class="badge bg-danger badge-paytm-enhanced badge-paytm-pulse px-2 py-1">
+                                                                    <i class="fas fa-exchange-alt me-1"></i>Transfer
+                                                                </span>
+                                                            @endif
                                                                             
                                                                             @if($interaction->remarks->count() > 0)
                                                                                 @if($interaction->is_completed)
@@ -326,73 +331,88 @@
                                                             <div id="collapse{{ $interaction->interaction_id }}" class="accordion-collapse collapse {{ $index === 0 ? 'show' : '' }}" aria-labelledby="heading{{ $interaction->interaction_id }}" data-bs-parent="#sessionAccordion{{ $session->session_id }}">
                                                                 <div class="accordion-body">
                                                                     <div class="row">
-                                                                        <!-- Visit Entered By - Full width on mobile, left column on desktop -->
+                                                                        <!-- Visit Entered By with Notes - Full width on mobile, left column on desktop -->
                                                                         <div class="col-lg-4 col-12 mb-3">
                                                                             <div class="modern-card">
                                                                                 <div class="card-header-modern">
                                                                                     <i class="fas fa-user-plus me-2"></i>
-                                                                                    <strong>Visit Entered By</strong>
+                                                                                    <strong>Interaction Added By - {{ $interaction->createdBy->name ?? 'Unknown' }}
+                                                                                    @if($interaction->createdBy && $interaction->createdBy->branch)
+                                                                                        ({{ $interaction->createdBy->branch->branch_name }})
+                                                                                    @endif
+                                                                                    </strong>
                                                                                 </div>
                                                                                 <div class="card-body-modern">
-                                                                                    <div class="visit-entered-info">
-                                                                                        <div class="staff-name">
-                                                                                            <i class="fas fa-user-circle me-2"></i>
-                                                                                            <strong>{{ $interaction->createdBy->name ?? 'Unknown' }}</strong>
-                                                                                            @if($interaction->createdBy && $interaction->createdBy->branch)
-                                                                                                <small class="text-muted d-block">({{ $interaction->createdBy->branch->branch_name }})</small>
-                                                                                            @endif
-                                                                                        </div>
-                                                                                        <div class="visit-datetime">
-                                                                                            <i class="fas fa-calendar-alt me-2"></i>
-                                                                                            <span style="white-space: nowrap !important; font-family: monospace !important;">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'MdY g:iA') }}</span>
+                                                                                    
+                                                                                    <!-- Notes Section - Under Visit Entered By -->
+                                                                                    <div class="mt-3">
+                                                                                        <h6 class="section-label">
+                                                                                            <i class="fas fa-file-alt me-2"></i>Initial Notes
+                                                                                        </h6>
+                                                                                        @if($interaction->initial_notes)
+                                                                                            <div class="highlighted-box notes-highlight">
+                                                                                                {{ $interaction->initial_notes }}
+                                                                                            </div>
+                                                                                        @else
+                                                                                            <div class="highlighted-box notes-highlight empty">
+                                                                                                <i class="fas fa-sticky-note text-muted"></i>
+                                                                                                <span class="text-muted">No initial notes</span>
+                                                                                            </div>
+                                                                                        @endif
+                                                                                        
+                                                                                        <!-- Date/Time at bottom - Same style as Remarks section -->
+                                                                                        <div class="remark-meta">
+                                                                                            <div class="remark-time">
+                                                                                                <i class="fas fa-clock"></i>
+                                                                                                {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'M d, Y g:iA') }}
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
                                                                         
-                                                                        <!-- Notes and Remarks Content - Full width on mobile, right column on desktop -->
+                                                                        <!-- Remarks Content - Side by side, right column on desktop -->
                                                                         <div class="col-lg-8 col-12">
-                                                                            <div class="row">
-                                                                                <!-- Notes Section - Full width on mobile, half width on desktop -->
-                                                                                <div class="col-lg-6 col-12 mb-3">
-                                                                                    <h6 class="section-label">
-                                                                                        <i class="fas fa-sticky-note me-2"></i>Notes
-                                                                                    </h6>
-                                                                                    @if($interaction->initial_notes)
-                                                                                        <div class="highlighted-box notes-highlight">
-                                                                                            {{ $interaction->initial_notes }}
-                                                                                        </div>
-                                                                                    @else
-                                                                                        <div class="highlighted-box notes-highlight empty">
-                                                                                            <i class="fas fa-sticky-note text-muted"></i>
-                                                                                            <span class="text-muted">No notes</span>
-                                                                                        </div>
-                                                                                    @endif
-                                                                                </div>
-                                                                                
-                                                                                <!-- Remarks Section - Full width on mobile, half width on desktop -->
-                                                                                <div class="col-lg-6 col-12 mb-3">
-                                                                                    <h6 class="section-label">
-                                                                                        <i class="fas fa-comments me-2"></i>Remarks
-                                                                                    </h6>
                                                                                     @if($interaction->remarks->count() > 0)
                                                                                         @foreach($interaction->remarks as $remark)
-                                                                                            <div class="highlighted-box remarks-highlight">
-                                                                                                <div class="remark-content">
-                                                                                                    {{ $remark->remark_text }}
+                                                                                            <div class="modern-card">
+                                                                                                <div class="card-header-modern">
+                                                                                                    <i class="fas fa-comments me-2"></i>
+                                                                                                    <strong>Remarks & Actions Added by - {{ $remark->addedBy?->name ?? 'Unknown' }}
+                                                                                                    @if($remark->addedBy && $remark->addedBy->branch)
+                                                                                                        ({{ $remark->addedBy->branch->branch_name }})
+                                                                                                    @endif
+                                                                                                    </strong>
                                                                                                 </div>
-                                                                                                <div class="remark-meta">
-                                                                                                    <div class="remark-author">
-                                                                                                        <i class="fas fa-user-circle me-1"></i>
-                                                                                                        {{ $remark->addedBy?->name ?? 'Unknown' }}
-                                                                                                        @if($remark->addedBy && $remark->addedBy->branch)
-                                                                                                            <small class="text-muted">({{ $remark->addedBy->branch->branch_name }})</small>
-                                                                                                        @endif
+                                                                                                <div class="card-body-modern">
+                                                                                                    @php
+                                                                                                        // Check if this is a transfer remark and split it
+                                                                                                        $isTransferRemark = strpos($remark->remark_text, 'Transferred from') !== false || strpos($remark->remark_text, 'Completed & Transferred to') !== false;
+                                                                                                        $remarkParts = explode("\n", $remark->remark_text);
+                                                                                                        $transferText = $isTransferRemark ? $remarkParts[0] : '';
+                                                                                                        $notesText = $isTransferRemark && count($remarkParts) > 1 ? implode("\n", array_slice($remarkParts, 1)) : $remark->remark_text;
+                                                                                                    @endphp
+                                                                                                    
+                                                                                                    @if($isTransferRemark && $transferText)
+                                                                                                        <!-- Highlighted Transfer Text (compact) -->
+                                                                                                        <div class="transfer-highlight-compact">
+                                                                                                            <i class="fas fa-exchange-alt me-2"></i>{{ $transferText }}
+                                                                                                        </div>
+                                                                                                    @endif
+                                                                                                    
+                                                                                                    <div class="highlighted-box remarks-highlight">
+                                                                                                        <div class="remark-content">
+                                                                                                            {{ $notesText }}
+                                                                                                        </div>
                                                                                                     </div>
-                                                                                                    <div class="remark-time">
-                                                                                                        <i class="fas fa-clock me-1"></i>
-                                                                                                        <span style="white-space: nowrap !important; font-family: monospace !important;">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'MdY g:iA') }}</span>
+                                                                                                    
+                                                                                                    <!-- Date/Time at bottom - Same style as Interaction Added By -->
+                                                                                                    <div class="remark-meta">
+                                                                                                        <div class="remark-time">
+                                                                                                            <i class="fas fa-clock"></i>
+                                                                                                            {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, Y g:iA') }}
+                                                                                                        </div>
                                                                                                     </div>
                                                                                                 </div>
                                                                                             </div>
@@ -412,9 +432,9 @@
                                                                                             @endphp
                                                                                             
                                                                                             @if(!$hasWorkRemark)
-                                                                                                <div class="mt-2">
-                                                                                                    <button class="btn btn-primary btn-sm" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                        <i class="fas fa-plus me-1"></i>Add Remark
+                                                                                                <div class="mt-3 text-center">
+                                                                                                    <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                        <i class="fas fa-plus me-2"></i>Add Remark
                                                                                                     </button>
                                                                                                 </div>
                                                                                             @endif
@@ -424,8 +444,8 @@
                                                                                             <i class="fas fa-comment-slash text-muted"></i>
                                                                                             <span class="text-muted">No remarks</span>
                                                                                             @if($interaction->meeting_with == auth()->user()->user_id)
-                                                                                                <button class="btn btn-primary btn-sm mt-2" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                    <i class="fas fa-plus me-1"></i>Add Remark
+                                                                                                <button class="btn-paytm-primary mt-2" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                    <i class="fas fa-plus me-2"></i>Add Remark
                                                                                                 </button>
                                                                                             @else
                                                                                                 <div class="alert alert-info alert-sm mt-2">
@@ -435,8 +455,6 @@
                                                                                             @endif
                                                                                         </div>
                                                                                     @endif
-                                                                                </div>
-                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -697,6 +715,12 @@ function showAssignModal() {
     // Set the interaction ID for assignment
     document.getElementById('assign_interaction_id').value = interactionId;
     document.getElementById('assignInteractionDetails').innerHTML = interactionDetails;
+    
+    // NEW: Copy entire remark text to transfer notes field (time saver)
+    const remarkText = document.getElementById('remarkText').value.trim();
+    if (remarkText) {
+        document.getElementById('assignNotes').value = remarkText;
+    }
     
     // Close the remark modal and open the assign modal
     bootstrap.Modal.getInstance(document.getElementById('remarkModal')).hide();

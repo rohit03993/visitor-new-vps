@@ -631,3 +631,778 @@
   border-color: var(--paytm-primary);
   box-shadow: 0 0 0 0.2rem rgba(57, 116, 252, 0.25);
 }
+
+/* ===== PAYTM ACCORDION SYSTEM ===== */
+
+/* Enhanced Accordion Container */
+.accordion-paytm {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px var(--paytm-shadow-light);
+}
+
+/* Enhanced Accordion Items */
+.accordion-paytm-item {
+  border: 2px solid var(--paytm-border-medium);
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--paytm-white);
+  box-shadow: 0 3px 12px var(--paytm-shadow-medium);
+  transition: all 0.3s ease;
+}
+
+.accordion-paytm-item:hover {
+  box-shadow: 0 5px 20px var(--paytm-shadow-medium);
+  transform: translateY(-2px);
+  border-color: var(--paytm-primary);
+}
+
+/* Enhanced Accordion Headers */
+.accordion-paytm-header {
+  border-radius: 12px 12px 0 0;
+}
+
+/* Enhanced Accordion Buttons */
+.accordion-paytm-button {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%);
+  border: none;
+  color: var(--paytm-primary);
+  padding: 1.25rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  width: 100%;
+  text-align: left;
+  border-radius: 12px 12px 0 0;
+  transition: all 0.3s ease;
+  box-shadow: none;
+  border-bottom: 1px solid var(--paytm-border-light);
+}
+
+.accordion-paytm-button:hover {
+  background: linear-gradient(135deg, #cce7ff 0%, #b3daff 100%);
+  color: var(--paytm-primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(57, 116, 252, 0.15);
+}
+
+.accordion-paytm-button:not(.collapsed) {
+  background: linear-gradient(135deg, #b3daff 0%, #99ccff 100%);
+  color: var(--paytm-primary-dark);
+  box-shadow: 0 2px 8px var(--paytm-primary-shadow);
+  font-weight: 700;
+}
+
+.accordion-paytm-button:focus {
+  box-shadow: 0 0 0 0.25rem var(--paytm-primary-shadow);
+  border-color: var(--paytm-primary);
+}
+
+/* Accordion Body */
+.accordion-paytm-body {
+  padding: 1.5rem;
+  background: var(--paytm-white);
+  border-top: 1px solid var(--paytm-border-light);
+}
+
+/* ===== PAYTM BADGE ENHANCEMENTS ===== */
+
+/* Enhanced Badge Styling with Paytm Colors */
+.badge-paytm-enhanced {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+}
+
+/* Paytm Badge Variants with Gradients */
+.badge-paytm-success {
+  background: linear-gradient(135deg, var(--paytm-success) 0%, #218838 100%);
+  color: var(--paytm-white);
+  box-shadow: 0 2px 6px rgba(40, 167, 69, 0.3);
+}
+
+.badge-paytm-info {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+  color: var(--paytm-white);
+  box-shadow: 0 2px 6px var(--paytm-primary-shadow);
+}
+
+.badge-paytm-warning {
+  background: linear-gradient(135deg, var(--paytm-warning) 0%, #e0a800 100%);
+  color: var(--paytm-dark);
+  box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+}
+
+.badge-paytm-danger {
+  background: linear-gradient(135deg, var(--paytm-danger) 0%, #c82333 100%);
+  color: var(--paytm-white);
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+}
+
+/* Pulsing Transfer Badge */
+.badge-paytm-pulse {
+  animation: paytm-pulse-transfer 2s infinite;
+}
+
+@keyframes paytm-pulse-transfer {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.5);
+  }
+}
+
+/* ===== VISITOR PROFILE SPECIFIC COMPONENTS ===== */
+
+/* Visitor Profile Cards */
+.visitor-profile-card {
+  background: var(--paytm-white);
+  border: 1px solid var(--paytm-border-light);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px var(--paytm-shadow-light);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.visitor-profile-card:hover {
+  box-shadow: 0 6px 20px var(--paytm-shadow-medium);
+  transform: translateY(-2px);
+}
+
+.visitor-profile-header {
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+  color: var(--paytm-white);
+  padding: 1.5rem;
+  border-radius: 12px 12px 0 0;
+}
+
+/* Interaction Timeline */
+.interaction-timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.interaction-timeline::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -2rem;
+  top: 0.5rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--paytm-primary);
+  border: 3px solid var(--paytm-white);
+  box-shadow: 0 2px 4px var(--paytm-shadow-light);
+}
+
+/* Content Sections */
+.content-section-paytm {
+  background: var(--paytm-bg-secondary);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid var(--paytm-primary);
+}
+
+.notes-section-paytm {
+  background: rgba(255, 193, 7, 0.1);
+  border-left-color: var(--paytm-warning);
+}
+
+.remarks-section-paytm {
+  background: rgba(40, 167, 69, 0.1);
+  border-left-color: var(--paytm-success);
+}
+
+.transfer-section-paytm {
+  background: rgba(220, 53, 69, 0.1);
+  border-left-color: var(--paytm-danger);
+}
+
+/* Staff Information Display */
+.staff-info-paytm {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--paytm-bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--paytm-border-light);
+}
+
+.staff-name-paytm {
+  font-weight: 600;
+  color: var(--paytm-text-primary);
+}
+
+.staff-branch-paytm {
+  font-size: 0.85rem;
+  color: var(--paytm-text-secondary);
+}
+
+.staff-time-paytm {
+  font-size: 0.8rem;
+  color: var(--paytm-text-muted);
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== ACCORDION CONTENT REDESIGN - AS PER ORIGINAL PLAN ===== */
+
+/* Desktop Layout: Left Column - Interaction Details */
+.interaction-details-section {
+  background: var(--paytm-bg-secondary);
+  border-radius: 10px;
+  padding: 1.5rem;
+  border-left: 4px solid var(--paytm-primary);
+  height: fit-content;
+}
+
+.interaction-details-title {
+  color: var(--paytm-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  margin-bottom: 1rem;
+}
+
+.detail-label {
+  font-size: 0.85rem;
+  color: var(--paytm-text-secondary);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-value {
+  font-size: 0.95rem;
+  color: var(--paytm-text-primary);
+  font-weight: 500;
+}
+
+.staff-info-detailed {
+  background: rgba(57, 116, 252, 0.1);
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(57, 116, 252, 0.2);
+}
+
+.staff-name-detailed {
+  font-weight: 700;
+  color: var(--paytm-primary);
+  font-size: 1rem;
+}
+
+.staff-branch-detailed {
+  font-size: 0.85rem;
+  color: var(--paytm-text-secondary);
+  margin-top: 0.25rem;
+}
+
+/* Desktop Layout: Right Column - Communication Trail */
+.communication-trail-section {
+  background: var(--paytm-white);
+  border-radius: 10px;
+  padding: 1.5rem;
+  border: 1px solid var(--paytm-border-light);
+  min-height: 400px;
+}
+
+.communication-title {
+  color: var(--paytm-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 2px solid var(--paytm-border-light);
+  padding-bottom: 0.5rem;
+}
+
+/* Notes Section */
+.notes-section-enhanced {
+  background: rgba(255, 193, 7, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--paytm-warning);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.notes-title {
+  color: #b8860b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notes-content {
+  background: var(--paytm-white);
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--paytm-text-primary);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.notes-empty {
+  text-align: center;
+  color: var(--paytm-text-muted);
+  font-style: italic;
+  padding: 1rem;
+}
+
+/* Remarks Section */
+.remarks-section-enhanced {
+  background: rgba(40, 167, 69, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid var(--paytm-success);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.remarks-title {
+  color: #1e7e34;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.remark-item {
+  background: var(--paytm-white);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  position: relative;
+}
+
+.remark-item.transfer-remark {
+  background: rgba(220, 53, 69, 0.05);
+  border-color: rgba(220, 53, 69, 0.3);
+  border-left: 4px solid var(--paytm-danger);
+}
+
+.remark-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--paytm-text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.remark-meta {
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--paytm-border-light);
+  font-size: 0.8rem;
+}
+
+.remark-author {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--paytm-primary);
+  font-weight: 600;
+}
+
+.remark-time {
+  color: var(--paytm-text-muted);
+  font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Action Buttons */
+.action-buttons-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--paytm-border-light);
+  text-align: center;
+}
+
+/* ===== ACCORDION CONTENT ENHANCEMENTS ===== */
+
+/* Enhance existing accordion body */
+.accordion-paytm .accordion-body {
+  background: var(--paytm-bg-secondary);
+  padding: 1.5rem;
+  border-top: 2px solid var(--paytm-border-light);
+}
+
+/* Enhanced content organization */
+.modern-card {
+  background: var(--paytm-white);
+  border: 1px solid var(--paytm-border-light);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px var(--paytm-shadow-light);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.modern-card:hover {
+  box-shadow: 0 4px 12px var(--paytm-shadow-medium);
+  transform: translateY(-1px);
+}
+
+.card-header-modern {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: var(--paytm-primary-dark);
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(57, 116, 252, 0.3);
+}
+
+.card-body-modern {
+  padding: 1.25rem;
+  background: var(--paytm-white);
+}
+
+.visit-entered-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.staff-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(57, 116, 252, 0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(57, 116, 252, 0.2);
+}
+
+.staff-name strong {
+  color: var(--paytm-primary);
+  font-weight: 700;
+}
+
+.visit-datetime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--paytm-text-secondary);
+  font-weight: 500;
+}
+
+/* Enhanced section labels */
+.section-label {
+  color: var(--paytm-primary);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--paytm-border-light);
+}
+
+/* Enhanced highlighted boxes - ACTUALLY USED IN HTML */
+.highlighted-box {
+  background: var(--paytm-white);
+  border: 1px solid var(--paytm-border-light);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px var(--paytm-shadow-light);
+}
+
+.highlighted-box.notes-highlight {
+  background: rgba(255, 193, 7, 0.15) !important;
+  border: 1px solid rgba(255, 193, 7, 0.4) !important;
+  border-left: 4px solid var(--paytm-warning) !important;
+  color: #8b5a00 !important;
+  font-weight: 500 !important;
+}
+
+.highlighted-box.remarks-highlight {
+  background: var(--paytm-white) !important;
+  border: 1px solid var(--paytm-border-light) !important;
+  border-left: 4px solid var(--paytm-success) !important;
+  color: var(--paytm-text-primary) !important;
+  font-weight: 500 !important;
+  padding: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.highlighted-box.empty {
+  background: var(--paytm-bg-secondary) !important;
+  border: 2px dashed var(--paytm-border-medium) !important;
+  text-align: center !important;
+  padding: 1.5rem !important;
+  color: var(--paytm-text-muted) !important;
+  font-style: italic !important;
+}
+
+/* Enhanced remark content - ACTUALLY USED IN HTML */
+.remark-content {
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  color: var(--paytm-text-primary) !important;
+  margin-bottom: 0.5rem !important;
+  font-weight: 500 !important;
+}
+
+/* SPECIFIC rule for remark text display only (not staff info) */
+.highlighted-box.remarks-highlight .remark-content,
+.highlighted-box.remarks-highlight,
+.alert.alert-light {
+  white-space: pre-line !important;
+  word-wrap: break-word !important;
+}
+
+/* Keep staff info normal (no pre-line) */
+.remark-author {
+  white-space: normal !important;
+}
+
+/* Transfer Highlight Box - NEW */
+.transfer-highlight-box {
+  background: rgba(220, 53, 69, 0.15) !important;
+  border: 1px solid rgba(220, 53, 69, 0.4) !important;
+  border-left: 4px solid var(--paytm-danger) !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--paytm-danger) !important;
+  display: flex !important;
+  align-items: center !important;
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.2) !important;
+}
+
+/* Compact Transfer Highlight - For inside cards */
+.transfer-highlight-compact {
+  background: rgba(220, 53, 69, 0.1) !important;
+  border: 1px solid rgba(220, 53, 69, 0.3) !important;
+  border-radius: 6px !important;
+  padding: 0.5rem 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+  font-weight: 600 !important;
+  color: var(--paytm-danger) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 0.85rem !important;
+  width: fit-content !important;
+}
+
+/* Enhanced remark meta - ACTUALLY USED IN HTML */
+.remark-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding-top: 0.5rem !important;
+  border-top: 1px solid var(--paytm-border-light) !important;
+  font-size: 0.85rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Enhanced remark author - ACTUALLY USED IN HTML */
+.remark-author {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  color: var(--paytm-primary) !important;
+  font-weight: 600 !important;
+}
+
+/* Enhanced remark time - ACTUALLY USED IN HTML */
+.remark-time {
+  color: var(--paytm-text-muted) !important;
+  font-family: 'Courier New', monospace !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+  font-size: 0.8rem !important;
+}
+
+
+/* Mobile Optimizations for Accordion */
+@media (max-width: 768px) {
+  .accordion-paytm .accordion-body {
+    padding: 1rem;
+  }
+  
+  .modern-card {
+    margin-bottom: 1rem;
+  }
+  
+  .card-header-modern {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .card-body-modern {
+    padding: 1rem;
+  }
+  
+  .staff-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.5rem;
+  }
+  
+  .section-label {
+    font-size: 0.9rem;
+  }
+  
+  .highlighted-box {
+    padding: 0.75rem;
+  }
+  
+  .remark-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  /* Mobile Layout: Stack everything vertically */
+  .interaction-details-section {
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  
+  .communication-trail-section {
+    padding: 1rem;
+  }
+  
+  .interaction-details-title,
+  .communication-title {
+    font-size: 0.9rem;
+  }
+  
+  .detail-label {
+    font-size: 0.8rem;
+  }
+  
+  .detail-value {
+    font-size: 0.85rem;
+  }
+  
+  .staff-name-detailed {
+    font-size: 0.9rem;
+  }
+  
+  .notes-section-enhanced,
+  .remarks-section-enhanced {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .remark-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .remark-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .accordion-paytm-button {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .accordion-paytm-body {
+    padding: 1rem;
+  }
+  
+  .badge-paytm-enhanced {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.6rem;
+  }
+  
+  .staff-info-paytm {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .visitor-profile-header {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .accordion-paytm-item {
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .accordion-paytm-button {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .accordion-paytm-body {
+    padding: 0.75rem;
+  }
+  
+  .badge-paytm-enhanced {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.5rem;
+  }
+  
+  .content-section-paytm {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+}

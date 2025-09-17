@@ -929,7 +929,8 @@ class StaffController extends Controller
             
             // Step 1: Add transfer remark to Y's original interaction
             $assignmentNotes = $request->assignment_notes ? trim($request->assignment_notes) : '';
-            $transferContext = "Completed & Transferred to {$targetMember->name}";
+            $targetBranch = $targetMember->branch ? $targetMember->branch->branch_name : 'Unknown Branch';
+            $transferContext = "Completed & Transferred to {$targetMember->name} ({$targetBranch})";
             
             $remarkText = $transferContext;
             if (!empty($assignmentNotes)) {
@@ -974,7 +975,8 @@ class StaffController extends Controller
             ]);
             
             // Step 4: Add transfer context remark to X's new interaction
-            $transferContextForX = "Transferred from {$user->name}";
+            $userBranch = $user->branch ? $user->branch->branch_name : 'Unknown Branch';
+            $transferContextForX = "Transferred from {$user->name} ({$userBranch})";
             $contextForX = $transferContextForX;
             if (!empty($assignmentNotes)) {
                 $contextForX .= "\nNotes: " . $assignmentNotes;

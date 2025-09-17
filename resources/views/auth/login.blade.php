@@ -295,7 +295,7 @@
         <div class="login-card">
             <div class="login-header">
                 <h1><i class="fas fa-building me-3"></i>Log Book</h1>
-                <p>Visitor Management System</p>
+                <p>Create | Record | Track</p>
             </div>
             <div class="login-body">
                 @if ($errors->any())
