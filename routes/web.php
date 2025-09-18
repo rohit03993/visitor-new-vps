@@ -91,6 +91,10 @@ Route::middleware('auth')->group(function () {
         // Assignment Routes
         Route::post('/assign-interaction/{interactionId}', [StaffController::class, 'assignInteraction'])->name('assign-interaction');
         
+        // Phone Number Management Routes (NEW FEATURE)
+        Route::post('/visitor/{visitorId}/add-phone', [StaffController::class, 'addPhoneNumber'])->name('add-phone-number');
+        Route::delete('/visitor/{visitorId}/remove-phone/{phoneId}', [StaffController::class, 'removePhoneNumber'])->name('remove-phone-number');
+        
         // Smart refresh API
         Route::get('/check-assigned-changes', [StaffController::class, 'checkAssignedChanges'])->name('check-assigned-changes');
         

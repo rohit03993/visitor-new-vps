@@ -94,10 +94,22 @@ class AdminController extends Controller
         // Format mobile number with +91 prefix for database search
         $formattedMobile = '+91' . $mobileNumber;
         
-        // Search for visitor with +91 prefix first, then without prefix as fallback
+        // Search for visitor - PRIMARY SEARCH (existing logic preserved)
         $visitor = Visitor::where('mobile_number', $formattedMobile)
             ->orWhere('mobile_number', $mobileNumber)
             ->first();
+        
+        // If not found in primary search, try additional phone numbers (NEW FEATURE)
+        if (!$visitor) {
+            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+                ->orWhere('phone_number', $mobileNumber)
+                ->with('visitor')
+                ->first();
+            
+            if ($phoneRecord && $phoneRecord->visitor) {
+                $visitor = $phoneRecord->visitor;
+            }
+        }
         
         if (!$visitor) {
             return back()->withErrors(['error' => 'No visitor found with this mobile number.']);

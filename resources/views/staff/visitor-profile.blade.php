@@ -73,6 +73,76 @@
     </div>
 </div>
 
+<!-- Phone Numbers Management (NEW FEATURE) -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-phone me-2"></i>Phone Numbers
+                    <small class="phone-counter">({{ $visitor->getTotalPhoneCount() }}/4)</small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="phoneNumbersContainer">
+                    @php
+                        $allPhones = $visitor->getAllPhoneNumbersMasked();
+                    @endphp
+                    
+                    @if($allPhones->count() > 0)
+                        <div class="phone-numbers-grid">
+                            @foreach($allPhones as $phone)
+                                <div class="phone-number-item">
+                                    <div class="phone-info">
+                                        <div class="phone-number">
+                                            <i class="fas fa-phone"></i>
+                                            <strong>{{ $phone['phone_number'] }}</strong>
+                                        </div>
+                                        <div class="phone-type">
+                                            @if($phone['is_primary'])
+                                                <span class="badge bg-success">Primary</span>
+                                            @else
+                                                <span class="badge bg-secondary">Additional</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @if(!$phone['is_primary'])
+                                        <button type="button" class="remove-phone-btn" 
+                                                data-phone-id="{{ $phone['id'] }}" 
+                                                data-phone-number="{{ $phone['original_phone_number'] ?? $phone['phone_number'] }}">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-4">
+                            <i class="fas fa-phone-slash text-muted mb-3" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">No phone numbers available</p>
+                        </div>
+                    @endif
+                    
+                    @if($visitor->canAddMorePhoneNumbers())
+                        <div class="text-center">
+                            <button type="button" class="btn add-phone-btn" data-bs-toggle="modal" data-bs-target="#addPhoneModal">
+                                <i class="fas fa-plus"></i>Add Phone Number
+                            </button>
+                        </div>
+                    @else
+                        <div class="text-center">
+                            <div class="alert alert-info border-0" style="background: rgba(57, 116, 252, 0.1); color: var(--paytm-primary);">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Maximum limit reached:</strong> 4 phone numbers per visitor
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Trail Timeline -->
 <div class="row">
     <div class="col-12">
@@ -891,5 +961,143 @@ document.getElementById('completeSessionForm').addEventListener('submit', functi
         alert('Error: Failed to complete session');
     });
 });
+
+// ========== PHONE NUMBER MANAGEMENT (NEW FEATURE) ==========
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up phone number handlers');
+    
+    // Add Phone Number Modal Handler
+    const addPhoneForm = document.getElementById('addPhoneForm');
+    console.log('Add phone form found:', addPhoneForm);
+    
+    if (addPhoneForm) {
+        addPhoneForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const phoneNumber = document.getElementById('newPhoneNumber').value;
+    const visitorId = {{ $visitor->visitor_id }};
+    const url = `/staff/visitor/${visitorId}/add-phone`;
+    
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Phone Number:', phoneNumber);
+    console.log('Visitor ID:', visitorId);
+    console.log('URL:', url);
+    
+    const formData = new FormData();
+    formData.append('phone_number', phoneNumber);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    console.log('Form Data:', Object.fromEntries(formData));
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            alert('Phone number added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addPhoneModal')).hide();
+            location.reload();
+        } else {
+            // Show the actual error message from server
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        alert('Error: Failed to add phone number - Please try again');
+    });
+        });
+    }
+
+    // Remove Phone Number Handler
+    const removeButtons = document.querySelectorAll('.remove-phone-btn');
+    console.log('Remove buttons found:', removeButtons.length);
+    
+    removeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const phoneId = this.getAttribute('data-phone-id');
+            const phoneNumber = this.getAttribute('data-phone-number');
+            const visitorId = {{ $visitor->visitor_id }};
+            
+            console.log('Remove button clicked:', phoneId, phoneNumber);
+            
+            if (confirm(`Are you sure you want to remove phone number ${phoneNumber}?`)) {
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+                formData.append('_method', 'DELETE');
+                
+                fetch(`/staff/visitor/${visitorId}/remove-phone/${phoneId}`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Phone number removed successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error: Failed to remove phone number');
+                });
+            }
+        });
+    });
+});
 </script>
+
+<!-- Add Phone Number Modal (NEW FEATURE) -->
+<div class="modal fade" id="addPhoneModal" tabindex="-1" aria-labelledby="addPhoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPhoneModalLabel">
+                    <i class="fas fa-phone me-2"></i>Add Phone Number
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addPhoneForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newPhoneNumber" class="form-label">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text">+91</span>
+                            <input type="tel" class="form-control" id="newPhoneNumber" name="phone_number" 
+                                   placeholder="Enter 10-digit mobile number" required maxlength="10" 
+                                   pattern="[0-9]{10}" inputmode="numeric"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This number will be searchable and linked to the same visitor profile.
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Note:</strong> Maximum 4 phone numbers per visitor. 
+                        Current count: <span class="badge bg-primary">{{ $visitor->getTotalPhoneCount() }}/4</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-paytm-primary">
+                        <i class="fas fa-plus me-1"></i>Add Phone Number
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection

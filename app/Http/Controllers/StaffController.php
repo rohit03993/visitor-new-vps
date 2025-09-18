@@ -106,10 +106,22 @@ class StaffController extends Controller
             // Clean the mobile number (remove +91 if present)
             $cleanMobile = preg_replace('/^\+91/', '', $prefilledMobile);
             
-            // Search for visitor
+            // Search for visitor - PRIMARY SEARCH (existing logic preserved)
             $visitor = Visitor::where('mobile_number', '+91' . $cleanMobile)
                 ->orWhere('mobile_number', $cleanMobile)
                 ->first();
+            
+            // If not found in primary search, try additional phone numbers (NEW FEATURE)
+            if (!$visitor) {
+                $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', '+91' . $cleanMobile)
+                    ->orWhere('phone_number', $cleanMobile)
+                    ->with('visitor')
+                    ->first();
+                
+                if ($phoneRecord && $phoneRecord->visitor) {
+                    $visitor = $phoneRecord->visitor;
+                }
+            }
             
             if ($visitor) {
                 // Redirect to the visitor profile page (single source of truth)
@@ -260,10 +272,22 @@ class StaffController extends Controller
         $user = auth()->user();
         $permittedBranchIds = $user->getAllowedBranchIds('can_view_remarks');
         
-        // Search for visitor
+        // Search for visitor - PRIMARY SEARCH (existing logic preserved)
         $visitor = Visitor::where('mobile_number', $formattedMobile)
             ->orWhere('mobile_number', $mobileNumber)
             ->first();
+        
+        // If not found in primary search, try additional phone numbers (NEW FEATURE)
+        if (!$visitor) {
+            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+                ->orWhere('phone_number', $mobileNumber)
+                ->with('visitor')
+                ->first();
+            
+            if ($phoneRecord && $phoneRecord->visitor) {
+                $visitor = $phoneRecord->visitor;
+            }
+        }
         
         if ($visitor) {
             // Redirect to the visitor profile page (single source of truth)
@@ -456,9 +480,24 @@ class StaffController extends Controller
         $lastInteractionDetails = null;
         if (!empty($prefilledMobile)) {
             $formattedMobile = '+91' . $prefilledMobile;
+            
+            // Search for visitor - PRIMARY SEARCH (existing logic preserved)
             $visitor = Visitor::where('mobile_number', $formattedMobile)
                 ->orWhere('mobile_number', $prefilledMobile)
                 ->first();
+            
+            // If not found in primary search, try additional phone numbers (NEW FEATURE)
+            if (!$visitor) {
+                $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+                    ->orWhere('phone_number', $prefilledMobile)
+                    ->with('visitor')
+                    ->first();
+                
+                if ($phoneRecord && $phoneRecord->visitor) {
+                    $visitor = $phoneRecord->visitor;
+                }
+            }
+            
             $isExistingVisitor = $visitor ? true : false;
             
             // Get last interaction details for auto-fill
@@ -532,10 +571,22 @@ class StaffController extends Controller
             $request->merge(['address_id' => $address->address_id]);
         }
 
-        // Find or create visitor
+        // Find or create visitor - PRIMARY SEARCH (existing logic preserved)
         $visitor = Visitor::where('mobile_number', $formattedMobile)
             ->orWhere('mobile_number', $mobileNumber)
             ->first();
+        
+        // If not found in primary search, try additional phone numbers (NEW FEATURE)
+        if (!$visitor) {
+            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+                ->orWhere('phone_number', $mobileNumber)
+                ->with('visitor')
+                ->first();
+            
+            if ($phoneRecord && $phoneRecord->visitor) {
+                $visitor = $phoneRecord->visitor;
+            }
+        }
         
         if (!$visitor) {
             $visitor = Visitor::create([
@@ -650,7 +701,7 @@ class StaffController extends Controller
                 $successMessage .= " 🔔 Notification sent to {$assignedUser->name}.";
             }
         }
-        
+
         return redirect()->route('staff.visitor-search')
             ->with('success', $successMessage);
     }
@@ -768,9 +819,22 @@ class StaffController extends Controller
         $mobileNumber = $request->input('mobile_number');
         $formattedMobile = '+91' . $mobileNumber;
         
+        // Search for visitor - PRIMARY SEARCH (existing logic preserved)
         $visitor = Visitor::where('mobile_number', $formattedMobile)
             ->orWhere('mobile_number', $mobileNumber)
             ->first();
+        
+        // If not found in primary search, try additional phone numbers (NEW FEATURE)
+        if (!$visitor) {
+            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+                ->orWhere('phone_number', $mobileNumber)
+                ->with('visitor')
+                ->first();
+            
+            if ($phoneRecord && $phoneRecord->visitor) {
+                $visitor = $phoneRecord->visitor;
+            }
+        }
         
         if ($visitor) {
             return response()->json([
@@ -982,8 +1046,8 @@ class StaffController extends Controller
             $user = Auth::user();
             \Log::info('=== METHOD CALLED: showVisitorProfile with ID: ' . $visitorId . ' ===');
             
-            // Get visitor with basic relationships
-            $visitor = Visitor::with(['course', 'tags'])->findOrFail($visitorId);
+            // Get visitor with basic relationships (including phone numbers)
+            $visitor = Visitor::with(['course', 'tags', 'additionalPhoneNumbers'])->findOrFail($visitorId);
             \Log::info('Visitor found: ' . $visitor->name);
             
             // Get all interactions for this visitor
@@ -1166,6 +1230,144 @@ class StaffController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to transfer interaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ========== PHONE NUMBER MANAGEMENT METHODS (NEW FEATURE) ==========
+    
+    /**
+     * Add additional phone number to visitor
+     */
+    public function addPhoneNumber(Request $request, $visitorId)
+    {
+        try {
+            \Log::info('=== ADD PHONE NUMBER REQUEST ===');
+            \Log::info('Visitor ID: ' . $visitorId);
+            \Log::info('Request data: ' . json_encode($request->all()));
+            $request->validate([
+                'phone_number' => 'required|string|regex:/^[0-9]{10}$/',
+            ], [
+                'phone_number.regex' => 'Phone number must be exactly 10 digits.',
+            ]);
+
+            $visitor = Visitor::findOrFail($visitorId);
+            
+            // Check if visitor can add more phone numbers (max 4 total)
+            if (!$visitor->canAddMorePhoneNumbers()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Maximum 4 phone numbers allowed per visitor.'
+                ], 400);
+            }
+            
+            // Check if phone number already exists
+            $phoneNumber = $request->phone_number;
+            $formattedPhone = '+91' . $phoneNumber;
+            
+            // Check against primary mobile_number
+            if ($visitor->mobile_number === $phoneNumber || $visitor->mobile_number === $formattedPhone) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This number is already the primary mobile number.'
+                ], 400);
+            }
+            
+            // Check against ALL other visitors' primary mobile numbers
+            $existingVisitor = Visitor::where('mobile_number', $formattedPhone)
+                ->orWhere('mobile_number', $phoneNumber)
+                ->where('visitor_id', '!=', $visitor->visitor_id)
+                ->first();
+                
+            if ($existingVisitor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This phone number is already registered as primary number for another visitor.'
+                ], 400);
+            }
+            
+            // Check against existing additional phone numbers
+            $existingPhone = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedPhone)
+                ->orWhere('phone_number', $phoneNumber)
+                ->first();
+                
+            if ($existingPhone) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This phone number is already registered as additional number for another visitor.'
+                ], 400);
+            }
+            
+            // Add the phone number
+            $newPhone = \App\Models\VisitorPhoneNumber::create([
+                'visitor_id' => $visitor->visitor_id,
+                'phone_number' => $formattedPhone,
+                'is_primary' => false,
+            ]);
+            
+            \Log::info('Phone number created successfully: ' . $newPhone->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Phone number added successfully.',
+                'phone_numbers' => $visitor->fresh()->getAllPhoneNumbers()
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Add phone number error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add phone number. Please try again.'
+            ], 500);
+        }
+    }
+    
+    /**
+     * Remove additional phone number from visitor
+     */
+    public function removePhoneNumber(Request $request, $visitorId, $phoneId)
+    {
+        try {
+            $visitor = Visitor::findOrFail($visitorId);
+            
+            $phoneRecord = \App\Models\VisitorPhoneNumber::where('id', $phoneId)
+                ->where('visitor_id', $visitor->visitor_id)
+                ->first();
+            
+            if (!$phoneRecord) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Phone number not found.'
+                ], 404);
+            }
+            
+            // Cannot remove primary phone number (should not happen, but safety check)
+            if ($phoneRecord->is_primary) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot remove primary phone number.'
+                ], 400);
+            }
+            
+            $phoneRecord->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Phone number removed successfully.',
+                'phone_numbers' => $visitor->fresh()->getAllPhoneNumbers()
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Remove phone number error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove phone number. Please try again.'
             ], 500);
         }
     }

@@ -154,17 +154,20 @@
         }
         
         .password-toggle {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            border: none;
-            background: transparent;
-            color: #6c757d;
-            padding: 8px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            z-index: 2;
+            position: absolute !important;
+            right: 15px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            border: none !important;
+            background: transparent !important;
+            color: #6c757d !important;
+            padding: 8px 10px !important;
+            border-radius: 6px !important;
+            transition: all 0.3s ease !important;
+            z-index: 3 !important;
+            width: auto !important;
+            height: auto !important;
+            font-size: 1.1rem !important;
         }
         
         .password-toggle:hover {
@@ -340,7 +343,7 @@
                             <i class="fas fa-lock input-icon"></i>
                             <input type="password" class="form-control" id="password" name="password" 
                                    required placeholder="Enter your password">
-                            <button class="btn btn-outline-secondary password-toggle" type="button" id="togglePassword">
+                            <button class="password-toggle" type="button" id="togglePassword">
                                 <i class="fas fa-eye" id="passwordIcon"></i>
                             </button>
                         </div>
