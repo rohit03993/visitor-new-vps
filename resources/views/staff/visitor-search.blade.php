@@ -7,55 +7,92 @@
 <div class="row justify-content-center">
     <div class="col-12 col-lg-8">
         <!-- Mobile Number Search -->
-        <div class="card-paytm paytm-fade-in mb-4">
-            <div class="card-paytm-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-mobile-alt me-2"></i>Search Log by Mobile Number
-                </h5>
+        <div class="card-paytm paytm-fade-in mb-4 modern-mobile-search">
+            <div class="mobile-search-header">
+                <div class="search-header-content">
+                    <div class="search-title-section">
+                        <h4 class="search-main-title">
+                            <i class="fas fa-mobile-alt me-3"></i>Quick Search
+                        </h4>
+                        <p class="search-main-subtitle">Find visitor logs instantly by mobile number</p>
+                    </div>
+                    <div class="search-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-users"></i>
+                            <span>Fast Lookup</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-paytm-body">
-                <form method="POST" action="{{ route('staff.search-visitor') }}">
+            <div class="mobile-search-body">
+                <form method="POST" action="{{ route('staff.search-visitor') }}" class="modern-search-form">
                     @csrf
-                    <div class="mb-3">
-                        <div class="input-group">
-                            <span class="input-group-text" style="background: var(--paytm-primary); color: white; border-color: var(--paytm-primary);">+91</span>
-                            <input type="tel" class="form-control-paytm" id="mobile_number" name="mobile_number" 
-                                   required maxlength="10" placeholder="Enter the mobile number to search for Log or Enter New Log" 
+                    <div class="search-input-section">
+                        <div class="modern-input-group">
+                            <div class="mobile-header-section">
+                                <i class="fas fa-phone me-2"></i>
+                                <span class="mobile-label-text">Mobile Number</span>
+                            </div>
+                            <input type="tel" class="modern-mobile-input" id="mobile_number" name="mobile_number" 
+                                   required maxlength="10" placeholder="+91 Enter 10-digit mobile number" 
                                    value="{{ old('mobile_number', $prefilledMobile ?? '') }}"
                                    inputmode="numeric" pattern="[0-9]{10}"
                                    oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
+                            <button type="submit" class="modern-search-btn">
+                                <i class="fas fa-search"></i>
+                                <span class="btn-text">Search</span>
+                            </button>
                         </div>
                         @error('mobile_number')
-                            <div class="text-danger mt-1">{{ $message }}</div>
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ $message }}
+                            </div>
                         @enderror
                     </div>
                     
-                    <div class="d-flex justify-content-end">
-                        <button type="submit" class="btn btn-paytm-primary">
-                            <i class="fas fa-search me-2"></i>Search Log
-                        </button>
+                    <div class="search-info-section">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <i class="fas fa-search-plus"></i>
+                                <span>Search existing visitor logs</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Create new log if not found</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-history"></i>
+                                <span>View complete interaction history</span>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
 
         <!-- Advanced Search -->
-        <div class="card-paytm paytm-fade-in">
-            <div class="card-paytm-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-search-plus me-2"></i>Advanced Search Options
-                </h5>
-                <button class="btn btn-sm btn-outline-light ms-auto" type="button" data-bs-toggle="collapse" 
-                        data-bs-target="#advancedSearchCollapse" aria-expanded="false" aria-controls="advancedSearchCollapse">
-                    <i class="fas fa-chevron-down" id="collapseIcon"></i>
-                </button>
+        <div class="card-paytm paytm-fade-in modern-advanced-search">
+            <div class="advanced-search-toggle-section">
+                <div class="toggle-content">
+                    <div class="toggle-text">
+                        <h5 class="toggle-title">
+                            <i class="fas fa-search-plus me-2"></i>Advanced Search
+                        </h5>
+                        <p class="toggle-subtitle">Don't have the mobile number? Search by name, course, or visit details</p>
+                    </div>
+                    <button class="modern-toggle-btn" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#advancedSearchCollapse" aria-expanded="false" aria-controls="advancedSearchCollapse">
+                        <span class="toggle-text-btn">Show Options</span>
+                        <i class="fas fa-chevron-down toggle-icon" id="collapseIcon"></i>
+                    </button>
+                </div>
             </div>
             <div class="collapse" id="advancedSearchCollapse">
-                <div class="card-paytm-body">
-                    <div class="advanced-search-intro mb-4">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Don't know the mobile number?</strong> Use these fields to find visitors by their details.
+                <div class="advanced-search-body">
+                    <div class="search-info-banner">
+                        <div class="info-content">
+                            <i class="fas fa-lightbulb info-icon"></i>
+                            <span><strong>Tip:</strong> Fill any field(s) below - we'll show results that match any of your criteria!</span>
                         </div>
                     </div>
                     
@@ -159,18 +196,21 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Toggle collapse icon
+    // Toggle collapse icon and text
     const collapseElement = document.getElementById('advancedSearchCollapse');
     const collapseIcon = document.getElementById('collapseIcon');
+    const toggleTextBtn = document.querySelector('.toggle-text-btn');
     
     collapseElement.addEventListener('show.bs.collapse', function() {
         collapseIcon.classList.remove('fa-chevron-down');
         collapseIcon.classList.add('fa-chevron-up');
+        toggleTextBtn.textContent = 'Hide Options';
     });
     
     collapseElement.addEventListener('hide.bs.collapse', function() {
         collapseIcon.classList.remove('fa-chevron-up');
         collapseIcon.classList.add('fa-chevron-down');
+        toggleTextBtn.textContent = 'Show Options';
     });
     
     // Clear advanced search form
