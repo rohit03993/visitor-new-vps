@@ -13,9 +13,6 @@
                    class="btn btn-paytm-success">
                     <i class="fas fa-plus me-2"></i>Add Interaction
                 </a>
-                <a href="{{ route('staff.assigned-to-me') }}" class="btn btn-paytm-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Assigned
-                </a>
             </div>
         </div>
     </div>
@@ -52,7 +49,7 @@
                         <table class="table table-borderless">
                             @if($visitor->course)
                             <tr>
-                                <td><strong>Course Interest:</strong></td>
+                                <td><strong>Course:</strong></td>
                                 <td><span class="badge bg-info">{{ $visitor->course->course_name }}</span></td>
                             </tr>
                             @endif
@@ -234,7 +231,7 @@
                                                                             <div class="interaction-info">
                                                                                 <div class="fw-bold interaction-date" style="white-space: nowrap !important; font-family: monospace !important; display: inline-block !important;">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'Md g:iA') }}</div>
                                                                                 <small class="text-muted interaction-meeting">
-                                                                                    with {{ $interaction->meetingWith->name ?? 'Unknown' }}
+                                                                                    Attended by - {{ $interaction->meetingWith->name ?? 'Unknown' }}
                                                                                     @if($interaction->meetingWith && $interaction->meetingWith->branch)
                                                                                         <span class="text-muted">({{ $interaction->meetingWith->branch->branch_name }})</span>
                                                                                     @endif
@@ -336,7 +333,7 @@
                                                                             <div class="modern-card">
                                                                                 <div class="card-header-modern">
                                                                                     <i class="fas fa-user-plus me-2"></i>
-                                                                                    <strong>Interaction Added By - {{ $interaction->createdBy->name ?? 'Unknown' }}
+                                                                                    <strong>Added By - {{ $interaction->createdBy->name ?? 'Unknown' }}
                                                                                     @if($interaction->createdBy && $interaction->createdBy->branch)
                                                                                         ({{ $interaction->createdBy->branch->branch_name }})
                                                                                     @endif
@@ -344,11 +341,12 @@
                                                                                 </div>
                                                                                 <div class="card-body-modern">
                                                                                     
+                                                                                    <!-- Before Meeting Section Header -->
+                                                                                    <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.125rem;">
+                                                                                        Before Meeting -
+                                                                                    </small>
                                                                                     <!-- Notes Section - Under Visit Entered By -->
-                                                                                    <div class="mt-3">
-                                                                                        <h6 class="section-label">
-                                                                                            <i class="fas fa-file-alt me-2"></i>Initial Notes
-                                                                                        </h6>
+                                                                                    <div>
                                                                                         @if($interaction->initial_notes)
                                                                                             <div class="highlighted-box notes-highlight">
                                                                                                 {{ $interaction->initial_notes }}
@@ -376,35 +374,51 @@
                                                                         <div class="col-lg-8 col-12">
                                                                                     @if($interaction->remarks->count() > 0)
                                                                                         @foreach($interaction->remarks as $remark)
+                                                                                            @php
+                                                                                                // Check if this is a transfer remark and split it
+                                                                                                $isTransferRemark = strpos($remark->remark_text, 'Transferred from') !== false || strpos($remark->remark_text, 'Completed & Transferred to') !== false;
+                                                                                                $remarkParts = explode("\n", $remark->remark_text);
+                                                                                                $transferText = $isTransferRemark ? $remarkParts[0] : '';
+                                                                                                $notesText = $isTransferRemark && count($remarkParts) > 1 ? implode("\n", array_slice($remarkParts, 1)) : $remark->remark_text;
+                                                                                            @endphp
+                                                                                            
                                                                                             <div class="modern-card">
-                                                                                                <div class="card-header-modern">
-                                                                                                    <i class="fas fa-comments me-2"></i>
-                                                                                                    <strong>Remarks & Actions Added by - {{ $remark->addedBy?->name ?? 'Unknown' }}
-                                                                                                    @if($remark->addedBy && $remark->addedBy->branch)
-                                                                                                        ({{ $remark->addedBy->branch->branch_name }})
-                                                                                                    @endif
-                                                                                                    </strong>
-                                                                                                </div>
+                                                                                                @if(!$isTransferRemark)
+                                                                                                    <!-- Regular Remark: Show Attended by header -->
+                                                                                                    <div class="card-header-modern">
+                                                                                                        <i class="fas fa-comments me-2"></i>
+                                                                                                        <strong>Attended by - {{ $remark->addedBy?->name ?? 'Unknown' }}
+                                                                                                        @if($remark->addedBy && $remark->addedBy->branch)
+                                                                                                            ({{ $remark->addedBy->branch->branch_name }})
+                                                                                                        @endif
+                                                                                                        </strong>
+                                                                                                    </div>
+                                                                                                @endif
+                                                                                                
                                                                                                 <div class="card-body-modern">
-                                                                                                    @php
-                                                                                                        // Check if this is a transfer remark and split it
-                                                                                                        $isTransferRemark = strpos($remark->remark_text, 'Transferred from') !== false || strpos($remark->remark_text, 'Completed & Transferred to') !== false;
-                                                                                                        $remarkParts = explode("\n", $remark->remark_text);
-                                                                                                        $transferText = $isTransferRemark ? $remarkParts[0] : '';
-                                                                                                        $notesText = $isTransferRemark && count($remarkParts) > 1 ? implode("\n", array_slice($remarkParts, 1)) : $remark->remark_text;
-                                                                                                    @endphp
                                                                                                     
-                                                                                                    @if($isTransferRemark && $transferText)
-                                                                                                        <!-- Highlighted Transfer Text (compact) -->
-                                                                                                        <div class="transfer-highlight-compact">
-                                                                                                            <i class="fas fa-exchange-alt me-2"></i>{{ $transferText }}
-                                                                                                        </div>
+                                                                                                    @if($isTransferRemark)
+                                                                                                        <!-- Transfer Case: Show transfer info and Transfer Notes header -->
+                                                                                                        @if($transferText)
+                                                                                                            <!-- Highlighted Transfer Text (compact) -->
+                                                                                                            <div class="transfer-highlight-compact">
+                                                                                                                <i class="fas fa-exchange-alt me-2"></i>{{ $transferText }}
+                                                                                                            </div>
+                                                                                                        @endif
+                                                                                                        
+                                                                                                        <!-- Transfer Notes Section Header -->
+                                                                                                        <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.25rem;">
+                                                                                                            Transfer Notes -
+                                                                                                        </small>
+                                                                                                    @else
+                                                                                                        <!-- Regular Remark: Show After Meeting header -->
+                                                                                                        <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.25rem;">
+                                                                                                            After Meeting -
+                                                                                                        </small>
                                                                                                     @endif
                                                                                                     
                                                                                                     <div class="highlighted-box remarks-highlight">
-                                                                                                        <div class="remark-content">
-                                                                                                            {{ $notesText }}
-                                                                                                        </div>
+                                                                                                        {{ $notesText }}
                                                                                                     </div>
                                                                                                     
                                                                                                     <!-- Date/Time at bottom - Same style as Interaction Added By -->

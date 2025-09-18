@@ -1153,11 +1153,11 @@
 .highlighted-box {
   background: var(--paytm-white);
   border: 1px solid var(--paytm-border-light);
-  border-radius: 8px;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  padding: 0.375rem 0.5rem;
+  margin-bottom: 0.125rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 6px var(--paytm-shadow-light);
+  box-shadow: 0 1px 3px var(--paytm-shadow-light);
 }
 
 .highlighted-box.notes-highlight {
@@ -1166,6 +1166,11 @@
   border-left: 4px solid var(--paytm-warning) !important;
   color: #8b5a00 !important;
   font-weight: 500 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0.2rem 0.5rem !important;
+  line-height: 1.2 !important;
+  font-size: 0.875rem !important;
 }
 
 .highlighted-box.remarks-highlight {
@@ -1174,8 +1179,11 @@
   border-left: 4px solid var(--paytm-success) !important;
   color: var(--paytm-text-primary) !important;
   font-weight: 500 !important;
-  padding: 0.75rem !important;
-  margin-bottom: 0.5rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 0.2rem 0.5rem !important;
+  line-height: 1.2 !important;
+  font-size: 0.875rem !important;
 }
 
 .highlighted-box.empty {
@@ -1196,9 +1204,10 @@
   font-weight: 500 !important;
 }
 
-/* SPECIFIC rule for remark text display only (not staff info) */
+/* SPECIFIC rule for text display consistency */
 .highlighted-box.remarks-highlight .remark-content,
 .highlighted-box.remarks-highlight,
+.highlighted-box.notes-highlight,
 .alert.alert-light {
   white-space: pre-line !important;
   word-wrap: break-word !important;
@@ -1244,10 +1253,10 @@
   display: flex !important;
   justify-content: space-between !important;
   align-items: center !important;
-  padding-top: 0.5rem !important;
+  padding-top: 0.25rem !important;
   border-top: 1px solid var(--paytm-border-light) !important;
-  font-size: 0.85rem !important;
-  margin-top: 0.5rem !important;
+  font-size: 0.8rem !important;
+  margin-top: 0.25rem !important;
 }
 
 /* Enhanced remark author - ACTUALLY USED IN HTML */
