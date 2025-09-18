@@ -159,7 +159,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge {{ $interactionBadgeClass }}">
+                                            <span class="badge interaction-count-badge {{ $interactionBadgeClass }}">
                                                 {{ $interactionCount }}
                                             </span>
                                         </td>
@@ -182,8 +182,8 @@
                                                     <i class="fas fa-eye me-1"></i>View
                                                 </a>
                                                 <a href="{{ route('staff.visitor-form', ['mobile' => str_replace('+91', '', $visitor->original_mobile_number)]) }}" 
-                                                   class="btn btn-paytm-secondary btn-sm">
-                                                    <i class="fas fa-plus me-1"></i>Add
+                                                   class="btn btn-paytm-secondary btn-sm add-interaction-btn">
+                                                    <i class="fas fa-plus me-1"></i>Add Interaction
                                                 </a>
                                             </div>
                                         </td>
@@ -219,7 +219,7 @@
                                         </small>
                                     </div>
                                     <div class="interaction-badge">
-                                        <span class="badge {{ $interactionBadgeClass }}">
+                                        <span class="badge interaction-count-badge {{ $interactionBadgeClass }}">
                                             {{ $interactionCount }} visits
                                         </span>
                                     </div>
@@ -258,8 +258,8 @@
                                         <i class="fas fa-eye me-1"></i>View Profile
                                     </a>
                                     <a href="{{ route('staff.visitor-form', ['mobile' => str_replace('+91', '', $visitor->original_mobile_number)]) }}" 
-                                       class="btn btn-paytm-secondary btn-sm">
-                                        <i class="fas fa-plus me-1"></i>Add
+                                       class="btn btn-paytm-secondary btn-sm add-interaction-btn">
+                                        <i class="fas fa-plus me-1"></i>Add Interaction
                                     </a>
                                 </div>
                             </div>
@@ -355,22 +355,57 @@
     border-radius: 8px;
 }
 
-/* Interaction count badges */
-.badge-success {
-    background-color: var(--paytm-success) !important;
+/* Interaction count badges with better visibility */
+.interaction-count-badge {
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 12px !important;
+    min-width: 40px !important;
+    text-align: center !important;
+    display: inline-block !important;
 }
 
-.badge-warning {
-    background-color: var(--paytm-warning) !important;
-    color: var(--paytm-dark) !important;
+.interaction-count-badge.badge-success {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+    border: 2px solid #1e7e34 !important;
 }
 
-.badge-danger {
-    background-color: var(--paytm-danger) !important;
+.interaction-count-badge.badge-warning {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+    border: 2px solid #e0a800 !important;
+    font-weight: 700 !important;
 }
 
-.badge-secondary {
+.interaction-count-badge.badge-danger {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+    border: 2px solid #c82333 !important;
+}
+
+.interaction-count-badge.badge-secondary {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+    border: 2px solid #545b62 !important;
+}
+
+/* Add Interaction button styling */
+.add-interaction-btn {
     background-color: var(--paytm-secondary) !important;
+    color: #ffffff !important;
+    border: 2px solid var(--paytm-secondary) !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.add-interaction-btn:hover {
+    background-color: var(--paytm-secondary-dark) !important;
+    color: #ffffff !important;
+    border-color: var(--paytm-secondary-dark) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(var(--paytm-secondary-rgb), 0.3) !important;
 }
 
 /* Mobile Results */
