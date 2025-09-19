@@ -70,9 +70,9 @@
                                             <div>
                                                 @if($interaction->initial_notes && $interaction->initial_notes !== 'NA')
                                                     <span class="text-muted">{{ Str::limit($interaction->initial_notes, 100) }}</span>
-                                                @else
+                                            @else
                                                     <span class="text-muted fst-italic">No notes added</span>
-                                                @endif
+                                            @endif
                                             </div>
                                         </td>
                                         <td>
@@ -118,9 +118,9 @@
                                                title="View Profile">
                                                 <i class="fas fa-eye me-1"></i>View
                                             </a>
-                                            @else
+                                                @else
                                             <span class="text-muted">No visitor</span>
-                                            @endif
+                                                @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -184,7 +184,7 @@
                                             <small class="text-muted">Mobile:</small><br>
                                             <strong>{{ $interaction->visitor ? $interaction->visitor->mobile_number : 'No mobile number' }}</strong>
                                         </div>
-                                    </div>
+                                        </div>
 
                                     <!-- Purpose and Mode -->
                                     <div class="row mb-2">
@@ -221,9 +221,9 @@
                                                title="View Profile">
                                                 <i class="fas fa-eye me-1"></i>View Profile
                                             </a>
-                                            @else
+                                        @else
                                             <span class="btn btn-secondary w-100 disabled">No visitor data</span>
-                                            @endif
+                                        @endif
                                         </div>
                                     </div>
                                 </div>

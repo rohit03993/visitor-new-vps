@@ -540,18 +540,18 @@ class StaffController extends Controller
                 // Get last interaction details for auto-fill
                 $lastInteraction = $visitor->interactions()->with(['meetingWith', 'address'])->orderBy('created_at', 'desc')->first();
                 
-                $lastInteractionDetails = [
+                    $lastInteractionDetails = [
                     'contact_name' => $visitor->name,
                     'student_name' => $visitor->student_name,
-                    'father_name' => $visitor->father_name,
+                        'father_name' => $visitor->father_name,
                     'course_id' => $visitor->course_id,
                     'mode' => $lastInteraction->mode ?? 'In-Campus',
                     'meeting_with' => $lastInteraction->meeting_with ?? null,
                     'address_id' => $lastInteraction->address_id ?? null,
-                    'address_name' => $lastInteraction->address->address_name ?? '',
-                    'tags' => $visitor->tags->pluck('id')->toArray(),
-                ];
-            }
+                        'address_name' => $lastInteraction->address->address_name ?? '',
+                        'tags' => $visitor->tags->pluck('id')->toArray(),
+                    ];
+                }
         } elseif (!empty($prefilledMobile)) {
             $formattedMobile = '+91' . $prefilledMobile;
             
@@ -675,10 +675,10 @@ class StaffController extends Controller
             // If not found by ID, search by name match (case-insensitive and trimmed)
             if (!$existingVisitor) {
                 $existingVisitor = Visitor::where('mobile_number', $formattedMobile)
-                    ->orWhere('mobile_number', $mobileNumber)
+            ->orWhere('mobile_number', $mobileNumber)
                     ->whereRaw('LOWER(TRIM(name)) = LOWER(TRIM(?))', [trim($request->name)])
                     ->whereRaw('LOWER(TRIM(student_name)) = LOWER(TRIM(?))', [trim($request->student_name)])
-                    ->first();
+            ->first();
             }
             
             // If not found in primary search, try additional phone numbers
