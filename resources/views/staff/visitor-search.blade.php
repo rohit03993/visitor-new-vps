@@ -171,7 +171,7 @@
                                        value="{{ old('date_to') }}">
                             </div>
                         </div>
-
+                        
                         <!-- Action Buttons -->
                         <div class="d-flex justify-content-between">
                             <button type="button" class="btn btn-paytm-secondary" id="clearAdvancedSearch">
@@ -182,10 +182,10 @@
                             </button>
                         </div>
                     </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 </div>
 @endsection
 

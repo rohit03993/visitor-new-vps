@@ -9,9 +9,13 @@
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
             <div></div>
             <div class="d-flex flex-column flex-md-row gap-2">
-                <a href="{{ route('staff.visitor-form', ['mobile' => $originalMobileNumber, 'name' => $visitor->name]) }}" 
+                <a href="{{ route('staff.visitor-form', ['mobile' => $originalMobileNumber, 'name' => $visitor->name, 'action' => 'add_interaction', 'visitor_id' => $visitor->visitor_id]) }}" 
                    class="btn btn-paytm-success">
                     <i class="fas fa-plus me-2"></i>Add Interaction
+                </a>
+                <a href="{{ route('staff.visitor-form', ['mobile' => !empty($searchedMobile) ? $searchedMobile : $originalMobileNumber, 'action' => 'add_student']) }}" 
+                   class="btn btn-outline-primary">
+                    <i class="fas fa-user-plus me-2"></i>Add Another Student
                 </a>
             </div>
         </div>

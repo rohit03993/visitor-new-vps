@@ -95,6 +95,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/visitor/{visitorId}/add-phone', [StaffController::class, 'addPhoneNumber'])->name('add-phone-number');
         Route::delete('/visitor/{visitorId}/remove-phone/{phoneId}', [StaffController::class, 'removePhoneNumber'])->name('remove-phone-number');
         
+        
         // Smart refresh API
         Route::get('/check-assigned-changes', [StaffController::class, 'checkAssignedChanges'])->name('check-assigned-changes');
         

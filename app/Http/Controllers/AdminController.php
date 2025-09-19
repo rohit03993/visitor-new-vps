@@ -90,41 +90,79 @@ class AdminController extends Controller
         ]);
 
         $mobileNumber = $request->input('mobile_number');
-        
-        // Format mobile number with +91 prefix for database search
         $formattedMobile = '+91' . $mobileNumber;
         
-        // Search for visitor - PRIMARY SEARCH (existing logic preserved)
-        $visitor = Visitor::where('mobile_number', $formattedMobile)
-            ->orWhere('mobile_number', $mobileNumber)
-            ->first();
+        // Search for ALL students with this phone number
+        $students = $this->findStudentsByPhoneNumber($mobileNumber, $formattedMobile);
         
-        // If not found in primary search, try additional phone numbers (NEW FEATURE)
-        if (!$visitor) {
-            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
-                ->orWhere('phone_number', $mobileNumber)
-                ->with('visitor')
-                ->first();
+        if (count($students) === 0) {
+            return back()->withErrors(['error' => 'No students found with this mobile number.']);
+        } elseif (count($students) === 1) {
+            // Single student found - show profile directly
+            $visitor = Visitor::findOrFail($students[0]['visitor_id']);
             
-            if ($phoneRecord && $phoneRecord->visitor) {
-                $visitor = $phoneRecord->visitor;
+            // Get all interactions for this visitor (Admin can see all interactions)
+            $interactions = $visitor->interactions()
+                ->with(['address', 'meetingWith', 'createdBy', 'remarks.addedBy'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Load tags for the visitor
+            $visitor->load('tags');
+
+            return view('admin.visitor-profile', compact('visitor', 'interactions', 'mobileNumber'));
+        } else {
+            // Multiple students found - show selection screen
+            return view('admin.student-selection', [
+                'students' => $students,
+                'phoneNumber' => $mobileNumber,
+                'formattedPhone' => $formattedMobile
+            ]);
+        }
+    }
+    
+    /**
+     * Find all students associated with a phone number (same as StaffController)
+     */
+    private function findStudentsByPhoneNumber($mobileNumber, $formattedMobile)
+    {
+        $students = collect();
+        
+        // Find students with this as PRIMARY number
+        $primaryStudents = Visitor::where('mobile_number', $formattedMobile)
+            ->orWhere('mobile_number', $mobileNumber)
+            ->with(['interactions', 'course'])
+            ->get()
+            ->map(function($student) {
+                $student->phone_type = 'primary';
+                return $student;
+            });
+        
+        // Find students with this as ADDITIONAL number
+        $additionalStudents = collect();
+        $phoneRecords = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+            ->orWhere('phone_number', $mobileNumber)
+            ->with(['visitor.interactions', 'visitor.course'])
+            ->get();
+        
+        foreach ($phoneRecords as $phoneRecord) {
+            if ($phoneRecord->visitor) {
+                $student = $phoneRecord->visitor;
+                $student->phone_type = 'additional';
+                $additionalStudents->push($student);
             }
         }
         
-        if (!$visitor) {
-            return back()->withErrors(['error' => 'No visitor found with this mobile number.']);
+        // Combine results: Primary students first, then additional
+        $students = $primaryStudents->concat($additionalStudents);
+        
+        // Add interaction count for each student
+        foreach ($students as $student) {
+            $student->interaction_count = $student->interactions->count();
+            $student->latest_interaction = $student->interactions->sortByDesc('created_at')->first();
         }
-
-        // Get all interactions for this visitor (Admin can see all interactions)
-        $interactions = $visitor->interactions()
-            ->with(['address', 'meetingWith', 'createdBy', 'remarks.addedBy'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        // Load tags for the visitor
-        $visitor->load('tags');
-
-        return view('admin.visitor-profile', compact('visitor', 'interactions', 'mobileNumber'));
+        
+        return $students->toArray();
     }
 
     public function exportVisitorProfile($visitorId)

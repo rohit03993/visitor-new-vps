@@ -16,6 +16,14 @@
                 <form id="visitorForm" method="POST" action="{{ route('staff.store-visitor') }}">
                     @csrf
                     
+                    <!-- Hidden fields to preserve parameters -->
+                    @if(request('action'))
+                        <input type="hidden" name="action" value="{{ request('action') }}">
+                    @endif
+                    @if(request('visitor_id'))
+                        <input type="hidden" name="visitor_id" value="{{ request('visitor_id') }}">
+                    @endif
+                    
                     <!-- Mobile Number -->
                     <div class="form-field mb-4">
                         <div class="field-header">
@@ -25,10 +33,13 @@
                             </div>
                             <div class="visitor-status">
                                 <div id="visitorStatus">
-                                    @if($isExistingVisitor)
+                                    @if(isset($lastInteractionDetails) && $lastInteractionDetails)
                                         <span class="badge bg-success">Existing Visitor</span>
+                                    @elseif(isset($isExistingContact) && $isExistingContact)
+                                        <span class="badge bg-info">Existing Contact</span>
+                                        <small class="text-muted d-block mt-1">{{ $existingStudentsCount ?? 0 }} student(s) found</small>
                                     @else
-                                        <span class="badge bg-primary">New Visitor</span>
+                                        <span class="badge bg-primary">New Contact</span>
                                     @endif
                                 </div>
                             </div>
@@ -62,7 +73,8 @@
                         <div class="field-content">
                             <input type="text" class="form-control modern-input" id="name" name="name" 
                                    required maxlength="255" placeholder="Enter contact person's full name"
-                                   value="{{ $prefilledName ?? '' }}">
+                                   value="{{ $lastInteractionDetails['contact_name'] ?? $prefilledName ?? '' }}"
+                                   {{ request('action') === 'add_interaction' ? 'readonly' : '' }}>
                             @error('name')
                                 <div class="text-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -134,7 +146,8 @@
                                 <div class="field-content">
                                     <input type="text" class="form-control modern-input" id="student_name" name="student_name" 
                                            maxlength="255" placeholder="Enter student's name"
-                                           value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['student_name'] : '' }}">
+                                           value="{{ $lastInteractionDetails['student_name'] ?? '' }}"
+                                           {{ request('action') === 'add_interaction' ? 'readonly' : '' }}>
                                     @error('student_name')
                                         <div class="text-danger mt-2">{{ $message }}</div>
                                     @enderror
@@ -152,7 +165,7 @@
                                     <div class="d-flex align-items-center gap-3">
                                         <input type="text" class="form-control modern-input flex-grow-1" id="father_name" name="father_name" 
                                    maxlength="255" placeholder="Enter father's name"
-                                   value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['father_name'] : '' }}">
+                                   value="{{ $lastInteractionDetails['father_name'] ?? '' }}">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="copy_visitor_name" 
                                                    onchange="toggleFatherNameCopy()">
@@ -444,6 +457,19 @@
 
 #addressSuggestions .list-group-item:last-child {
     border-bottom: none;
+}
+
+/* Readonly fields styling */
+.form-control[readonly] {
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+    color: #6c757d !important;
+    cursor: not-allowed;
+}
+
+.form-control[readonly]:focus {
+    box-shadow: none !important;
+    border-color: #e9ecef !important;
 }
 
 /* Form validation */

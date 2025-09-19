@@ -35,9 +35,9 @@
                             <thead>
                                 <tr>
                                     <th>Date & Time</th>
-                                    <th>Visitor</th>
+                                    <th>Student Name</th>
                                     <th>Purpose</th>
-                                    <th>Meeting With</th>
+                                    <th>Notes Before Meeting</th>
                                     <th>Status</th>
                                     <th>Action</th>
                                 </tr>
@@ -54,9 +54,9 @@
                                         </td>
                                         <td>
                                             <div>
-                                                <strong>{{ $interaction->name_entered }}</strong>
+                                                <strong>{{ $interaction->visitor ? $interaction->visitor->student_name : $interaction->name_entered }}</strong>
                                                 <br>
-                                                <small class="text-muted">{{ $interaction->visitor->mobile_number }}</small>
+                                                <small class="text-muted">{{ $interaction->visitor ? $interaction->visitor->mobile_number : 'No mobile number' }}</small>
                                             </div>
                                         </td>
                                         <td>
@@ -68,16 +68,16 @@
                                         </td>
                                         <td>
                                             <div>
-                                                <strong>{{ $interaction->meetingWith->name ?? 'No Data' }}</strong>
-                                                <br>
-                                                <span class="badge bg-info">
-                                                    {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
-                                                </span>
-                                                </div>
+                                                @if($interaction->initial_notes && $interaction->initial_notes !== 'NA')
+                                                    <span class="text-muted">{{ Str::limit($interaction->initial_notes, 100) }}</span>
+                                                @else
+                                                    <span class="text-muted fst-italic">No notes added</span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td>
                                             @if($interaction->remarks->count() > 0)
-                                                @if($interaction->is_completed)
+                                            @if($interaction->is_completed)
                                                     @php
                                                         $latestRemark = $interaction->remarks->last();
                                                         $outcome = $latestRemark->outcome ?? 'in_process';
@@ -102,7 +102,7 @@
                                                     @endphp
                                                     
                                                     @if($hasWorkRemark)
-                                                        <span class="badge bg-info">Remark Updated</span>
+                                                    <span class="badge bg-info">Remark Updated</span>
                                                     @else
                                                         <span class="badge bg-warning">Remark Pending</span>
                                                     @endif
@@ -112,11 +112,15 @@
                                             @endif
                                         </td>
                                         <td>
+                                            @if($interaction->visitor)
                                             <a href="{{ route('staff.visitor-profile', $interaction->visitor->visitor_id) }}" 
                                                class="btn btn-sm btn-outline-primary"
                                                title="View Profile">
                                                 <i class="fas fa-eye me-1"></i>View
                                             </a>
+                                            @else
+                                            <span class="text-muted">No visitor</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -132,7 +136,7 @@
                                     <!-- Header with Date and Status -->
                                     <div class="d-flex justify-content-between align-items-start mb-3">
                                         <div>
-                                            <h6 class="card-title mb-1">{{ $interaction->name_entered }}</h6>
+                                            <h6 class="card-title mb-1">{{ $interaction->visitor ? $interaction->visitor->student_name : $interaction->name_entered }}</h6>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar me-1"></i>
                                                 {{ \App\Helpers\DateTimeHelper::formatIndianDate($interaction->created_at) }}
@@ -178,7 +182,7 @@
                                     <div class="row mb-2">
                                         <div class="col-12">
                                             <small class="text-muted">Mobile:</small><br>
-                                            <strong>{{ $interaction->visitor->mobile_number }}</strong>
+                                            <strong>{{ $interaction->visitor ? $interaction->visitor->mobile_number : 'No mobile number' }}</strong>
                                         </div>
                                     </div>
 
@@ -196,26 +200,30 @@
                                         </div>
                                     </div>
 
-                                    <!-- Meeting Details -->
+                                    <!-- Notes Before Meeting -->
                                     <div class="row mb-3">
                                         <div class="col-12">
-                                            <small class="text-muted">Meeting With:</small><br>
-                                            <strong>{{ $interaction->meetingWith->name ?? 'No Data' }}</strong>
-                                            <br>
-                                            <span class="badge bg-info">
-                                                {{ $interaction->meetingWith->branch->branch_name ?? 'No Data' }}
-                                            </span>
+                                            <small class="text-muted">Notes Before Meeting:</small><br>
+                                            @if($interaction->initial_notes && $interaction->initial_notes !== 'NA')
+                                                <span class="text-dark">{{ Str::limit($interaction->initial_notes, 150) }}</span>
+                                            @else
+                                                <span class="text-muted fst-italic">No notes added</span>
+                                            @endif
                                         </div>
                                     </div>
 
                                     <!-- Action Button -->
                                     <div class="row">
                                         <div class="col-12">
+                                            @if($interaction->visitor)
                                             <a href="{{ route('staff.visitor-profile', $interaction->visitor->visitor_id) }}" 
                                                class="btn btn-primary w-100"
                                                title="View Profile">
                                                 <i class="fas fa-eye me-1"></i>View Profile
                                             </a>
+                                            @else
+                                            <span class="btn btn-secondary w-100 disabled">No visitor data</span>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>

@@ -105,28 +105,24 @@ class StaffController extends Controller
         if (!empty($prefilledMobile)) {
             // Clean the mobile number (remove +91 if present)
             $cleanMobile = preg_replace('/^\+91/', '', $prefilledMobile);
+            $formattedMobile = '+91' . $cleanMobile;
             
-            // Search for visitor - PRIMARY SEARCH (existing logic preserved)
-            $visitor = Visitor::where('mobile_number', '+91' . $cleanMobile)
-                ->orWhere('mobile_number', $cleanMobile)
-                ->first();
+            // Search for ALL students with this phone number
+            $students = $this->findStudentsByPhoneNumber($cleanMobile, $formattedMobile);
             
-            // If not found in primary search, try additional phone numbers (NEW FEATURE)
-            if (!$visitor) {
-                $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', '+91' . $cleanMobile)
-                    ->orWhere('phone_number', $cleanMobile)
-                    ->with('visitor')
-                    ->first();
-                
-                if ($phoneRecord && $phoneRecord->visitor) {
-                    $visitor = $phoneRecord->visitor;
-                }
+            if (count($students) === 1) {
+                // Single student found - redirect directly to profile with searched number
+                return redirect()->route('staff.visitor-profile', $students[0]['visitor_id'])
+                    ->with('searched_mobile', $cleanMobile);
+            } elseif (count($students) > 1) {
+                // Multiple students found - show selection screen
+                return view('staff.student-selection', [
+                    'students' => $students,
+                    'phoneNumber' => $cleanMobile,
+                    'formattedPhone' => $formattedMobile
+                ]);
             }
-            
-            if ($visitor) {
-                // Redirect to the visitor profile page (single source of truth)
-                return redirect()->route('staff.visitor-profile', $visitor->visitor_id);
-            }
+            // If no students found, continue to show search form
         }
         
         // Get dropdown data for advanced search
@@ -144,6 +140,7 @@ class StaffController extends Controller
         $assignedInteractions = InteractionHistory::where('meeting_with', $user->user_id)
             ->where('is_completed', false) // Only show interactions that are not completed
             ->with(['visitor', 'meetingWith.branch', 'address', 'remarks'])
+            ->orderBy('created_at', 'desc') // Latest first
             ->get()
             ->filter(function($interaction) {
                 // If interaction has no remarks, show it (truly pending)
@@ -171,13 +168,6 @@ class StaffController extends Controller
             ['path' => request()->url()]
         );
         
-        // Debug: Log the count for troubleshooting
-        \Log::info('Assigned interactions for user ' . $user->user_id . ': ' . $assignedInteractions->count());
-        
-        // Debug: Log visitor IDs
-        foreach($assignedInteractions as $interaction) {
-            \Log::info('Interaction ID: ' . $interaction->interaction_id . ', Visitor ID: ' . $interaction->visitor_id . ', Visitor Name: ' . $interaction->visitor->name);
-        }
         
         // Mask mobile numbers for staff privacy (display only)
         foreach ($assignedInteractions as $interaction) {
@@ -204,6 +194,7 @@ class StaffController extends Controller
             $assignedInteractions = InteractionHistory::where('meeting_with', $user->user_id)
                 ->where('is_completed', false)
                 ->with(['visitor', 'remarks'])
+                ->orderBy('created_at', 'desc') // Latest first
                 ->get()
                 ->filter(function($interaction) {
                     // Same filtering logic as showAssignedToMe
@@ -272,32 +263,90 @@ class StaffController extends Controller
         $user = auth()->user();
         $permittedBranchIds = $user->getAllowedBranchIds('can_view_remarks');
         
-        // Search for visitor - PRIMARY SEARCH (existing logic preserved)
-        $visitor = Visitor::where('mobile_number', $formattedMobile)
-            ->orWhere('mobile_number', $mobileNumber)
-            ->first();
+        // Search for ALL students with this phone number
+        $students = $this->findStudentsByPhoneNumber($mobileNumber, $formattedMobile);
         
-        // If not found in primary search, try additional phone numbers (NEW FEATURE)
-        if (!$visitor) {
-            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
-                ->orWhere('phone_number', $mobileNumber)
-                ->with('visitor')
-                ->first();
-            
-            if ($phoneRecord && $phoneRecord->visitor) {
-                $visitor = $phoneRecord->visitor;
-            }
-        }
-        
-        if ($visitor) {
-            // Redirect to the visitor profile page (single source of truth)
-            return redirect()->route('staff.visitor-profile', $visitor->visitor_id);
-        } else {
-            // Visitor not found - redirect to visitor form
+        if (count($students) === 0) {
+            // No students found - redirect to visitor form for new student
             return redirect()->route('staff.visitor-form', [
                 'mobile' => $mobileNumber
             ]);
+        } elseif (count($students) === 1) {
+            // Single student found - redirect directly to profile with searched number
+            return redirect()->route('staff.visitor-profile', $students[0]['visitor_id'])
+->with('searched_mobile', $mobileNumber);
+        } else {
+            // Multiple students found - show selection screen
+            return view('staff.student-selection', [
+                'students' => $students,
+                'phoneNumber' => $mobileNumber,
+                'formattedPhone' => $formattedMobile
+            ]);
         }
+    }
+    
+    /**
+     * Find all students associated with a phone number
+     */
+    private function findStudentsByPhoneNumber($mobileNumber, $formattedMobile)
+    {
+        $students = collect();
+        
+        // Find students with this as PRIMARY number
+        $primaryStudents = Visitor::where('mobile_number', $formattedMobile)
+            ->orWhere('mobile_number', $mobileNumber)
+            ->with(['interactions', 'course'])
+            ->get()
+            ->map(function($student) {
+                $student->phone_type = 'primary';
+                return $student;
+            });
+        
+        // Find students with this as ADDITIONAL number
+        $additionalStudents = collect();
+        $phoneRecords = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+            ->orWhere('phone_number', $mobileNumber)
+            ->with(['visitor.interactions', 'visitor.course'])
+            ->get();
+        
+        foreach ($phoneRecords as $phoneRecord) {
+            if ($phoneRecord->visitor) {
+                $student = $phoneRecord->visitor;
+                $student->phone_type = 'additional';
+                $additionalStudents->push($student);
+            }
+        }
+        
+        // Combine results: Primary students first, then additional
+        $students = $primaryStudents->concat($additionalStudents);
+        
+        // Add interaction count for each student
+        foreach ($students as $student) {
+            $student->interaction_count = $student->interactions->count();
+            $student->latest_interaction = $student->interactions->sortByDesc('created_at')->first();
+        }
+        
+        // Convert to array format that the view expects
+        return $students->map(function($student) {
+            return [
+                'visitor_id' => $student->visitor_id,
+                'name' => $student->name,
+                'student_name' => $student->student_name,
+                'father_name' => $student->father_name,
+                'mobile_number' => $student->mobile_number,
+                'course_id' => $student->course_id,
+                'phone_type' => $student->phone_type,
+                'interaction_count' => $student->interaction_count,
+                'latest_interaction' => $student->latest_interaction ? [
+                    'created_at' => $student->latest_interaction->created_at,
+                    'mode' => $student->latest_interaction->mode,
+                ] : null,
+                'course' => $student->course ? [
+                    'course_name' => $student->course->course_name,
+                ] : null,
+                'interactions' => $student->interactions->toArray(),
+            ];
+        })->toArray();
     }
 
     public function advancedSearch(Request $request)
@@ -475,54 +524,94 @@ class StaffController extends Controller
             $prefilledMobile = preg_replace('/^\+91/', '', $prefilledMobile);
         }
         
-        // Check if visitor exists and get last details
-        $isExistingVisitor = false;
+        // Check if this is "Add Interaction" with visitor_id (most reliable)
+        $isExistingContact = false;
+        $contactPersonDetails = null;
         $lastInteractionDetails = null;
-        if (!empty($prefilledMobile)) {
+        $existingStudentsCount = 0;
+        
+        // PRIORITY 1: If visitor_id is provided (from "Add Interaction" button)
+        if ($request->has('visitor_id') && $request->visitor_id) {
+            $visitor = Visitor::with(['interactions', 'tags'])->find($request->visitor_id);
+            
+            if ($visitor) {
+                $isExistingContact = true;
+                
+                // Get last interaction details for auto-fill
+                $lastInteraction = $visitor->interactions()->with(['meetingWith', 'address'])->orderBy('created_at', 'desc')->first();
+                
+                $lastInteractionDetails = [
+                    'contact_name' => $visitor->name,
+                    'student_name' => $visitor->student_name,
+                    'father_name' => $visitor->father_name,
+                    'course_id' => $visitor->course_id,
+                    'mode' => $lastInteraction->mode ?? 'In-Campus',
+                    'meeting_with' => $lastInteraction->meeting_with ?? null,
+                    'address_id' => $lastInteraction->address_id ?? null,
+                    'address_name' => $lastInteraction->address->address_name ?? '',
+                    'tags' => $visitor->tags->pluck('id')->toArray(),
+                ];
+            }
+        } elseif (!empty($prefilledMobile)) {
             $formattedMobile = '+91' . $prefilledMobile;
             
-            // Search for visitor - PRIMARY SEARCH (existing logic preserved)
-            $visitor = Visitor::where('mobile_number', $formattedMobile)
-                ->orWhere('mobile_number', $prefilledMobile)
-                ->first();
+            // Search for ALL students with this phone number
+            $students = $this->findStudentsByPhoneNumber($prefilledMobile, $formattedMobile);
+            $existingStudentsCount = count($students);
             
-            // If not found in primary search, try additional phone numbers (NEW FEATURE)
-            if (!$visitor) {
-                $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
-                    ->orWhere('phone_number', $prefilledMobile)
-                    ->with('visitor')
-                    ->first();
+            if ($existingStudentsCount > 0) {
+                $isExistingContact = true;
                 
-                if ($phoneRecord && $phoneRecord->visitor) {
-                    $visitor = $phoneRecord->visitor;
+                // Check if this is for a specific existing visitor (Add Interaction) 
+                $targetStudentName = $prefilledName ?? '';
+                $targetStudent = null;
+                
+                if (!empty($targetStudentName)) {
+                    // Find the specific student this interaction is for
+                    $targetStudent = collect($students)->first(function($student) use ($targetStudentName) {
+                        return $student['name'] === $targetStudentName;
+                    });
                 }
-            }
-            
-            $isExistingVisitor = $visitor ? true : false;
-            
-            // Get last interaction details for auto-fill
-            if ($visitor) {
-                $lastInteraction = InteractionHistory::where('visitor_id', $visitor->visitor_id)
-                    ->with(['meetingWith', 'address'])
-                    ->orderBy('created_at', 'desc')
-                    ->first();
                 
-                if ($lastInteraction) {
+                if ($targetStudent) {
+                    // This is "Add Interaction" for existing visitor - pre-fill ALL details
+                    $lastInteraction = collect($targetStudent['interactions'])->sortByDesc('created_at')->first();
+                    
                     $lastInteractionDetails = [
-                        'course_id' => $visitor->course_id,
-                        'student_name' => $visitor->student_name,
-                        'father_name' => $visitor->father_name,
-                        'mode' => $lastInteraction->mode,
-                        'meeting_with' => $lastInteraction->meeting_with,
-                        'address_id' => $lastInteraction->address_id,
-                        'address_name' => $lastInteraction->address->address_name ?? '',
-                        'tags' => $visitor->tags->pluck('id')->toArray(),
+                        'contact_name' => $targetStudent['name'],
+                        'student_name' => $targetStudent['student_name'],
+                        'father_name' => $targetStudent['father_name'],
+                        'course_id' => $targetStudent['course_id'],
+                        'mode' => $lastInteraction['mode'] ?? 'In-Campus',
+                        'meeting_with' => $lastInteraction['meeting_with'] ?? null,
+                        'address_id' => $lastInteraction['address_id'] ?? null,
+                        'address_name' => $lastInteraction['address']['address_name'] ?? '',
+                        'tags' => [], // Will be loaded from visitor tags
                     ];
+                } else {
+                    // This is "Add Another Student" - only pre-fill contact details
+                    $firstStudent = collect($students)->first();
+                    $lastInteraction = collect($firstStudent['interactions'])->sortByDesc('created_at')->first();
+                    
+                    $contactPersonDetails = [
+                        'contact_name' => $firstStudent['name'], // Contact person name
+                        'student_name' => '', // Will be filled by user for new student
+                        'father_name' => $firstStudent['father_name'],
+                        'course_id' => null, // New student, new course
+                        'mode' => $lastInteraction['mode'] ?? 'In-Campus',
+                        'meeting_with' => $lastInteraction['meeting_with'] ?? null,
+                        'address_id' => $lastInteraction['address_id'] ?? null,
+                        'address_name' => $lastInteraction['address']['address_name'] ?? '',
+                        'tags' => [], // New student, new purpose
+                    ];
+                    
+                    // For backward compatibility
+                    $lastInteractionDetails = $contactPersonDetails;
                 }
             }
         }
         
-        return view('staff.visitor-form', compact('employees', 'addresses', 'tags', 'courses', 'prefilledMobile', 'prefilledName', 'isExistingVisitor', 'originalMobileNumber', 'lastInteractionDetails'));
+        return view('staff.visitor-form', compact('employees', 'addresses', 'tags', 'courses', 'prefilledMobile', 'prefilledName', 'isExistingContact', 'contactPersonDetails', 'existingStudentsCount', 'originalMobileNumber', 'lastInteractionDetails'));
     }
 
     public function storeVisitor(Request $request)
@@ -571,24 +660,66 @@ class StaffController extends Controller
             $request->merge(['address_id' => $address->address_id]);
         }
 
-        // Find or create visitor - PRIMARY SEARCH (existing logic preserved)
-        $visitor = Visitor::where('mobile_number', $formattedMobile)
-            ->orWhere('mobile_number', $mobileNumber)
-            ->first();
+        // Check if this is for an existing visitor (Add Interaction) or new student (Add Another Student)
+        // Use the action parameter to determine the intent
+        $isAddingInteraction = $request->get('action') === 'add_interaction';
+        $existingVisitor = null;
         
-        // If not found in primary search, try additional phone numbers (NEW FEATURE)
-        if (!$visitor) {
-            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
-                ->orWhere('phone_number', $mobileNumber)
-                ->with('visitor')
-                ->first();
+        // If adding interaction, try to find existing visitor
+        if ($isAddingInteraction) {
+            // First, try to find by visitor_id if provided (most reliable)
+            if ($request->has('visitor_id') && $request->visitor_id) {
+                $existingVisitor = Visitor::find($request->visitor_id);
+            }
             
-            if ($phoneRecord && $phoneRecord->visitor) {
-                $visitor = $phoneRecord->visitor;
+            // If not found by ID, search by name match (case-insensitive and trimmed)
+            if (!$existingVisitor) {
+                $existingVisitor = Visitor::where('mobile_number', $formattedMobile)
+                    ->orWhere('mobile_number', $mobileNumber)
+                    ->whereRaw('LOWER(TRIM(name)) = LOWER(TRIM(?))', [trim($request->name)])
+                    ->whereRaw('LOWER(TRIM(student_name)) = LOWER(TRIM(?))', [trim($request->student_name)])
+                    ->first();
+            }
+            
+            // If not found in primary search, try additional phone numbers
+            if (!$existingVisitor) {
+                $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
+                    ->orWhere('phone_number', $mobileNumber)
+                    ->with('visitor')
+                    ->first();
+                
+                if ($phoneRecord && $phoneRecord->visitor && 
+                    $phoneRecord->visitor->name === $request->name &&
+                    $phoneRecord->visitor->student_name === $request->student_name) {
+                    $existingVisitor = $phoneRecord->visitor;
+                }
             }
         }
         
-        if (!$visitor) {
+        if ($existingVisitor) {
+            // Update existing visitor information if different
+            $updateData = ['last_updated_by' => $user->user_id];
+            
+            if ($existingVisitor->name !== $request->name) {
+                $updateData['name'] = $request->name;
+            }
+            if ($existingVisitor->course_id != $request->course_id) {
+                $updateData['course_id'] = $request->course_id;
+            }
+            if ($existingVisitor->student_name !== $request->student_name) {
+                $updateData['student_name'] = $request->student_name;
+            }
+            if ($existingVisitor->father_name !== $request->father_name) {
+                $updateData['father_name'] = $request->father_name;
+            }
+            
+            if (count($updateData) > 1) { // More than just last_updated_by
+                $existingVisitor->update($updateData);
+            }
+            
+            $visitor = $existingVisitor;
+        } else {
+            // Create new visitor (allows multiple students with same phone number)
             $visitor = Visitor::create([
                 'mobile_number' => $formattedMobile,
                 'name' => $request->name,
@@ -597,26 +728,6 @@ class StaffController extends Controller
                 'father_name' => $request->father_name,
                 'last_updated_by' => $user->user_id,
             ]);
-        } else {
-            // Update visitor information if different
-            $updateData = ['last_updated_by' => $user->user_id];
-            
-            if ($visitor->name !== $request->name) {
-                $updateData['name'] = $request->name;
-            }
-            if ($visitor->course_id != $request->course_id) {
-                $updateData['course_id'] = $request->course_id;
-            }
-            if ($visitor->student_name !== $request->student_name) {
-                $updateData['student_name'] = $request->student_name;
-            }
-            if ($visitor->father_name !== $request->father_name) {
-                $updateData['father_name'] = $request->father_name;
-            }
-            
-            if (count($updateData) > 1) { // More than just last_updated_by
-                $visitor->update($updateData);
-            }
         }
 
         // Assign single purpose tag to visitor
@@ -819,30 +930,21 @@ class StaffController extends Controller
         $mobileNumber = $request->input('mobile_number');
         $formattedMobile = '+91' . $mobileNumber;
         
-        // Search for visitor - PRIMARY SEARCH (existing logic preserved)
-        $visitor = Visitor::where('mobile_number', $formattedMobile)
-            ->orWhere('mobile_number', $mobileNumber)
-            ->first();
+        // Search for ALL students with this phone number
+        $students = $this->findStudentsByPhoneNumber($mobileNumber, $formattedMobile);
         
-        // If not found in primary search, try additional phone numbers (NEW FEATURE)
-        if (!$visitor) {
-            $phoneRecord = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedMobile)
-                ->orWhere('phone_number', $mobileNumber)
-                ->with('visitor')
-                ->first();
-            
-            if ($phoneRecord && $phoneRecord->visitor) {
-                $visitor = $phoneRecord->visitor;
-            }
-        }
-        
-        if ($visitor) {
+        if (count($students) > 0) {
             return response()->json([
                 'exists' => true,
-                'visitor' => [
-                    'name' => $visitor->name,
-                    'mobile_number' => $visitor->mobile_number,
-                ]
+                'count' => count($students),
+                'students' => array_map(function($student) {
+                    return [
+                        'name' => $student['name'],
+                        'student_name' => $student['student_name'],
+                        'mobile_number' => $student['mobile_number'],
+                        'phone_type' => $student['phone_type']
+                    ];
+                }, $students)
             ]);
         }
         
@@ -1040,7 +1142,7 @@ class StaffController extends Controller
     /**
      * Show visitor profile for staff
      */
-    public function showVisitorProfile($visitorId)
+    public function showVisitorProfile($visitorId, Request $request)
     {
         try {
             $user = Auth::user();
@@ -1071,6 +1173,12 @@ class StaffController extends Controller
             // Store original mobile number for "Add Revisit" functionality
             $originalMobileNumber = $visitor->mobile_number;
             
+            // Get the searched mobile number (if provided)
+            $searchedMobile = session('searched_mobile', '');
+            
+            // Clear the session after using it
+            session()->forget('searched_mobile');
+            
             // Mask mobile number for staff privacy (display only)
             $visitor->mobile_number = $this->maskMobileNumber($visitor->mobile_number);
             
@@ -1082,7 +1190,8 @@ class StaffController extends Controller
                 'groupedInteractions' => $groupedInteractions,
                 'assignedInteractions' => $assignedInteractions,
                 'user' => $user,
-                'originalMobileNumber' => $originalMobileNumber
+                'originalMobileNumber' => $originalMobileNumber,
+                'searchedMobile' => $searchedMobile
             ]);
             
         } catch (\Exception $e) {
@@ -1273,30 +1382,21 @@ class StaffController extends Controller
                 ], 400);
             }
             
-            // Check against ALL other visitors' primary mobile numbers
-            $existingVisitor = Visitor::where('mobile_number', $formattedPhone)
-                ->orWhere('mobile_number', $phoneNumber)
-                ->where('visitor_id', '!=', $visitor->visitor_id)
-                ->first();
-                
-            if ($existingVisitor) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This phone number is already registered as primary number for another visitor.'
-                ], 400);
-            }
-            
-            // Check against existing additional phone numbers
+            // Check against this visitor's existing additional phone numbers (prevent duplicates for same visitor)
             $existingPhone = \App\Models\VisitorPhoneNumber::where('phone_number', $formattedPhone)
                 ->orWhere('phone_number', $phoneNumber)
+                ->where('visitor_id', $visitor->visitor_id)
                 ->first();
                 
             if ($existingPhone) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'This phone number is already registered as additional number for another visitor.'
+                    'message' => 'This phone number is already added as additional number for this student.'
                 ], 400);
             }
+            
+            // Note: We now ALLOW sharing phone numbers between different students
+            // This enables family members to share contact numbers as requested
             
             // Add the phone number
             $newPhone = \App\Models\VisitorPhoneNumber::create([
