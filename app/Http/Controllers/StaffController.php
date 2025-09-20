@@ -1225,7 +1225,6 @@ class StaffController extends Controller
             $request->validate([
                 'team_member_id' => 'required|exists:vms_users,user_id',
                 'assignment_notes' => 'nullable|string|max:500',
-                'schedule_assignment' => 'nullable|boolean',
                 'scheduled_date' => 'nullable|date|after_or_equal:today',
             ]);
             
@@ -1284,8 +1283,8 @@ class StaffController extends Controller
             ]);
             
             // Check if this is a scheduled assignment
-            $isScheduled = $request->boolean('schedule_assignment');
-            $scheduledDate = $isScheduled ? $request->scheduled_date : null;
+            $isScheduled = $request->has('schedule_assignment') && $request->schedule_assignment;
+            $scheduledDate = $isScheduled && $request->scheduled_date ? $request->scheduled_date : null;
             
             // Step 3: Create new interaction for X with transfer context
             $newInteraction = InteractionHistory::create([
