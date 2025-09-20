@@ -54,7 +54,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-success" id="uploadBtn" disabled>
-                        <i class="fas fa-upload me-1"></i>Upload to Google Drive
+                        <i class="fas fa-upload me-1"></i>Upload
                     </button>
                 </div>
             </form>
