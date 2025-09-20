@@ -722,6 +722,7 @@
                         <label for="teamMember" class="form-label">Select Team Member <span class="text-danger">*</span></label>
                         <select class="form-select" id="teamMember" name="team_member_id" required>
                             <option value="">Choose a team member...</option>
+                            <option value="{{ auth()->user()->user_id }}">🔄 Assign to Myself</option>
                             @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
                                 <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
                             @endforeach
@@ -734,6 +735,24 @@
                         <textarea class="form-control" id="assignNotes" name="assignment_notes" rows="3" 
                                   placeholder="Optional: Add notes about why you're transferring this interaction..."></textarea>
                         <div class="form-text">Optional: Add notes that will be visible to the assigned team member</div>
+                    </div>
+                    
+                    <!-- Scheduling Section -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="scheduleAssignment" name="schedule_assignment">
+                            <label class="form-check-label" for="scheduleAssignment">
+                                <i class="fas fa-calendar-alt me-1"></i>Schedule for later date
+                            </label>
+                        </div>
+                        <div class="form-text">Check this to schedule the assignment for a future date</div>
+                    </div>
+                    
+                    <div class="mb-3" id="scheduleDateSection" style="display: none;">
+                        <label for="scheduledDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="scheduledDate" name="scheduled_date" 
+                               min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                        <div class="form-text">The interaction will appear in assignee's tab on this date</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1146,6 +1165,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Handle schedule assignment checkbox
+    const scheduleCheckbox = document.getElementById('scheduleAssignment');
+    const scheduleDateSection = document.getElementById('scheduleDateSection');
+    const scheduledDateInput = document.getElementById('scheduledDate');
+    
+    if (scheduleCheckbox && scheduleDateSection) {
+        scheduleCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                scheduleDateSection.style.display = 'block';
+                scheduledDateInput.required = true;
+            } else {
+                scheduleDateSection.style.display = 'none';
+                scheduledDateInput.required = false;
+                scheduledDateInput.value = '{{ date("Y-m-d") }}';
+            }
+        });
+    }
 });
 </script>
 
