@@ -1154,7 +1154,7 @@ class StaffController extends Controller
             
             // Get all interactions for this visitor
             $interactions = InteractionHistory::where('visitor_id', $visitorId)
-                ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession'])
+                ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession', 'attachments.uploadedBy'])
                 ->orderBy('created_at', 'desc')
                 ->get();
             \Log::info('Interactions found: ' . $interactions->count());

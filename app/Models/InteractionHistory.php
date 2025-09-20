@@ -84,6 +84,11 @@ class InteractionHistory extends Model
         return $this->hasMany(Remark::class, 'interaction_id');
     }
 
+    public function attachments()
+    {
+        return $this->hasMany(InteractionAttachment::class, 'interaction_id');
+    }
+
     // Helper methods
     public function getLatestRemark()
     {
