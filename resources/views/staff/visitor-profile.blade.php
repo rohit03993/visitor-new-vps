@@ -553,38 +553,6 @@
                                                                                             </div>
                                                                                         @endforeach
                                                                                         
-                                                                                        <!-- File Attachments Section for Session Interactions -->
-                                                                                        @if($interaction->attachments && $interaction->attachments->count() > 0)
-                                                                                            <div class="mt-3">
-                                                                                                <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-2"></i>Attachments</h6>
-                                                                                                <div class="attachments-list">
-                                                                                                    @foreach($interaction->attachments as $attachment)
-                                                                                                        <div class="attachment-item d-flex align-items-center justify-content-between p-2 border rounded mb-2">
-                                                                                                            <div class="d-flex align-items-center">
-                                                                                                                <i class="fas fa-{{ $attachment->getFileIcon() }} me-2 text-primary"></i>
-                                                                                                                <div>
-                                                                                                                    <div class="fw-semibold">{{ $attachment->original_filename }}</div>
-                                                                                                                    <small class="text-muted">
-                                                                                                                        {{ $attachment->getFormattedFileSize() }} • 
-                                                                                                                        {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($attachment->created_at, 'M d, Y g:iA') }} • 
-                                                                                                                        by {{ $attachment->uploadedBy?->name ?? 'Unknown' }}
-                                                                                                                    </small>
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                            <div class="attachment-actions">
-                                                                                                                <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
-                                                                                                                    <i class="fas fa-eye"></i> View
-                                                                                                                </a>
-                                                                                                                <a href="{{ $attachment->google_drive_url }}/export?format=pdf&download=true" class="btn btn-sm btn-outline-secondary">
-                                                                                                                    <i class="fas fa-download"></i> Download
-                                                                                                                </a>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    @endforeach
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        @endif
-                                                                                        
                                                                                         <!-- Show Add Remark button for transferred interactions (only if no work remarks exist) -->
                                                                                         @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
                                                                                             @php
@@ -635,6 +603,38 @@
                                                                                                     Assigned to: <strong>{{ $interaction->meetingWith->name ?? 'Unknown' }}</strong>
                                                                                                 </div>
                                                                                             @endif
+                                                                                        </div>
+                                                                                    @endif
+                                                                                    
+                                                                                    <!-- File Attachments Section for Session Interactions - Independent of remarks -->
+                                                                                    @if($interaction->attachments && $interaction->attachments->count() > 0)
+                                                                                        <div class="mt-3">
+                                                                                            <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-2"></i>Attachments</h6>
+                                                                                            <div class="attachments-list">
+                                                                                                @foreach($interaction->attachments as $attachment)
+                                                                                                    <div class="attachment-item d-flex align-items-center justify-content-between p-2 border rounded mb-2">
+                                                                                                        <div class="d-flex align-items-center">
+                                                                                                            <i class="fas fa-{{ $attachment->getFileIcon() }} me-2 text-primary"></i>
+                                                                                                            <div>
+                                                                                                                <div class="fw-semibold">{{ $attachment->original_filename }}</div>
+                                                                                                                <small class="text-muted">
+                                                                                                                    {{ $attachment->getFormattedFileSize() }} • 
+                                                                                                                    {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($attachment->created_at, 'M d, Y g:iA') }} • 
+                                                                                                                    by {{ $attachment->uploadedBy?->name ?? 'Unknown' }}
+                                                                                                                </small>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        <div class="attachment-actions">
+                                                                                                            <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                                                                                                <i class="fas fa-eye"></i> View
+                                                                                                            </a>
+                                                                                                            <a href="{{ $attachment->google_drive_url }}/export?format=pdf&download=true" class="btn btn-sm btn-outline-secondary">
+                                                                                                                <i class="fas fa-download"></i> Download
+                                                                                                            </a>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                @endforeach
+                                                                                            </div>
                                                                                         </div>
                                                                                     @endif
                                                                         </div>
