@@ -749,10 +749,40 @@
                     </div>
                     
                     <div class="mb-3" id="scheduleDateSection" style="display: none;">
-                        <label for="scheduledDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="scheduledDate" name="scheduled_date" 
-                               min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
-                        <div class="form-text">The interaction will appear in assignee's tab on this date</div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="scheduledDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="scheduledDate" name="scheduled_date" 
+                                       min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="scheduledHour" class="form-label">Hour <span class="text-danger">*</span></label>
+                                <select class="form-select" id="scheduledHour" name="scheduled_hour">
+                                    <option value="09">09 AM</option>
+                                    <option value="10">10 AM</option>
+                                    <option value="11">11 AM</option>
+                                    <option value="12">12 PM</option>
+                                    <option value="13">01 PM</option>
+                                    <option value="14">02 PM</option>
+                                    <option value="15" selected>03 PM</option>
+                                    <option value="16">04 PM</option>
+                                    <option value="17">05 PM</option>
+                                    <option value="18">06 PM</option>
+                                    <option value="19">07 PM</option>
+                                    <option value="20">08 PM</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="scheduledMinute" class="form-label">Minute <span class="text-danger">*</span></label>
+                                <select class="form-select" id="scheduledMinute" name="scheduled_minute">
+                                    <option value="00">00</option>
+                                    <option value="15">15</option>
+                                    <option value="30">30</option>
+                                    <option value="45">45</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-text">The interaction will appear in assignee's tab on this date and time</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1184,6 +1214,61 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// File Upload Modal Functions
+function showFileUploadModal(interactionId) {
+    document.getElementById('upload_interaction_id').value = interactionId;
+    // Only clear file info display, not the input itself
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = true;
+    const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
+    modal.show();
+}
+
+function submitFileUpload() {
+    const fileInput = document.getElementById('fileInput');
+    const interactionId = document.getElementById('upload_interaction_id').value;
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a file to upload.');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('interaction_id', interactionId);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    // Disable upload button and show loading
+    const uploadBtn = document.getElementById('uploadBtn');
+    const originalText = uploadBtn.innerHTML;
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+    
+    // Upload file
+    fetch('/staff/upload-attachment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('fileUploadModal')).hide();
+            alert('File uploaded successfully to Google Drive!');
+            window.location.reload(true);
+        } else {
+            alert('Upload failed: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        alert('Upload failed: Network error');
+    })
+    .finally(() => {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = originalText;
+    });
+}
 </script>
 
 <!-- Add Phone Number Modal (NEW FEATURE) -->

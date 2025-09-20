@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('interaction_history', function (Blueprint $table) {
-            $table->date('scheduled_date')->nullable()->after('meeting_with');
+            $table->datetime('scheduled_date')->nullable()->after('meeting_with');
             $table->unsignedBigInteger('assigned_by')->nullable()->after('scheduled_date');
             $table->boolean('is_scheduled')->default(false)->after('assigned_by');
             
@@ -32,8 +32,8 @@ return new class extends Migration
     {
         Schema::table('interaction_history', function (Blueprint $table) {
             $table->dropForeign(['assigned_by']);
-            $table->dropIndex(['interaction_history_scheduled_date_index']);
-            $table->dropIndex(['interaction_history_is_scheduled_scheduled_date_index']);
+            $table->dropIndex(['scheduled_date']);
+            $table->dropIndex(['is_scheduled', 'scheduled_date']);
             $table->dropColumn(['scheduled_date', 'assigned_by', 'is_scheduled']);
         });
     }

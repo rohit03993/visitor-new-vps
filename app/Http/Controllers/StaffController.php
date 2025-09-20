@@ -144,8 +144,9 @@ class StaffController extends Controller
                 $query->where('is_scheduled', false)
                       ->orWhere(function($subQuery) {
                           $subQuery->where('is_scheduled', true)
-                                   ->whereDate('scheduled_date', '<=', now()->toDateString());
-                      });
+                                   ->where('scheduled_date', '<=', now());
+                      })
+                      ->orWhereNull('is_scheduled'); // Also show legacy records without scheduling
             })
             ->with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'assignedBy'])
             ->orderBy('created_at', 'desc') // Latest first
@@ -159,7 +160,8 @@ class StaffController extends Controller
                 // If interaction has only 1 remark and it's a transfer remark, show it (transferred interaction)
                 if ($interaction->remarks->count() === 1) {
                     $remark = $interaction->remarks->first();
-                    return strpos($remark->remark_text, 'Transferred from') !== false;
+                    return strpos($remark->remark_text, 'Transferred from') !== false ||
+                           strpos($remark->remark_text, '📅 Scheduled Assignment from') !== false;
                 }
                 
                 // If interaction has multiple remarks, don't show it (already worked on)
@@ -1226,6 +1228,8 @@ class StaffController extends Controller
                 'team_member_id' => 'required|exists:vms_users,user_id',
                 'assignment_notes' => 'nullable|string|max:500',
                 'scheduled_date' => 'nullable|date|after_or_equal:today',
+                'scheduled_hour' => 'nullable|string',
+                'scheduled_minute' => 'nullable|string',
             ]);
             
             // Get the interaction
@@ -1284,7 +1288,14 @@ class StaffController extends Controller
             
             // Check if this is a scheduled assignment
             $isScheduled = $request->has('schedule_assignment') && $request->schedule_assignment;
-            $scheduledDate = $isScheduled && $request->scheduled_date ? $request->scheduled_date : null;
+            $scheduledDate = null;
+            
+            if ($isScheduled && $request->scheduled_date) {
+                $scheduledHour = $request->scheduled_hour ?? '09';
+                $scheduledMinute = $request->scheduled_minute ?? '00';
+                $scheduledDate = $request->scheduled_date . ' ' . $scheduledHour . ':' . $scheduledMinute . ':00';
+                \Log::info('Scheduled datetime constructed: ' . $scheduledDate);
+            }
             
             // Step 3: Create new interaction for X with transfer context
             $newInteraction = InteractionHistory::create([
