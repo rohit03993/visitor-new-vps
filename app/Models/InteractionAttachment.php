@@ -49,21 +49,26 @@ class InteractionAttachment extends Model
         return round($bytes, 2) . ' ' . $units[$i];
     }
     
+    public function getFormattedFileSize()
+    {
+        return $this->getFileSizeFormatted();
+    }
+    
     public function getFileIcon()
     {
         switch (strtolower($this->file_type)) {
             case 'pdf':
-                return 'fas fa-file-pdf text-danger';
+                return 'file-pdf';
             case 'jpg':
             case 'jpeg':
             case 'png':
             case 'webp':
-                return 'fas fa-file-image text-primary';
+                return 'file-image';
             case 'mp3':
             case 'wav':
-                return 'fas fa-file-audio text-success';
+                return 'file-audio';
             default:
-                return 'fas fa-file text-secondary';
+                return 'file';
         }
     }
     
