@@ -192,8 +192,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     bootstrap.Modal.getInstance(document.getElementById('fileUploadModal')).hide();
+                    // Show success message and reload page immediately
                     alert('File uploaded successfully to Google Drive!');
-                    location.reload();
+                    // Force page reload to show the uploaded file
+                    window.location.reload(true);
                 } else {
                     alert('Upload failed: ' + (data.message || 'Unknown error'));
                 }
