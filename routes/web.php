@@ -64,6 +64,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/create-course', [AdminController::class, 'createCourse'])->name('create-course');
         Route::put('/update-course/{courseId}', [AdminController::class, 'updateCourse'])->name('update-course');
         Route::delete('/delete-course/{courseId}', [AdminController::class, 'deleteCourse'])->name('delete-course');
+        
+        // Student Selection Routes
+        Route::get('/student-selection', [AdminController::class, 'showStudentSelection'])->name('student-selection');
     });
 
 
@@ -95,6 +98,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/visitor/{visitorId}/add-phone', [StaffController::class, 'addPhoneNumber'])->name('add-phone-number');
         Route::delete('/visitor/{visitorId}/remove-phone/{phoneId}', [StaffController::class, 'removePhoneNumber'])->name('remove-phone-number');
         
+        // File Upload Routes (GOOGLE DRIVE INTEGRATION)
+        Route::post('/upload-attachment', [StaffController::class, 'uploadAttachment'])->name('upload-attachment');
+        
+        // Student Selection Routes
+        Route::get('/student-selection', [StaffController::class, 'showStudentSelection'])->name('student-selection');
         
         // Smart refresh API
         Route::get('/check-assigned-changes', [StaffController::class, 'checkAssignedChanges'])->name('check-assigned-changes');
@@ -118,4 +126,10 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('test-api');
 
+});
+
+// Google OAuth Routes (Admin only)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('google.auth');
+    Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
 });

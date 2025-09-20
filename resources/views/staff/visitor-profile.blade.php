@@ -206,18 +206,26 @@
                                                             
                                                             <!-- Show Add Remark button if assigned to current user and not completed -->
                                                             @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
-                                                                <div class="mt-2">
+                                                                <div class="mt-2 d-flex gap-2">
                                                                     <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                         <i class="fas fa-plus me-1"></i>Add Remark
+                                                                    </button>
+                                                                    <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
                                                                     </button>
                                                                 </div>
                                                             @endif
                                                         @else
                                                             @if($interaction->meeting_with == auth()->user()->user_id)
                                                                 <span class="badge bg-warning">Remark Pending</span>
-                                                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                    <i class="fas fa-plus me-1"></i>Add Remark
-                                                                </button>
+                                                                <div class="d-flex gap-2 ms-2">
+                                                                    <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                        <i class="fas fa-plus me-1"></i>Add Remark
+                                                                    </button>
+                                                                    <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                    </button>
+                                                                </div>
                                                             @else
                                                                 <span class="badge bg-warning">
                                                                     Remark Pending - {{ $interaction->meetingWith->name ?? 'Unknown' }}
@@ -532,9 +540,14 @@
                                                                                             <i class="fas fa-comment-slash text-muted"></i>
                                                                                             <span class="text-muted">No remarks</span>
                                                                                             @if($interaction->meeting_with == auth()->user()->user_id)
-                                                                                                <button class="btn-paytm-primary mt-2" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                    <i class="fas fa-plus me-2"></i>Add Remark
-                                                                                                </button>
+                                                                                                <div class="d-flex gap-2 mt-2 justify-content-center">
+                                                                                                    <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                        <i class="fas fa-plus me-2"></i>Add Remark
+                                                                                                    </button>
+                                                                                                    <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                                    </button>
+                                                                                                </div>
                                                                                             @else
                                                                                                 <div class="alert alert-info alert-sm mt-2">
                                                                                                     <i class="fas fa-info-circle me-1"></i>
@@ -1103,5 +1116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+@include('staff.modals.file-upload')
 
 @endsection

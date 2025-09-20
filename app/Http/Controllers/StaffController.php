@@ -1471,4 +1471,83 @@ class StaffController extends Controller
             ], 500);
         }
     }
+    
+    /**
+     * Upload file attachment to Google Drive
+     */
+    public function uploadAttachment(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|file|max:20480', // 20MB max
+                'interaction_id' => 'required|exists:interaction_history,interaction_id',
+            ]);
+            
+            $user = auth()->user();
+            $interactionId = $request->interaction_id;
+            $file = $request->file('file');
+            
+            // Check if user has permission to add attachments to this interaction
+            $interaction = InteractionHistory::find($interactionId);
+            if (!$interaction || $interaction->meeting_with != $user->user_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to add attachments to this interaction.'
+                ], 403);
+            }
+            
+            // Check file limit per interaction (max 5 files)
+            $existingFiles = \App\Models\InteractionAttachment::where('interaction_id', $interactionId)->count();
+            if ($existingFiles >= 5) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Maximum 5 files allowed per interaction.'
+                ], 400);
+            }
+            
+            // Initialize Google Drive service
+            $googleDriveService = new \App\Services\GoogleDriveService();
+            
+            // Validate file
+            $googleDriveService->validateFile($file);
+            
+            // Upload to Google Drive
+            $uploadResult = $googleDriveService->uploadFile($file, $interactionId);
+            
+            // Save attachment record to database
+            $attachment = \App\Models\InteractionAttachment::create([
+                'interaction_id' => $interactionId,
+                'original_filename' => $file->getClientOriginalName(),
+                'file_type' => strtolower($file->getClientOriginalExtension()),
+                'file_size' => $file->getSize(),
+                'google_drive_file_id' => $uploadResult['google_drive_file_id'],
+                'google_drive_url' => $uploadResult['google_drive_url'],
+                'uploaded_by' => $user->user_id,
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'File uploaded successfully to Google Drive!',
+                'attachment' => [
+                    'id' => $attachment->id,
+                    'filename' => $attachment->original_filename,
+                    'size' => $attachment->getFileSizeFormatted(),
+                    'type' => $attachment->file_type,
+                    'url' => $attachment->google_drive_url,
+                ]
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('File upload error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
