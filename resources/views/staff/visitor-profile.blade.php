@@ -259,11 +259,8 @@
                                                                                 </div>
                                                                             </div>
                                                                             <div class="attachment-actions">
-                                                                                <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                                                                <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                                                     <i class="fas fa-eye"></i> View
-                                                                                </a>
-                                                                                <a href="{{ $attachment->google_drive_url }}/export?format=pdf&download=true" class="btn btn-sm btn-outline-secondary">
-                                                                                    <i class="fas fa-download"></i> Download
                                                                                 </a>
                                                                             </div>
                                                                         </div>
@@ -625,11 +622,8 @@
                                                                                                             </div>
                                                                                                         </div>
                                                                                                         <div class="attachment-actions">
-                                                                                                            <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                                                                                            <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                                                                                 <i class="fas fa-eye"></i> View
-                                                                                                            </a>
-                                                                                                            <a href="{{ $attachment->google_drive_url }}/export?format=pdf&download=true" class="btn btn-sm btn-outline-secondary">
-                                                                                                                <i class="fas fa-download"></i> Download
                                                                                                             </a>
                                                                                                         </div>
                                                                                                     </div>
