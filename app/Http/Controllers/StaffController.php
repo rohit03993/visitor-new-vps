@@ -139,7 +139,15 @@ class StaffController extends Controller
         // Get assigned visitors (visitors assigned to this staff member) - show only pending interactions
         $assignedInteractions = InteractionHistory::where('meeting_with', $user->user_id)
             ->where('is_completed', false) // Only show interactions that are not completed
-            ->with(['visitor', 'meetingWith.branch', 'address', 'remarks'])
+            ->where(function($query) {
+                // Show immediate assignments OR scheduled assignments where date has arrived
+                $query->where('is_scheduled', false)
+                      ->orWhere(function($subQuery) {
+                          $subQuery->where('is_scheduled', true)
+                                   ->whereDate('scheduled_date', '<=', now()->toDateString());
+                      });
+            })
+            ->with(['visitor', 'meetingWith.branch', 'address', 'remarks', 'assignedBy'])
             ->orderBy('created_at', 'desc') // Latest first
             ->get()
             ->filter(function($interaction) {
@@ -1217,6 +1225,8 @@ class StaffController extends Controller
             $request->validate([
                 'team_member_id' => 'required|exists:vms_users,user_id',
                 'assignment_notes' => 'nullable|string|max:500',
+                'schedule_assignment' => 'nullable|boolean',
+                'scheduled_date' => 'nullable|date|after_or_equal:today',
             ]);
             
             // Get the interaction
@@ -1273,6 +1283,10 @@ class StaffController extends Controller
                 'updated_at' => now(),
             ]);
             
+            // Check if this is a scheduled assignment
+            $isScheduled = $request->boolean('schedule_assignment');
+            $scheduledDate = $isScheduled ? $request->scheduled_date : null;
+            
             // Step 3: Create new interaction for X with transfer context
             $newInteraction = InteractionHistory::create([
                 'visitor_id' => $interaction->visitor_id,
@@ -1287,13 +1301,23 @@ class StaffController extends Controller
                 'created_by' => $user->user_id, // Y created this new interaction for X
                 'created_by_role' => $user->role, // Include role
                 'is_completed' => false, // New interaction is not completed
+                'scheduled_date' => $scheduledDate, // NEW: Scheduled date
+                'assigned_by' => $user->user_id, // NEW: Who assigned it
+                'is_scheduled' => $isScheduled, // NEW: Is this scheduled
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
             
             // Step 4: Add transfer context remark to X's new interaction
             $userBranch = $user->branch ? $user->branch->branch_name : 'Unknown Branch';
-            $transferContextForX = "Transferred from {$user->name} ({$userBranch})";
+            
+            // Update transfer context based on scheduling
+            if ($isScheduled) {
+                $transferContextForX = "📅 Scheduled Assignment from {$user->name} ({$userBranch}) - " . date('M d, Y', strtotime($scheduledDate));
+            } else {
+                $transferContextForX = "Transferred from {$user->name} ({$userBranch})";
+            }
+            
             $contextForX = $transferContextForX;
             if (!empty($assignmentNotes)) {
                 $contextForX .= "\nNotes: " . $assignmentNotes;

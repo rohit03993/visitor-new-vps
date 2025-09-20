@@ -19,6 +19,9 @@ class InteractionHistory extends Model
         'initial_notes',
         'address_id',
         'meeting_with',
+        'scheduled_date',
+        'assigned_by',
+        'is_scheduled',
         'created_by',
         'created_by_role',
         'is_completed',
@@ -87,6 +90,11 @@ class InteractionHistory extends Model
     public function attachments()
     {
         return $this->hasMany(InteractionAttachment::class, 'interaction_id', 'interaction_id');
+    }
+
+    public function assignedBy()
+    {
+        return $this->belongsTo(VmsUser::class, 'assigned_by', 'user_id');
     }
 
     // Helper methods
