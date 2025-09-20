@@ -86,7 +86,7 @@ class InteractionHistory extends Model
 
     public function attachments()
     {
-        return $this->hasMany(InteractionAttachment::class, 'interaction_id');
+        return $this->hasMany(InteractionAttachment::class, 'interaction_id', 'interaction_id');
     }
 
     // Helper methods
