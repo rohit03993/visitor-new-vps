@@ -246,6 +246,13 @@
                                                                         <i class="fas fa-paperclip me-1"></i>Upload File
                                                                     </button>
                                                                 </div>
+                                                            @elseif($interaction->meeting_with == auth()->user()->user_id)
+                                                                <!-- Show Upload File button even after completion if assigned to current user -->
+                                                                <div class="mt-2">
+                                                                    <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                    </button>
+                                                                </div>
                                                             @endif
                                                         @else
                                                             @if($interaction->meeting_with == auth()->user()->user_id)
@@ -595,6 +602,16 @@
                                                                                                 <div class="mt-3 text-center">
                                                                                                     <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                                                         <i class="fas fa-plus me-2"></i>Add Remark
+                                                                                                    </button>
+                                                                                                    <button class="btn btn-outline-success ms-2" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                                    </button>
+                                                                                                </div>
+                                                                                            @else
+                                                                                                <!-- Show Upload File button even after work remarks are added -->
+                                                                                                <div class="mt-3 text-center">
+                                                                                                    <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
                                                                                                     </button>
                                                                                                 </div>
                                                                                             @endif
