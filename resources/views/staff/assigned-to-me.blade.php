@@ -91,10 +91,11 @@
                                                     @endif
                                                 @else
                                                     @php
-                                                        // Check if interaction has actual work remarks (not just transfer remarks)
+                                                        // Check if interaction has actual work remarks (not just transfer/scheduled remarks)
                                                         $hasWorkRemark = false;
                                                         foreach($interaction->remarks as $remark) {
-                                                            if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                            if (strpos($remark->remark_text, 'Transferred from') === false && 
+                                                                strpos($remark->remark_text, '📅 Scheduled Assignment from') === false) {
                                                                 $hasWorkRemark = true;
                                                                 break;
                                                             }
@@ -152,7 +153,8 @@
                                                 @php
                                                     $hasOnlyTransferRemark = $interaction->remarks->count() === 1 && 
                                                         (strpos($interaction->remarks->first()->remark_text, '🔄 **Transferred from') !== false ||
-                                                         strpos($interaction->remarks->first()->remark_text, 'Transferred from') !== false);
+                                                         strpos($interaction->remarks->first()->remark_text, 'Transferred from') !== false ||
+                                                         strpos($interaction->remarks->first()->remark_text, '📅 Scheduled Assignment from') !== false);
                                                 @endphp
                                                 
                                                 @if($hasOnlyTransferRemark)

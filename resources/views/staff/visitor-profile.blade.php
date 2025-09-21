@@ -206,14 +206,36 @@
                                                             
                                                             <!-- Show Add Remark button if assigned to current user and not completed -->
                                                             @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
-                                                                <div class="mt-2 d-flex gap-2">
-                                                                    <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                        <i class="fas fa-plus me-1"></i>Add Remark
-                                                                    </button>
-                                                                    <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                    </button>
-                                                                </div>
+                                                                @php
+                                                                    // Check if this is a scheduled assignment and if the scheduled time has passed
+                                                                    $canAddRemark = true;
+                                                                    if ($interaction->is_scheduled && $interaction->scheduled_date) {
+                                                                        $canAddRemark = now() >= $interaction->scheduled_date;
+                                                                    }
+                                                                @endphp
+                                                                
+                                                                @if($canAddRemark)
+                                                                    <div class="mt-2 d-flex gap-2">
+                                                                        <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                            <i class="fas fa-plus me-1"></i>Add Remark
+                                                                        </button>
+                                                                        <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                            <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                        </button>
+                                                                    </div>
+                                                                @else
+                                                                    <div class="mt-2 text-center">
+                                                                        <small class="text-muted">
+                                                                            <i class="fas fa-clock me-1"></i>
+                                                                            Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
+                                                                        </small>
+                                                                        <div class="mt-1">
+                                                                            <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                @endif
                                                             @elseif($interaction->meeting_with == auth()->user()->user_id)
                                                                 <!-- Show Upload File button even after completion if assigned to current user -->
                                                                 <div class="mt-2">
@@ -380,7 +402,7 @@
                                                                 </span>
                                                             @endif
                                                                             
-                                                                            @if($interaction->remarks->count() > 0)
+                                                                            @if($interaction->remarks->count() > 0 && !$isTransferInteraction)
                                                                                 @if($interaction->is_completed)
                                                                                     @php
                                                                                         $latestRemark = $interaction->remarks->last();
@@ -398,7 +420,8 @@
                                                                                         @php
                                                                                             $hasWorkRemark = false;
                                                                                             foreach($interaction->remarks as $remark) {
-                                                                                                if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                                                                if (strpos($remark->remark_text, 'Transferred from') === false && 
+                                                                                                    strpos($remark->remark_text, '📅 Scheduled Assignment from') === false) {
                                                                                                     $hasWorkRemark = true;
                                                                                                     break;
                                                                                                 }
@@ -553,10 +576,11 @@
                                                                                         <!-- Show Add Remark button for transferred interactions (only if no work remarks exist) -->
                                                                                         @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
                                                                                             @php
-                                                                                                // Check if all existing remarks are just transfer remarks
+                                                                                                // Check if all existing remarks are just transfer remarks (including scheduled assignments)
                                                                                                 $hasWorkRemark = false;
                                                                                                 foreach($interaction->remarks as $remark) {
-                                                                                                    if (strpos($remark->remark_text, 'Transferred from') === false) {
+                                                                                                    if (strpos($remark->remark_text, 'Transferred from') === false && 
+                                                                                                        strpos($remark->remark_text, '📅 Scheduled Assignment from') === false) {
                                                                                                         $hasWorkRemark = true;
                                                                                                         break;
                                                                                                     }
@@ -564,14 +588,36 @@
                                                                                             @endphp
                                                                                             
                                                                                             @if(!$hasWorkRemark)
-                                                                                                <div class="mt-3 text-center">
-                                                                                                    <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                        <i class="fas fa-plus me-2"></i>Add Remark
-                                                                                                    </button>
-                                                                                                    <button class="btn btn-outline-success ms-2" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                    </button>
-                                                                                                </div>
+                                                                                                @php
+                                                                                                    // Check if this is a scheduled assignment and if the scheduled time has passed
+                                                                                                    $canAddRemarkAccordion = true;
+                                                                                                    if ($interaction->is_scheduled && $interaction->scheduled_date) {
+                                                                                                        $canAddRemarkAccordion = now() >= $interaction->scheduled_date;
+                                                                                                    }
+                                                                                                @endphp
+                                                                                                
+                                                                                                @if($canAddRemarkAccordion)
+                                                                                                    <div class="mt-3 text-center">
+                                                                                                        <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                            <i class="fas fa-plus me-2"></i>Add Remark
+                                                                                                        </button>
+                                                                                                        <button class="btn btn-outline-success ms-2" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                            <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                                        </button>
+                                                                                                    </div>
+                                                                                                @else
+                                                                                                    <div class="mt-3 text-center">
+                                                                                                        <small class="text-muted">
+                                                                                                            <i class="fas fa-clock me-1"></i>
+                                                                                                            Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
+                                                                                                        </small>
+                                                                                                        <div class="mt-2">
+                                                                                                            <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                                <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                                            </button>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                @endif
                                                                                             @else
                                                                                                 <!-- Show Upload File button even after work remarks are added -->
                                                                                                 <div class="mt-3 text-center">
@@ -775,10 +821,9 @@
                             <div class="col-md-4">
                                 <label for="scheduledMinute" class="form-label">Minute <span class="text-danger">*</span></label>
                                 <select class="form-select" id="scheduledMinute" name="scheduled_minute">
-                                    <option value="00">00</option>
-                                    <option value="15">15</option>
-                                    <option value="30">30</option>
-                                    <option value="45">45</option>
+                                    @for($i = 0; $i < 60; $i++)
+                                        <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                                    @endfor
                                 </select>
                             </div>
                         </div>
