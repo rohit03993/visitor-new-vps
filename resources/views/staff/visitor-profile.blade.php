@@ -4,6 +4,88 @@
 @section('page-title', 'Visitor Profile')
 
 @section('content')
+@php
+    // Reusable function to determine badge state for interactions
+    function getInteractionBadgeState($interaction, $currentUserId) {
+        // Check if interaction is completed
+        if ($interaction->is_completed) {
+            return 'updated';  // Completed = no one can work
+        }
+        
+        // Check if scheduled and time not arrived
+        if ($interaction->is_scheduled && $interaction->scheduled_date && now() < $interaction->scheduled_date) {
+            return 'scheduled';  // Waiting for scheduled time
+        }
+        
+        // Check if there are actual work remarks
+        $hasWorkRemarks = false;
+        if ($interaction->remarks && $interaction->remarks->count() > 0) {
+            foreach ($interaction->remarks as $remark) {
+                // Exclude system-generated remarks
+                $isSystemRemark = strpos($remark->remark_text, '📅 Scheduled Assignment from') !== false ||
+                                 strpos($remark->remark_text, 'Transferred from') !== false ||
+                                 strpos($remark->remark_text, 'Completed & Transferred to') !== false;
+                
+                if (!$isSystemRemark) {
+                    $hasWorkRemarks = true;
+                    break;
+                }
+            }
+        }
+        
+        // SPECIAL CASE: Transfer interactions
+        if ($hasWorkRemarks) {
+            // Check if this is a transfer case
+            $isTransferCase = false;
+            foreach ($interaction->remarks as $remark) {
+                if (strpos($remark->remark_text, 'Transferred from') !== false || 
+                    strpos($remark->remark_text, 'Completed & Transferred to') !== false) {
+                    $isTransferCase = true;
+                    break;
+                }
+            }
+            
+            if ($isTransferCase) {
+                // For transfer cases, check if current user is the new assignee
+                if ($interaction->meeting_with == $currentUserId) {
+                    // Check if the new assignee has added their own work remarks
+                    $newAssigneeHasWorkRemarks = false;
+                    foreach ($interaction->remarks as $remark) {
+                        // Check if this remark is from the new assignee and is not a system remark
+                        if ($remark->added_by == $currentUserId) {
+                            $isSystemRemark = strpos($remark->remark_text, '📅 Scheduled Assignment from') !== false ||
+                                             strpos($remark->remark_text, 'Transferred from') !== false ||
+                                             strpos($remark->remark_text, 'Completed & Transferred to') !== false;
+                            
+                            if (!$isSystemRemark) {
+                                $newAssigneeHasWorkRemarks = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if ($newAssigneeHasWorkRemarks) {
+                        // New assignee has added their remark, show "updated"
+                        return 'updated';
+                    } else {
+                        // New assignee hasn't added their remark yet, show "pending"
+                        return 'pending';
+                    }
+                } else {
+                    // Original assignee sees "updated" (they're done)
+                    return 'updated';
+                }
+            } else {
+                // Regular case with work remarks
+                return 'updated';
+            }
+        }
+        
+        // No work remarks = pending (work needed)
+        return 'pending';
+    }
+@endphp
+
 <div class="row">
     <div class="col-12">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
@@ -246,7 +328,22 @@
                                                             @endif
                                                         @else
                                                             @if($interaction->meeting_with == auth()->user()->user_id)
-                                                                <span class="badge bg-warning">Remark Pending</span>
+                                                                @php
+                                                                    $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
+                                                                @endphp
+                                                                @if($badgeState === 'scheduled')
+                                                                    <span class="badge bg-secondary">
+                                                                        <i class="fas fa-calendar-clock me-1"></i>Scheduled
+                                                                    </span>
+                                                                @elseif($badgeState === 'pending')
+                                                                    <span class="badge bg-warning">
+                                                                        <i class="fas fa-clock me-1"></i>Remark Pending
+                                                                    </span>
+                                                                @else
+                                                                    <span class="badge bg-info">
+                                                                        <i class="fas fa-comment me-1"></i>Remark Updated
+                                                                    </span>
+                                                                @endif
                                                                 <div class="d-flex gap-2 ms-2">
                                                                     <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                         <i class="fas fa-plus me-1"></i>Add Remark
@@ -402,7 +499,7 @@
                                                                 </span>
                                                             @endif
                                                                             
-                                                                            @if($interaction->remarks->count() > 0 && !$isTransferInteraction)
+                                                                            @if($interaction->remarks->count() > 0)
                                                                                 @if($interaction->is_completed)
                                                                                     @php
                                                                                         $latestRemark = $interaction->remarks->last();
@@ -418,49 +515,57 @@
                                                                                         </span>
                                                                                     @else
                                                                                         @php
-                                                                                            $hasWorkRemark = false;
-                                                                                            foreach($interaction->remarks as $remark) {
-                                                                                                if (strpos($remark->remark_text, 'Transferred from') === false && 
-                                                                                                    strpos($remark->remark_text, '📅 Scheduled Assignment from') === false) {
-                                                                                                    $hasWorkRemark = true;
-                                                                                                    break;
-                                                                                                }
-                                                                                            }
+                                                                                            $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
                                                                                         @endphp
-                                                                                        @if($hasWorkRemark)
-                                                                                            <span class="badge bg-info px-2 py-1">
-                                                                                                <i class="fas fa-comment me-1"></i>Remark Updated
+                                                                                        @if($badgeState === 'scheduled')
+                                                                                            <span class="badge bg-secondary px-2 py-1">
+                                                                                                <i class="fas fa-calendar-clock me-1"></i>Scheduled
                                                                                             </span>
-                                                                                        @else
+                                                                                        @elseif($badgeState === 'pending')
                                                                                             <span class="badge bg-warning px-2 py-1">
                                                                                                 <i class="fas fa-clock me-1"></i>Remark Pending
+                                                                                            </span>
+                                                                                        @else
+                                                                                            <span class="badge bg-info px-2 py-1">
+                                                                                                <i class="fas fa-comment me-1"></i>Remark Updated
                                                                                             </span>
                                                                                         @endif
                                                                                     @endif
                                                                                 @else
                                                                                     @php
-                                                                                        $hasWorkRemark = false;
-                                                                                        foreach($interaction->remarks as $remark) {
-                                                                                            if (strpos($remark->remark_text, 'Transferred from') === false) {
-                                                                                                $hasWorkRemark = true;
-                                                                                                break;
-                                                                                            }
-                                                                                        }
+                                                                                        $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
                                                                                     @endphp
-                                                                                    @if($hasWorkRemark)
-                                                                                        <span class="badge bg-info px-2 py-1">
-                                                                                            <i class="fas fa-comment me-1"></i>Remark Updated
+                                                                                    @if($badgeState === 'scheduled')
+                                                                                        <span class="badge bg-secondary px-2 py-1">
+                                                                                            <i class="fas fa-calendar-clock me-1"></i>Scheduled
                                                                                         </span>
-                                                                                    @else
+                                                                                    @elseif($badgeState === 'pending')
                                                                                         <span class="badge bg-warning px-2 py-1">
                                                                                             <i class="fas fa-clock me-1"></i>Remark Pending
+                                                                                        </span>
+                                                                                    @else
+                                                                                        <span class="badge bg-info px-2 py-1">
+                                                                                            <i class="fas fa-comment me-1"></i>Remark Updated
                                                                                         </span>
                                                                                     @endif
                                                                                 @endif
                                                                             @else
-                                                                                <span class="badge bg-warning px-2 py-1">
-                                                                                    <i class="fas fa-clock me-1"></i>Remark Pending
-                                                                                </span>
+                                                                                @php
+                                                                                    $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
+                                                                                @endphp
+                                                                                @if($badgeState === 'scheduled')
+                                                                                    <span class="badge bg-secondary px-2 py-1">
+                                                                                        <i class="fas fa-calendar-clock me-1"></i>Scheduled
+                                                                                    </span>
+                                                                                @elseif($badgeState === 'pending')
+                                                                                    <span class="badge bg-warning px-2 py-1">
+                                                                                        <i class="fas fa-clock me-1"></i>Remark Pending
+                                                                                    </span>
+                                                                                @else
+                                                                                    <span class="badge bg-info px-2 py-1">
+                                                                                        <i class="fas fa-comment me-1"></i>Remark Updated
+                                                                                    </span>
+                                                                                @endif
                                                                             @endif
                                                                         </div>
                                                                     </div>
@@ -576,25 +681,9 @@
                                                                                         <!-- Show Add Remark button for transferred interactions (only if no work remarks exist) -->
                                                                                         @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
                                                                                             @php
-                                                                                                // Check if all existing remarks are just transfer remarks (including scheduled assignments)
-                                                                                                $hasWorkRemark = false;
-                                                                                                foreach($interaction->remarks as $remark) {
-                                                                                                    if (strpos($remark->remark_text, 'Transferred from') === false && 
-                                                                                                        strpos($remark->remark_text, '📅 Scheduled Assignment from') === false) {
-                                                                                                        $hasWorkRemark = true;
-                                                                                                        break;
-                                                                                                    }
-                                                                                                }
+                                                                                                $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
+                                                                                                $canAddRemarkAccordion = ($badgeState === 'pending');
                                                                                             @endphp
-                                                                                            
-                                                                                            @if(!$hasWorkRemark)
-                                                                                                @php
-                                                                                                    // Check if this is a scheduled assignment and if the scheduled time has passed
-                                                                                                    $canAddRemarkAccordion = true;
-                                                                                                    if ($interaction->is_scheduled && $interaction->scheduled_date) {
-                                                                                                        $canAddRemarkAccordion = now() >= $interaction->scheduled_date;
-                                                                                                    }
-                                                                                                @endphp
                                                                                                 
                                                                                                 @if($canAddRemarkAccordion)
                                                                                                     <div class="mt-3 text-center">
@@ -626,8 +715,7 @@
                                                                                                     </button>
                                                                                                 </div>
                                                                                             @endif
-                                                                                        @endif
-                                                                                    @else
+                                                                                @else
                                                                                         <div class="highlighted-box remarks-highlight empty">
                                                                                             <i class="fas fa-comment-slash text-muted"></i>
                                                                                             <span class="text-muted">No remarks</span>
@@ -647,7 +735,7 @@
                                                                                                 </div>
                                                                                             @endif
                                                                                         </div>
-                                                                                    @endif
+                                                                                @endif
                                                                                     
                                                                                     <!-- File Attachments Section for Session Interactions - Independent of remarks -->
                                                                                     @if($interaction->attachments && $interaction->attachments->count() > 0)
