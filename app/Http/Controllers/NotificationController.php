@@ -49,8 +49,8 @@ class NotificationController extends Controller
             
             while (time() - $startTime < $maxRunTime) {
                 try {
-                    // Check for new notifications for this user
-                    $notifications = session("notifications_{$user->user_id}", []);
+                    // Check for new notifications for this user from file storage
+                    $notifications = $this->getFileNotifications($user->user_id);
                     
                     if (!empty($notifications)) {
                         foreach ($notifications as $index => $notification) {
@@ -59,7 +59,7 @@ class NotificationController extends Controller
                         }
                         
                         // Clear all sent notifications
-                        session()->forget("notifications_{$user->user_id}");
+                        $this->clearFileNotifications($user->user_id);
                         
                         flush();
                     }
@@ -135,10 +135,8 @@ class NotificationController extends Controller
                 'user_name' => $user->name
             ];
 
-            // Store notification in session for this user (simple approach)
-            $notifications = session("notifications_{$user->user_id}", []);
-            $notifications[] = $notificationData;
-            session(["notifications_{$user->user_id}" => $notifications]);
+            // Store notification in file storage for this user
+            $this->storeFileNotification($user->user_id, $notificationData);
 
             \Log::info("Notification sent to user {$user->user_id}: {$request->title}");
 
@@ -169,22 +167,16 @@ class NotificationController extends Controller
             \Log::info("=== GET NOTIFICATIONS CALLED ===");
             \Log::info("User: {$user->name} (ID: {$user->user_id})");
 
-            // Try both session and file storage
-            $sessionNotifications = session("notifications_{$user->user_id}", []);
-            $fileNotifications = $this->getFileNotifications($user->user_id);
-            
-            // Combine both sources
-            $allNotifications = array_merge($sessionNotifications, $fileNotifications);
+            // Get notifications from file storage only
+            $allNotifications = $this->getFileNotifications($user->user_id);
             
             // Clear notifications after retrieving
-            session()->forget("notifications_{$user->user_id}");
             $this->clearFileNotifications($user->user_id);
 
             // Debug logging
             \Log::info("=== GET NOTIFICATIONS DEBUG ===");
             \Log::info("User ID: {$user->user_id}");
-            \Log::info("Session notifications: " . count($sessionNotifications));
-            \Log::info("File notifications: " . count($fileNotifications));
+            \Log::info("File notifications: " . count($allNotifications));
             \Log::info("Total notifications: " . count($allNotifications));
             \Log::info("Notifications data: " . json_encode($allNotifications));
             \Log::info("=== END GET DEBUG ===");
@@ -193,8 +185,7 @@ class NotificationController extends Controller
                 'success' => true,
                 'notifications' => $allNotifications,
                 'debug' => [
-                    'session_count' => count($sessionNotifications),
-                    'file_count' => count($fileNotifications),
+                    'file_count' => count($allNotifications),
                     'total_count' => count($allNotifications)
                 ]
             ]);
@@ -292,15 +283,7 @@ class NotificationController extends Controller
                 'user_name' => $assignedUser->name
             ];
 
-            // Store notification in both session and file
-            $sessionKey = "notifications_{$assignedUser->user_id}";
-            
-            // Store in session
-            $notifications = session($sessionKey, []);
-            $notifications[] = $notificationData;
-            session([$sessionKey => $notifications]);
-            
-            // Also store in file as backup
+            // Store notification in file storage only
             $fileStored = $this->storeFileNotification($assignedUser->user_id, $notificationData);
 
             // Enhanced debug logging
@@ -309,12 +292,8 @@ class NotificationController extends Controller
             \Log::info("Visitor: {$visitorName}");
             \Log::info("Purpose: {$purpose}");
             \Log::info("Interaction ID: {$interactionId}");
-            \Log::info("Session key: {$sessionKey}");
             \Log::info("Notification data: " . json_encode($notificationData));
-            \Log::info("Total session notifications for user {$assignedUser->user_id}: " . count($notifications));
             \Log::info("File storage success: " . ($fileStored ? 'YES' : 'NO'));
-            \Log::info("Session contents: " . json_encode(session($sessionKey)));
-            \Log::info("Current session ID: " . session()->getId());
             \Log::info("=== END DEBUG ===");
 
             return true;

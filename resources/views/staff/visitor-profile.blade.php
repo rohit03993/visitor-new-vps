@@ -482,20 +482,31 @@
                                                             </span>
                                                                             
                                                                             @php
-                                                                                // Check if this is a transfer interaction
-                                                                                $isTransferInteraction = false;
+                                                                                // Check if this is the ORIGINAL transfer interaction (where transfer was initiated)
+                                                                                $isOriginalTransferInteraction = false;
+                                                                                $transferredToName = null;
+                                                                                $transferredToBranch = null;
+                                                                                
                                                                                 foreach($interaction->remarks as $remark) {
-                                                                                    if (strpos($remark->remark_text, 'Transferred from') !== false || 
-                                                                                        strpos($remark->remark_text, 'Transferred to') !== false) {
-                                                                                        $isTransferInteraction = true;
+                                                                                    // Only show badge on interactions that have "Completed & Transferred to" remarks
+                                                                                    // This indicates the ORIGINAL interaction where transfer was initiated
+                                                                                    if (strpos($remark->remark_text, 'Completed & Transferred to') !== false) {
+                                                                                        $isOriginalTransferInteraction = true;
+                                                                                        
+                                                                                        // Extract the new assignee's name from the transfer remark
+                                                                                        // Format: "Completed & Transferred to [Name] ([Branch])"
+                                                                                        if (preg_match('/Completed & Transferred to ([^(]+)\s*\(([^)]+)\)/', $remark->remark_text, $matches)) {
+                                                                                            $transferredToName = trim($matches[1]);
+                                                                                            $transferredToBranch = trim($matches[2]);
+                                                                                        }
                                                                                         break;
                                                                                     }
                                                                                 }
                                                                             @endphp
                                                                             
-                                            @if($isTransferInteraction)
+                                            @if($isOriginalTransferInteraction && $transferredToName)
                                                                 <span class="badge bg-danger badge-paytm-enhanced badge-paytm-pulse px-2 py-1">
-                                                                    <i class="fas fa-exchange-alt me-1"></i>Transfer
+                                                                    <i class="fas fa-user-check me-1"></i>Assigned to {{ $transferredToName }}@if($transferredToBranch) ({{ $transferredToBranch }})@endif
                                                                 </span>
                                                             @endif
                                                                             
@@ -822,7 +833,7 @@
                         <i class="fas fa-times me-1"></i>Cancel
                     </button>
                     <button type="button" class="btn btn-warning" onclick="showAssignModal()">
-                        <i class="fas fa-exchange-alt me-1"></i>Transfer to Team Member
+                        <i class="fas fa-exchange-alt me-1"></i>Assign To Team Member
                     </button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-1"></i>Add Remark
@@ -839,7 +850,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-exchange-alt me-2"></i>Transfer to Team Member
+                    <i class="fas fa-exchange-alt me-2"></i>Assign To Team Member
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -923,7 +934,7 @@
                         <i class="fas fa-times me-1"></i>Cancel
                     </button>
                     <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-exchange-alt me-1"></i>Transfer to Team Member
+                        <i class="fas fa-exchange-alt me-1"></i>Assign To Team Member
                     </button>
                 </div>
             </form>
