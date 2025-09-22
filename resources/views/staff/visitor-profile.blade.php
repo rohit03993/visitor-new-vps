@@ -306,17 +306,27 @@
                                                                         </button>
                                                                     </div>
                                                                 @else
-                                                                    <div class="mt-2 text-center">
-                                                                        <small class="text-muted">
-                                                                            <i class="fas fa-clock me-1"></i>
-                                                                            Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
-                                                                        </small>
-                                                                        <div class="mt-1">
+                                                                    <!-- Only show "Scheduled for" text if no remarks have been added yet -->
+                                                                    @if($interaction->remarks->count() == 0)
+                                                                        <div class="mt-2 text-center">
+                                                                            <small class="text-muted">
+                                                                                <i class="fas fa-clock me-1"></i>
+                                                                                Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
+                                                                            </small>
+                                                                            <div class="mt-1">
+                                                                                <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                    <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    @else
+                                                                        <!-- If remarks exist, just show the upload file button -->
+                                                                        <div class="mt-2">
                                                                             <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
                                                                                 <i class="fas fa-paperclip me-1"></i>Upload File
                                                                             </button>
                                                                         </div>
-                                                                    </div>
+                                                                    @endif
                                                                 @endif
                                                             @elseif($interaction->meeting_with == auth()->user()->user_id)
                                                                 <!-- Show Upload File button even after completion if assigned to current user -->
@@ -706,17 +716,27 @@
                                                                                                         </button>
                                                                                                     </div>
                                                                                                 @else
-                                                                                                    <div class="mt-3 text-center">
-                                                                                                        <small class="text-muted">
-                                                                                                            <i class="fas fa-clock me-1"></i>
-                                                                                                            Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
-                                                                                                        </small>
-                                                                                                        <div class="mt-2">
+                                                                                                    <!-- Only show "Scheduled for" text if no remarks have been added yet -->
+                                                                                                    @if($interaction->remarks->count() == 0)
+                                                                                                        <div class="mt-3 text-center">
+                                                                                                            <small class="text-muted">
+                                                                                                                <i class="fas fa-clock me-1"></i>
+                                                                                                                Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
+                                                                                                            </small>
+                                                                                                            <div class="mt-2">
+                                                                                                                <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                                    <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                                                </button>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    @else
+                                                                                                        <!-- If remarks exist, just show the upload file button -->
+                                                                                                        <div class="mt-3 text-center">
                                                                                                             <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
                                                                                                                 <i class="fas fa-paperclip me-1"></i>Upload File
                                                                                                             </button>
                                                                                                         </div>
-                                                                                                    </div>
+                                                                                                    @endif
                                                                                                 @endif
                                                                                             @else
                                                                                                 <!-- Show Upload File button even after work remarks are added -->

@@ -107,6 +107,10 @@ Route::middleware('auth')->group(function () {
         // Smart refresh API
         Route::get('/check-assigned-changes', [StaffController::class, 'checkAssignedChanges'])->name('check-assigned-changes');
         
+        // Password Change Routes (NEW FEATURE)
+        Route::get('/change-password', [StaffController::class, 'showChangePasswordForm'])->name('change-password');
+        Route::post('/change-password', [StaffController::class, 'changePassword'])->name('change-password');
+        
         // Notification Routes (Available to staff)
         Route::prefix('notifications')->name('notifications.')->group(function () {
             // Route::get('/stream', [NotificationController::class, 'stream'])->name('stream'); // Disabled for now

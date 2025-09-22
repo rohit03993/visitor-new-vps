@@ -1584,4 +1584,59 @@ class StaffController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Show password change form for staff members
+     */
+    public function showChangePasswordForm()
+    {
+        return view('staff.change-password');
+    }
+
+    /**
+     * Handle password change for staff members
+     */
+    public function changePassword(Request $request)
+    {
+        try {
+            $request->validate([
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:6|confirmed',
+                'new_password_confirmation' => 'required|string|min:6',
+            ], [
+                'current_password.required' => 'Current password is required',
+                'new_password.required' => 'New password is required',
+                'new_password.min' => 'New password must be at least 6 characters',
+                'new_password.confirmed' => 'New password confirmation does not match',
+                'new_password_confirmation.required' => 'Password confirmation is required',
+            ]);
+
+            $user = auth()->user();
+            
+            // Verify current password
+            if (!password_verify($request->current_password, $user->password)) {
+                return back()->withErrors(['current_password' => 'Current password is incorrect'])->withInput();
+            }
+
+            // Check if new password is different from current
+            if (password_verify($request->new_password, $user->password)) {
+                return back()->withErrors(['new_password' => 'New password must be different from current password'])->withInput();
+            }
+
+            // Update password and store in temp_password for admin visibility
+            $user->update([
+                'password' => bcrypt($request->new_password),
+                'temp_password' => $request->new_password, // Store plain text for admin visibility
+            ]);
+
+            // Clear any relevant caches
+            Cache::forget('user_' . $user->user_id . '_permissions');
+
+            return redirect()->route('staff.change-password')->with('success', 'Password changed successfully!');
+
+        } catch (\Exception $e) {
+            \Log::error('Password change error: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'An error occurred while changing password. Please try again.'])->withInput();
+        }
+    }
 }

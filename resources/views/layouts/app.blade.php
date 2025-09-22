@@ -599,6 +599,9 @@
                             <a class="nav-link {{ request()->routeIs('staff.assigned-to-me') ? 'active' : '' }}" href="{{ route('staff.assigned-to-me') }}" onclick="closeSidebar()">
                                 <i class="fas fa-user-check me-2"></i> Assigned Logs
                             </a>
+                            <a class="nav-link {{ request()->routeIs('staff.change-password') ? 'active' : '' }}" href="{{ route('staff.change-password') }}" onclick="closeSidebar()">
+                                <i class="fas fa-key me-2"></i> Change Password
+                            </a>
                         @endif
                         
                         <hr class="my-3">
