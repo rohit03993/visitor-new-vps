@@ -2327,6 +2327,128 @@ a[href*="assigned-to-me"].btn-paytm-secondary:hover {
     margin-bottom: 1.5rem;
 }
 
+/* Override for Clean Action Buttons in Visitor Profile */
+.modern-action-buttons {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.modern-action-buttons .btn {
+    background-color: inherit !important;
+    border: 1px solid transparent !important;
+    border-radius: 0.375rem !important;
+    font-weight: 400 !important;
+    font-size: 0.85rem !important;
+    padding: 0.375rem 0.75rem !important;
+    transition: all 0.15s ease-in-out !important;
+    box-shadow: none !important;
+    transform: none !important;
+    position: relative !important;
+    overflow: visible !important;
+    min-width: auto !important;
+    text-align: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.375rem !important;
+    flex: 0 0 auto !important;
+}
+
+.modern-action-buttons .btn:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.modern-action-buttons .btn:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Add Remark Button - Clean Blue */
+.modern-action-buttons .btn-primary {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+}
+
+.modern-action-buttons .btn-primary:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: #fff !important;
+}
+
+/* Assign Button - Clean Orange */
+.modern-action-buttons .btn-warning {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+    color: #000 !important;
+}
+
+.modern-action-buttons .btn-warning:hover {
+    background-color: #ffca2c !important;
+    border-color: #ffc720 !important;
+    color: #000 !important;
+}
+
+/* Reschedule Button - Clean Green */
+.modern-action-buttons .btn-success {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #fff !important;
+}
+
+.modern-action-buttons .btn-success:hover {
+    background-color: #157347 !important;
+    border-color: #146c43 !important;
+    color: #fff !important;
+}
+
+/* Upload File Button - Clean Outline Green */
+.modern-action-buttons .btn-outline-success {
+    background-color: transparent !important;
+    border-color: #198754 !important;
+    color: #198754 !important;
+}
+
+.modern-action-buttons .btn-outline-success:hover {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+    color: #fff !important;
+}
+
+/* Mobile Responsive for Clean Buttons */
+@media (max-width: 768px) {
+    .modern-action-buttons {
+        gap: 0.375rem !important;
+        flex-direction: row !important;
+    }
+    
+    .modern-action-buttons .btn {
+        font-size: 0.75rem !important;
+        padding: 0.3rem 0.6rem !important;
+        flex: 0 0 auto !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-action-buttons {
+        gap: 0.25rem !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .modern-action-buttons .btn {
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+        flex: 1 !important;
+        max-width: calc(50% - 0.125rem) !important;
+    }
+}
+
 /* Add Phone Button - Enhanced */
 .add-phone-btn {
     background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-accent) 100%) !important;

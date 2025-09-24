@@ -297,7 +297,7 @@
                                                                 @endphp
                                                                 
                                                                 @if($canAddRemark)
-                                                                    <div class="mt-2 d-flex gap-1 flex-wrap">
+                                                                    <div class="mt-2 modern-action-buttons">
                                                                         <button class="btn btn-sm btn-primary" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                             <i class="fas fa-comment me-1"></i>Add Remark
                                                                         </button>
@@ -360,7 +360,7 @@
                                                                         <i class="fas fa-comment me-1"></i>Remark Updated
                                                                     </span>
                                                                 @endif
-                                                                <div class="d-flex gap-1 ms-2 flex-wrap">
+                                                                <div class="d-flex ms-2 modern-action-buttons">
                                                                     <button class="btn btn-sm btn-primary" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                         <i class="fas fa-comment me-1"></i>Add Remark
                                                                     </button>
@@ -739,7 +739,7 @@
                                                                                                 
                                                                                                 @if($canAddRemarkAccordion)
                                                                                                     <div class="mt-3 text-center">
-                                                                                                        <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                                                                                        <div class="modern-action-buttons justify-content-center">
                                                                                                             <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                                                                 <i class="fas fa-comment me-1"></i>Add Remark
                                                                                                             </button>
@@ -790,7 +790,7 @@
                                                                                             <i class="fas fa-comment-slash text-muted"></i>
                                                                                             <span class="text-muted">No remarks</span>
                                                                                             @if($interaction->meeting_with == auth()->user()->user_id)
-                                                                                                <div class="d-flex gap-1 mt-2 justify-content-center flex-wrap">
+                                                                                                <div class="mt-2 modern-action-buttons justify-content-center">
                                                                                                     <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                                                         <i class="fas fa-comment me-1"></i>Add Remark
                                                                                                     </button>
@@ -1289,6 +1289,104 @@
     .btn {
         font-size: 0.8rem;
         padding: 0.375rem 0.75rem;
+    }
+}
+
+/* Simple Button Styling - Clean Bootstrap Look */
+.modern-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+.modern-action-buttons .btn {
+    font-size: 0.85rem;
+    padding: 0.375rem 0.75rem;
+    font-weight: 400;
+    border-radius: 0.375rem;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+/* Add Remark Button - Clean Blue */
+.modern-action-buttons .btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
+
+.modern-action-buttons .btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+    color: #fff;
+}
+
+/* Assign Button - Clean Orange */
+.modern-action-buttons .btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #000;
+}
+
+.modern-action-buttons .btn-warning:hover {
+    background-color: #ffca2c;
+    border-color: #ffc720;
+    color: #000;
+}
+
+/* Reschedule Button - Clean Green */
+.modern-action-buttons .btn-success {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+.modern-action-buttons .btn-success:hover {
+    background-color: #157347;
+    border-color: #146c43;
+    color: #fff;
+}
+
+/* Upload File Button - Clean Outline Green */
+.modern-action-buttons .btn-outline-success {
+    background-color: transparent;
+    border-color: #198754;
+    color: #198754;
+}
+
+.modern-action-buttons .btn-outline-success:hover {
+    background-color: #198754;
+    border-color: #198754;
+    color: #fff;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .modern-action-buttons {
+        gap: 0.375rem;
+    }
+    
+    .modern-action-buttons .btn {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-action-buttons {
+        gap: 0.25rem;
+    }
+    
+    .modern-action-buttons .btn {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+        flex: 1;
+        max-width: calc(50% - 0.125rem);
     }
 }
 </style>
