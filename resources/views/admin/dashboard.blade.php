@@ -313,6 +313,106 @@
     </div>
 </div>
 
+<!-- System Management Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>System Management
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Warning:</strong> The reset operation will permanently delete all visitor data including interactions, remarks, and file attachments. This action cannot be undone.
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">Reset All Visitor Data</h6>
+                                <p class="text-muted mb-0">Clear all visitor records, interactions, and related data while preserving system settings.</p>
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#resetDataModal" id="resetDataBtn">
+                                    <i class="fas fa-trash-alt me-2"></i>Reset Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Data Confirmation Modal -->
+<div class="modal fade" id="resetDataModal" tabindex="-1" aria-labelledby="resetDataModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="resetDataModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Data Reset
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-warning me-2"></i>This action is IRREVERSIBLE!</h6>
+                    <p class="mb-0">You are about to permanently delete all visitor data from the system.</p>
+                </div>
+                
+                <h6>What will be deleted:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-danger me-2"></i>All visitor records</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>All interaction history</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>All remarks and comments</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>All student sessions</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>All file attachments (including Google Drive files)</li>
+                    <li><i class="fas fa-check text-danger me-2"></i>All visitor phone numbers</li>
+                </ul>
+                
+                <h6>What will be preserved:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Staff user accounts</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Branch information</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Purpose tags</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Course information</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Location data</li>
+                    <li><i class="fas fa-check text-success me-2"></i>System settings</li>
+                </ul>
+                
+                <div id="resetStats" class="mt-3">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading statistics...</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <label for="confirmReset" class="form-label">
+                        <strong>Type "RESET" to confirm:</strong>
+                    </label>
+                    <input type="text" class="form-control" id="confirmReset" placeholder="Type RESET here" required>
+                    <div class="form-text">This confirmation is required to prevent accidental deletion.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmResetBtn" disabled>
+                    <i class="fas fa-trash-alt me-2"></i>Confirm Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 /* Metric Cards */
 .metric-card {
@@ -543,4 +643,139 @@
     transform: translateY(-2px);
 }
 </style>
+
+@endsection
+
+@section('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const resetModal = document.getElementById('resetDataModal');
+    const confirmResetInput = document.getElementById('confirmReset');
+    const confirmResetBtn = document.getElementById('confirmResetBtn');
+    const resetStats = document.getElementById('resetStats');
+
+    // Load reset statistics when modal is shown
+    resetModal.addEventListener('show.bs.modal', function() {
+        loadResetStats();
+    });
+
+    // Enable/disable confirm button based on input
+    confirmResetInput.addEventListener('input', function() {
+        const isResetTyped = this.value.trim().toUpperCase() === 'RESET';
+        confirmResetBtn.disabled = !isResetTyped;
+        
+        if (isResetTyped) {
+            confirmResetBtn.classList.remove('btn-secondary');
+            confirmResetBtn.classList.add('btn-danger');
+        } else {
+            confirmResetBtn.classList.remove('btn-danger');
+            confirmResetBtn.classList.add('btn-secondary');
+        }
+    });
+
+    // Handle reset confirmation
+    confirmResetBtn.addEventListener('click', function() {
+        if (confirmResetInput.value.trim().toUpperCase() !== 'RESET') {
+            alert('Please type "RESET" to confirm.');
+            return;
+        }
+
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Resetting...';
+        this.disabled = true;
+
+        // Make the reset request
+        fetch('{{ route("admin.reset-visitor-data") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                alert('Data reset completed successfully!\n\nDeleted:\n' +
+                    '• ' + data.deleted_counts.visitors + ' visitors\n' +
+                    '• ' + data.deleted_counts.interactions + ' interactions\n' +
+                    '• ' + data.deleted_counts.remarks + ' remarks\n' +
+                    '• ' + data.deleted_counts.sessions + ' sessions\n' +
+                    '• ' + data.deleted_counts.phone_numbers + ' phone numbers\n' +
+                    '• ' + data.deleted_counts.attachments + ' attachments');
+
+                // Close modal and reload page
+                const modal = bootstrap.Modal.getInstance(resetModal);
+                modal.hide();
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while resetting data. Please try again.');
+            this.innerHTML = originalText;
+            this.disabled = false;
+        });
+    });
+
+    // Load reset statistics
+    function loadResetStats() {
+        fetch('{{ route("admin.get-reset-stats") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                resetStats.innerHTML = `
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Data Statistics</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <small><strong>Visitors:</strong> ${data.stats.visitors}</small><br>
+                                <small><strong>Interactions:</strong> ${data.stats.interactions}</small><br>
+                                <small><strong>Remarks:</strong> ${data.stats.remarks}</small>
+                            </div>
+                            <div class="col-6">
+                                <small><strong>Sessions:</strong> ${data.stats.sessions}</small><br>
+                                <small><strong>Phone Numbers:</strong> ${data.stats.phone_numbers}</small><br>
+                                <small><strong>Attachments:</strong> ${data.stats.attachments}</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <strong>Total Records to Delete: ${data.total_records}</strong>
+                    </div>
+                `;
+            } else {
+                resetStats.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading statistics: ${data.message}
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            resetStats.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error loading statistics. Please try again.
+                </div>
+            `;
+        });
+    }
+
+    // Reset form when modal is hidden
+    resetModal.addEventListener('hidden.bs.modal', function() {
+        confirmResetInput.value = '';
+        confirmResetBtn.disabled = true;
+        confirmResetBtn.classList.remove('btn-danger');
+        confirmResetBtn.classList.add('btn-secondary');
+        confirmResetBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Confirm Reset';
+    });
+});
+</script>
 @endsection

@@ -67,6 +67,10 @@ Route::middleware('auth')->group(function () {
         
         // Student Selection Routes
         Route::get('/student-selection', [AdminController::class, 'showStudentSelection'])->name('student-selection');
+        
+        // System Reset Routes
+        Route::get('/reset-stats', [AdminController::class, 'getResetStats'])->name('get-reset-stats');
+        Route::post('/reset-visitor-data', [AdminController::class, 'resetVisitorData'])->name('reset-visitor-data');
     });
 
 

@@ -12,6 +12,7 @@ use App\Models\Branch;
 use App\Models\UserBranchPermission;
 use App\Models\Tag;
 use App\Models\Course;
+use App\Models\StudentSession;
 use App\Helpers\DateTimeHelper;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
@@ -1024,6 +1025,129 @@ class AdminController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while deleting the course.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset all visitor data while preserving system data
+     */
+    public function resetVisitorData()
+    {
+        try {
+            \DB::beginTransaction();
+
+            // Get count of data to be deleted for confirmation
+            $visitorCount = Visitor::count();
+            $interactionCount = InteractionHistory::count();
+            $remarkCount = Remark::count();
+            $sessionCount = StudentSession::count();
+            $phoneCount = \App\Models\VisitorPhoneNumber::count();
+            $attachmentCount = \App\Models\InteractionAttachment::count();
+
+            // Delete in correct order (respecting foreign key constraints)
+            
+            // 1. Delete interaction attachments and their Google Drive files
+            $attachments = \App\Models\InteractionAttachment::all();
+            foreach ($attachments as $attachment) {
+                try {
+                    // Delete from Google Drive
+                    $googleDriveService = new \App\Services\GoogleDriveService();
+                    $googleDriveService->deleteFile($attachment->google_drive_file_id);
+                } catch (\Exception $e) {
+                    \Log::warning('Could not delete Google Drive file: ' . $e->getMessage());
+                }
+            }
+            \App\Models\InteractionAttachment::query()->delete();
+
+            // 2. Delete remarks (has foreign key to interaction_history)
+            Remark::query()->delete();
+
+            // 3. Delete interaction history (has foreign key to visitors)
+            InteractionHistory::query()->delete();
+
+            // 4. Delete student sessions (has foreign key to visitors)
+            StudentSession::query()->delete();
+
+            // 5. Delete visitor phone numbers (has foreign key to visitors)
+            \App\Models\VisitorPhoneNumber::query()->delete();
+
+            // 6. Delete visitor-tag associations (pivot table)
+            \DB::table('visitor_tags')->delete();
+
+            // 7. Delete visitors (main table)
+            Visitor::query()->delete();
+
+            \DB::commit();
+
+            // Clear relevant caches
+            Cache::flush();
+
+            \Log::info('Visitor data reset completed by admin user: ' . auth()->user()->name, [
+                'deleted_counts' => [
+                    'visitors' => $visitorCount,
+                    'interactions' => $interactionCount,
+                    'remarks' => $remarkCount,
+                    'sessions' => $sessionCount,
+                    'phone_numbers' => $phoneCount,
+                    'attachments' => $attachmentCount
+                ]
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All visitor data has been successfully reset!',
+                'deleted_counts' => [
+                    'visitors' => $visitorCount,
+                    'interactions' => $interactionCount,
+                    'remarks' => $remarkCount,
+                    'sessions' => $sessionCount,
+                    'phone_numbers' => $phoneCount,
+                    'attachments' => $attachmentCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \DB::rollback();
+            \Log::error('Error resetting visitor data: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reset visitor data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get statistics about what will be affected by reset
+     */
+    public function getResetStats()
+    {
+        try {
+            $stats = [
+                'visitors' => Visitor::count(),
+                'interactions' => InteractionHistory::count(),
+                'remarks' => Remark::count(),
+                'sessions' => StudentSession::count(),
+                'phone_numbers' => \App\Models\VisitorPhoneNumber::count(),
+                'attachments' => \App\Models\InteractionAttachment::count(),
+            ];
+
+            $totalRecords = array_sum($stats);
+
+            return response()->json([
+                'success' => true,
+                'stats' => $stats,
+                'total_records' => $totalRecords,
+                'message' => $totalRecords > 0 
+                    ? "This will delete {$totalRecords} records across all visitor-related tables."
+                    : "No visitor data found to reset."
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get reset statistics: ' . $e->getMessage()
             ], 500);
         }
     }

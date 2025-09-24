@@ -297,9 +297,15 @@
                                                                 @endphp
                                                                 
                                                                 @if($canAddRemark)
-                                                                    <div class="mt-2 d-flex gap-2">
-                                                                        <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                            <i class="fas fa-plus me-1"></i>Add Remark
+                                                                    <div class="mt-2 d-flex gap-1 flex-wrap">
+                                                                        <button class="btn btn-sm btn-primary" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                            <i class="fas fa-comment me-1"></i>Add Remark
+                                                                        </button>
+                                                                        <button class="btn btn-sm btn-warning" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                            <i class="fas fa-exchange-alt me-1"></i>Assign
+                                                                        </button>
+                                                                        <button class="btn btn-sm btn-success" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                            <i class="fas fa-calendar-alt me-1"></i>Reschedule
                                                                         </button>
                                                                         <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
                                                                             <i class="fas fa-paperclip me-1"></i>Upload File
@@ -354,9 +360,15 @@
                                                                         <i class="fas fa-comment me-1"></i>Remark Updated
                                                                     </span>
                                                                 @endif
-                                                                <div class="d-flex gap-2 ms-2">
-                                                                    <button class="btn btn-sm btn-outline-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                        <i class="fas fa-plus me-1"></i>Add Remark
+                                                                <div class="d-flex gap-1 ms-2 flex-wrap">
+                                                                    <button class="btn btn-sm btn-primary" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                        <i class="fas fa-comment me-1"></i>Add Remark
+                                                                    </button>
+                                                                    <button class="btn btn-sm btn-warning" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                        <i class="fas fa-exchange-alt me-1"></i>Assign
+                                                                    </button>
+                                                                    <button class="btn btn-sm btn-success" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                        <i class="fas fa-calendar-alt me-1"></i>Reschedule
                                                                     </button>
                                                                     <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
                                                                         <i class="fas fa-paperclip me-1"></i>Upload File
@@ -514,11 +526,7 @@
                                                                                 }
                                                                             @endphp
                                                                             
-                                            @if($isOriginalTransferInteraction && $transferredToName)
-                                                                <span class="badge bg-danger badge-paytm-enhanced badge-paytm-pulse px-2 py-1">
-                                                                    <i class="fas fa-user-check me-1"></i>Assigned to {{ $transferredToName }}@if($transferredToBranch) ({{ $transferredToBranch }})@endif
-                                                                </span>
-                                                            @endif
+                                            {{-- ASSIGNED TO tag removed as requested --}}
                                                                             
                                                                             @if($interaction->remarks->count() > 0)
                                                                                 @if($interaction->is_completed)
@@ -600,7 +608,7 @@
                                                                             <div class="modern-card">
                                                                                 <div class="card-header-modern">
                                                                                     <i class="fas fa-user-plus me-2"></i>
-                                                                                    <strong>Added By - {{ $interaction->createdBy->name ?? 'Unknown' }}
+                                                                                    <strong>Assigned By - {{ $interaction->createdBy->name ?? 'Unknown' }}
                                                                                     @if($interaction->createdBy && $interaction->createdBy->branch)
                                                                                         ({{ $interaction->createdBy->branch->branch_name }})
                                                                                     @endif
@@ -647,6 +655,29 @@
                                                                                                 $remarkParts = explode("\n", $remark->remark_text);
                                                                                                 $transferText = $isTransferRemark ? $remarkParts[0] : '';
                                                                                                 $notesText = $isTransferRemark && count($remarkParts) > 1 ? implode("\n", array_slice($remarkParts, 1)) : $remark->remark_text;
+                                                                                                
+                                                                                                // For transfer cases, modify the display text to show "Assigned to" format
+                                                                                                if ($isTransferRemark) {
+                                                                                                    if (strpos($transferText, 'Transferred from') !== false) {
+                                                                                                        // For "Transferred from [Person]" cases, we need to find who it was transferred TO
+                                                                                                        // This is stored in the interaction's meeting_with field (the new assignee)
+                                                                                                        $newAssignee = $interaction->meetingWith;
+                                                                                                        if ($newAssignee) {
+                                                                                                            $branchName = $newAssignee->branch ? $newAssignee->branch->branch_name : 'Unknown Branch';
+                                                                                                            $transferText = "Assigned to {$newAssignee->name} ({$branchName})";
+                                                                                                        } else {
+                                                                                                            // Fallback: extract from the original text but show it's a transfer
+                                                                                                            $transferText = "Transfer Case - " . $transferText;
+                                                                                                        }
+                                                                                                    } elseif (strpos($transferText, 'Completed & Transferred to') !== false) {
+                                                                                                        // Extract name and branch from "Completed & Transferred to [Name] ([Branch])"
+                                                                                                        if (preg_match('/Completed & Transferred to ([^(]+)\s*\(([^)]+)\)/', $transferText, $matches)) {
+                                                                                                            $transferredToName = trim($matches[1]);
+                                                                                                            $transferredToBranch = trim($matches[2]);
+                                                                                                            $transferText = "Assigned to {$transferredToName} ({$transferredToBranch})";
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
                                                                                             @endphp
                                                                                             
                                                                                             <div class="modern-card">
@@ -708,12 +739,20 @@
                                                                                                 
                                                                                                 @if($canAddRemarkAccordion)
                                                                                                     <div class="mt-3 text-center">
-                                                                                                        <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                            <i class="fas fa-plus me-2"></i>Add Remark
-                                                                                                        </button>
-                                                                                                        <button class="btn btn-outline-success ms-2" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                            <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                        </button>
+                                                                                                        <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                                                                                            <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                                <i class="fas fa-comment me-1"></i>Add Remark
+                                                                                                            </button>
+                                                                                                            <button class="btn btn-warning btn-sm" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                                <i class="fas fa-exchange-alt me-1"></i>Assign
+                                                                                                            </button>
+                                                                                                            <button class="btn btn-success btn-sm" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                                <i class="fas fa-calendar-alt me-1"></i>Reschedule
+                                                                                                            </button>
+                                                                                                            <button class="btn btn-outline-success btn-sm" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                                <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                                            </button>
+                                                                                                        </div>
                                                                                                     </div>
                                                                                                 @else
                                                                                                     <!-- Only show "Scheduled for" text if no remarks have been added yet -->
@@ -751,11 +790,17 @@
                                                                                             <i class="fas fa-comment-slash text-muted"></i>
                                                                                             <span class="text-muted">No remarks</span>
                                                                                             @if($interaction->meeting_with == auth()->user()->user_id)
-                                                                                                <div class="d-flex gap-2 mt-2 justify-content-center">
-                                                                                                    <button class="btn-paytm-primary" onclick="showRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                        <i class="fas fa-plus me-2"></i>Add Remark
+                                                                                                <div class="d-flex gap-1 mt-2 justify-content-center flex-wrap">
+                                                                                                    <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                        <i class="fas fa-comment me-1"></i>Add Remark
                                                                                                     </button>
-                                                                                                    <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                    <button class="btn btn-warning btn-sm" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                        <i class="fas fa-exchange-alt me-1"></i>Assign
+                                                                                                    </button>
+                                                                                                    <button class="btn btn-success btn-sm" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                        <i class="fas fa-calendar-alt me-1"></i>Reschedule
+                                                                                                    </button>
+                                                                                                    <button class="btn btn-outline-success btn-sm" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
                                                                                                         <i class="fas fa-paperclip me-1"></i>Upload File
                                                                                                     </button>
                                                                                                 </div>
@@ -864,6 +909,95 @@
     </div>
 </div>
 
+<!-- Simple Add Remark Modal -->
+<div class="modal fade" id="simpleRemarkModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-comment me-2"></i>Add Remark
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="simpleRemarkForm">
+                <input type="hidden" id="simple_interaction_id" name="interaction_id">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Interaction Details:</strong>
+                        <div id="simpleInteractionDetails" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="simpleRemarkText" class="form-label">Remark/Note <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="simpleRemarkText" name="remark_text" rows="4" 
+                                  placeholder="Enter your remark/note about this interaction..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Add Remark
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Focused Assign to Team Member Modal -->
+<div class="modal fade" id="focusedAssignModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt me-2"></i>Assign To Team Member
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="focusedAssignForm">
+                <input type="hidden" id="focused_assign_interaction_id" name="interaction_id">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Interaction Details:</strong>
+                        <div id="focusedAssignInteractionDetails" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="focusedTeamMember" class="form-label">Select Team Member <span class="text-danger">*</span></label>
+                        <select class="form-select" id="focusedTeamMember" name="team_member_id" required>
+                            <option value="">Choose a team member...</option>
+                            <option value="{{ auth()->user()->user_id }}">🔄 Assign to Myself</option>
+                            @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
+                                <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Select a team member to transfer this interaction to</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="focusedAssignNotes" class="form-label">Transfer Notes</label>
+                        <textarea class="form-control" id="focusedAssignNotes" name="assignment_notes" rows="3" 
+                                  placeholder="Optional: Add notes about why you're transferring this interaction..."></textarea>
+                        <div class="form-text">Optional: Add notes that will be visible to the assigned team member</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-exchange-alt me-1"></i>Assign To Team Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Assign to Team Member Modal -->
 <div class="modal fade" id="assignModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -955,6 +1089,94 @@
                     </button>
                     <button type="submit" class="btn btn-warning">
                         <i class="fas fa-exchange-alt me-1"></i>Assign To Team Member
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div class="modal fade" id="rescheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-alt me-2"></i>Reschedule My Interaction
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rescheduleForm">
+                <input type="hidden" id="reschedule_interaction_id" name="interaction_id">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Interaction Details:</strong>
+                        <div id="rescheduleInteractionDetails" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduleTeamMember" class="form-label">Assign To</label>
+                        <input type="hidden" id="rescheduleTeamMember" name="team_member_id" value="{{ auth()->user()->user_id }}">
+                        <div class="form-control-plaintext bg-light border rounded p-2">
+                            <i class="fas fa-user me-2 text-primary"></i>
+                            <strong>{{ auth()->user()->name }} ({{ auth()->user()->branch->branch_name ?? 'No Branch' }})</strong>
+                            <small class="text-muted ms-2">- Assign to Myself</small>
+                        </div>
+                        <div class="form-text">Reschedule your own interaction for a later date</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduleDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="rescheduleDate" name="scheduled_date" 
+                               min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduleHour" class="form-label">Hour <span class="text-danger">*</span></label>
+                        <select class="form-select" id="rescheduleHour" name="scheduled_hour">
+                            <option value="09">09 AM</option>
+                            <option value="10">10 AM</option>
+                            <option value="11">11 AM</option>
+                            <option value="12">12 PM</option>
+                            <option value="13">01 PM</option>
+                            <option value="14">02 PM</option>
+                            <option value="15" selected>03 PM</option>
+                            <option value="16">04 PM</option>
+                            <option value="17">05 PM</option>
+                            <option value="18">06 PM</option>
+                            <option value="19">07 PM</option>
+                            <option value="20">08 PM</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduleMinute" class="form-label">Minute <span class="text-danger">*</span></label>
+                        <select class="form-select" id="rescheduleMinute" name="scheduled_minute">
+                            @for($i = 0; $i < 60; $i++)
+                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduleNotes" class="form-label">Reschedule Notes <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rescheduleNotes" name="assignment_notes" rows="3" 
+                                  placeholder="Required: Explain why you're rescheduling this interaction..." required></textarea>
+                        <div class="form-text">Required: Add notes explaining why you're rescheduling this interaction</div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> This interaction will appear in your "Assigned to Me" tab on the scheduled date and time.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-calendar-check me-1"></i>Reschedule
                     </button>
                 </div>
             </form>
@@ -1056,10 +1278,7 @@
         white-space: nowrap !important;
     }
     
-    /* Ensure transfer tag doesn't overlap on mobile */
-    .badge.bg-danger {
-        margin-bottom: 2px !important;
-    }
+    {{-- Transfer tag CSS removed as the tag was removed --}}
 }
 
 @media (max-width: 576px) {
@@ -1092,6 +1311,60 @@ function showRemarkModal(interactionId, visitorName, purpose, studentName) {
     `;
     
     const modal = new bootstrap.Modal(document.getElementById('remarkModal'));
+    modal.show();
+}
+
+// Show Simple Remark Modal (New)
+function showSimpleRemarkModal(interactionId, visitorName, purpose, studentName) {
+    document.getElementById('simple_interaction_id').value = interactionId;
+    
+    // Show student name if available, otherwise show contact person
+    const displayName = studentName && studentName.trim() !== '' ? 
+        `<strong>Student Name:</strong> ${studentName}` : 
+        `<strong>Contact Person:</strong> ${visitorName}`;
+    
+    document.getElementById('simpleInteractionDetails').innerHTML = `
+        ${displayName}<br>
+        <strong>Purpose:</strong> ${purpose}
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('simpleRemarkModal'));
+    modal.show();
+}
+
+// Show Focused Assign Modal (New)
+function showFocusedAssignModal(interactionId, visitorName, purpose, studentName) {
+    document.getElementById('focused_assign_interaction_id').value = interactionId;
+    
+    // Show student name if available, otherwise show contact person
+    const displayName = studentName && studentName.trim() !== '' ? 
+        `<strong>Student Name:</strong> ${studentName}` : 
+        `<strong>Contact Person:</strong> ${visitorName}`;
+    
+    document.getElementById('focusedAssignInteractionDetails').innerHTML = `
+        ${displayName}<br>
+        <strong>Purpose:</strong> ${purpose}
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('focusedAssignModal'));
+    modal.show();
+}
+
+// Show Reschedule Modal (Self-Reschedule Only)
+function showRescheduleModal(interactionId, visitorName, purpose, studentName) {
+    document.getElementById('reschedule_interaction_id').value = interactionId;
+    
+    // Show student name if available, otherwise show contact person
+    const displayName = studentName && studentName.trim() !== '' ? 
+        `<strong>Student Name:</strong> ${studentName}` : 
+        `<strong>Contact Person:</strong> ${visitorName}`;
+    
+    document.getElementById('rescheduleInteractionDetails').innerHTML = `
+        ${displayName}<br>
+        <strong>Purpose:</strong> ${purpose}
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
     modal.show();
 }
 
@@ -1200,6 +1473,114 @@ document.getElementById('assignForm').addEventListener('submit', function(e) {
     .catch(error => {
         console.error('Error:', error);
         alert('Error: Failed to assign interaction');
+    });
+});
+
+// Handle Simple Remark Form Submission (New)
+document.getElementById('simpleRemarkForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const interactionId = document.getElementById('simple_interaction_id').value;
+    const formData = new FormData(this);
+    
+    fetch(`{{ url('staff/update-remark') }}/${interactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json().catch(() => {
+                return { success: true };
+            });
+        } else {
+            return response.json().catch(() => {
+                return { success: false, message: 'Server error' };
+            });
+        }
+    })
+    .then(data => {
+        if (data.success) {
+            alert('Remark added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('simpleRemarkModal')).hide();
+            this.reset();
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to add remark'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Remark may have been saved. Refreshing page...');
+        window.location.reload();
+    });
+});
+
+// Handle Focused Assign Form Submission (New)
+document.getElementById('focusedAssignForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const interactionId = formData.get('interaction_id');
+    
+    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Interaction transferred successfully! Your interaction has been completed and a new interaction has been created for the assigned team member.');
+            bootstrap.Modal.getInstance(document.getElementById('focusedAssignModal')).hide();
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to transfer interaction'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: Failed to assign interaction');
+    });
+});
+
+// Handle Reschedule Form Submission (New)
+document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const interactionId = formData.get('interaction_id');
+    
+    // Add scheduling flag for reschedule
+    formData.append('schedule_assignment', '1');
+    
+    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Interaction rescheduled successfully! The interaction will appear in assignee\'s tab on the scheduled date and time.');
+            bootstrap.Modal.getInstance(document.getElementById('rescheduleModal')).hide();
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to reschedule interaction'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: Failed to reschedule interaction');
     });
 });
 
