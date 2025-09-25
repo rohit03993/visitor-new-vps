@@ -447,7 +447,11 @@
                                                                 @endphp
                                                                 @if(!$canComplete)
                                                                     <small class="text-light">
-                                                                        <i class="fas fa-user me-1"></i>Attended by: {{ $latestInteraction->meetingWith->name ?? 'Unknown' }}
+                                                                        @php
+                                                                            $badgeState = getInteractionBadgeState($latestInteraction, auth()->user()->user_id);
+                                                                            $labelText = ($badgeState === 'pending') ? 'Assigned to' : 'Attended by';
+                                                                        @endphp
+                                                                        <i class="fas fa-user me-1"></i>{{ $labelText }}: {{ $latestInteraction->meetingWith->name ?? 'Unknown' }}
                                                                     </small>
                                                                 @endif
                                                             @endif
@@ -490,7 +494,11 @@
                                                                             <div class="interaction-info">
                                                                                 <div class="fw-bold interaction-date" style="white-space: nowrap !important; font-family: monospace !important; display: inline-block !important;">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'Md g:iA') }}</div>
                                                                                 <small class="text-muted interaction-meeting">
-                                                                                    Attended by - {{ $interaction->meetingWith->name ?? 'Unknown' }}
+                                                                                    @php
+                                                                                        $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
+                                                                                        $labelText = ($badgeState === 'pending') ? 'Assigned to' : 'Attended by';
+                                                                                    @endphp
+                                                                                    {{ $labelText }} - {{ $interaction->meetingWith->name ?? 'Unknown' }}
                                                                                     @if($interaction->meetingWith && $interaction->meetingWith->branch)
                                                                                         <span class="text-muted">({{ $interaction->meetingWith->branch->branch_name }})</span>
                                                                                     @endif
@@ -729,7 +737,11 @@
                                                                                     <div class="modern-card">
                                                                                         <div class="card-header-modern">
                                                                                             <i class="fas fa-user-check me-2"></i>
-                                                                                            <strong>Attended by - {{ $interaction->meetingWith->name ?? 'Unknown' }}
+                                                                                            @php
+                                                                                                $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
+                                                                                                $labelText = ($badgeState === 'pending') ? 'Assigned to' : 'Attended by';
+                                                                                            @endphp
+                                                                                            <strong>{{ $labelText }} - {{ $interaction->meetingWith->name ?? 'Unknown' }}
                                                                                             @if($interaction->meetingWith && $interaction->meetingWith->branch)
                                                                                                 ({{ $interaction->meetingWith->branch->branch_name }})
                                                                                             @endif
