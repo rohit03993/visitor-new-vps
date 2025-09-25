@@ -790,6 +790,7 @@ class StaffController extends Controller
             'mode' => $request->mode,
             'created_by' => $user->user_id,
             'created_by_role' => 'staff',
+            'interaction_type' => 'new', // NEW interaction created via visitor form
             'is_completed' => false, // PENDING - will be completed after meeting
         ]);
 
@@ -1310,6 +1311,7 @@ class StaffController extends Controller
                 'mobile_number' => $interaction->mobile_number, // Include mobile_number
                 'created_by' => $user->user_id, // Y created this new interaction for X
                 'created_by_role' => $user->role, // Include role
+                'interaction_type' => 'assigned', // ASSIGNED interaction created via transfer
                 'is_completed' => false, // New interaction is not completed
                 'scheduled_date' => $scheduledDate, // NEW: Scheduled date
                 'assigned_by' => $user->user_id, // NEW: Who assigned it

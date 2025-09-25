@@ -447,7 +447,7 @@
                                                                 @endphp
                                                                 @if(!$canComplete)
                                                                     <small class="text-light">
-                                                                        <i class="fas fa-user me-1"></i>Assigned to: {{ $latestInteraction->meetingWith->name ?? 'Unknown' }}
+                                                                        <i class="fas fa-user me-1"></i>Attended by: {{ $latestInteraction->meetingWith->name ?? 'Unknown' }}
                                                                     </small>
                                                                 @endif
                                                             @endif
@@ -603,244 +603,224 @@
                                                             <div id="collapse{{ $interaction->interaction_id }}" class="accordion-collapse collapse {{ $index === 0 ? 'show' : '' }}" aria-labelledby="heading{{ $interaction->interaction_id }}" data-bs-parent="#sessionAccordion{{ $session->session_id }}">
                                                                 <div class="accordion-body">
                                                                     <div class="row">
-                                                                        <!-- Visit Entered By with Notes - Full width on mobile, left column on desktop -->
-                                                                        <div class="col-lg-4 col-12 mb-3">
-                                                                            <div class="modern-card">
-                                                                                <div class="card-header-modern">
-                                                                                    <i class="fas fa-user-plus me-2"></i>
-                                                                                    <strong>Assigned By - {{ $interaction->createdBy->name ?? 'Unknown' }}
-                                                                                    @if($interaction->createdBy && $interaction->createdBy->branch)
-                                                                                        ({{ $interaction->createdBy->branch->branch_name }})
-                                                                                    @endif
-                                                                                    </strong>
-                                                                                </div>
-                                                                                <div class="card-body-modern">
+                                                                        <!-- Simple Left-Right View - Full width -->
+                                                                        <div class="col-12">
+                                                                            @php
+                                                                                // ===== SIMPLE CONTENT DISTRIBUTION (NO TIMELINE) =====
+                                                                                
+                                                                                // LEFT PANEL: LAST MESSAGE from assigner/scheduler
+                                                                                if ($interaction->interaction_type === 'new') {
+                                                                                    // For new interactions, show initial notes as LAST MESSAGE
+                                                                                    $leftPanelMessage = $interaction->initial_notes ?: 'New interaction created';
+                                                                                    $leftPanelTimestamp = $interaction->created_at;
+                                                                                } else {
+                                                                                    // For assigned interactions, find the assignment/schedule message
+                                                                                    $assignmentRemark = $interaction->remarks->first(function($remark) {
+                                                                                        return strpos($remark->remark_text, 'Transferred from') !== false || 
+                                                                                               strpos($remark->remark_text, '📅 Scheduled Assignment from') !== false ||
+                                                                                               strpos($remark->remark_text, 'Completed & Transferred to') !== false;
+                                                                                    });
                                                                                     
-                                                                                    <!-- Before Meeting Section Header -->
-                                                                                    <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.125rem;">
-                                                                                        Before Meeting -
-                                                                                    </small>
-                                                                                    <!-- Notes Section - Under Visit Entered By -->
-                                                                                    <div>
-                                                                                        @if($interaction->initial_notes)
-                                                                                            <div class="highlighted-box notes-highlight">
-                                                                                                {{ $interaction->initial_notes }}
-                                                                                            </div>
-                                                                                        @else
-                                                                                            <div class="highlighted-box notes-highlight empty">
-                                                                                                <i class="fas fa-sticky-note text-muted"></i>
-                                                                                                <span class="text-muted">No initial notes</span>
-                                                                                            </div>
-                                                                                        @endif
+                                                                                    if ($assignmentRemark) {
+                                                                                        // Extract notes from assignment message
+                                                                                        $remarkParts = explode("\n", $assignmentRemark->remark_text);
+                                                                                        foreach ($remarkParts as $part) {
+                                                                                            if (strpos($part, 'Notes:') !== false) {
+                                                                                                $leftPanelMessage = trim(str_replace('Notes:', '', $part));
+                                                                                                $leftPanelTimestamp = $assignmentRemark->created_at;
+                                                                                                break;
+                                                                                            }
+                                                                                        }
                                                                                         
-                                                                                        <!-- Date/Time at bottom - Same style as Remarks section -->
-                                                                                        <div class="remark-meta">
-                                                                                            <div class="remark-time">
-                                                                                                <i class="fas fa-clock"></i>
-                                                                                                {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($interaction->created_at, 'M d, Y g:iA') }}
+                                                                                        // If no "Notes:" found, show assignment details
+                                                                                        if (!isset($leftPanelMessage)) {
+                                                                                            $leftPanelMessage = 'Assignment details';
+                                                                                            $leftPanelTimestamp = $assignmentRemark->created_at;
+                                                                                        }
+                                                                                    } else {
+                                                                                        $leftPanelMessage = 'Assignment details';
+                                                                                        $leftPanelTimestamp = $interaction->created_at;
+                                                                                    }
+                                                                                }
+                                                                                
+                                                                                // RIGHT PANEL: LATEST MESSAGE (current status)
+                                                                                // COMPLETE LOGIC: Show the LATEST action taken by the current assignee
+                                                                                
+                                                                                // Get ALL remarks for this interaction, sorted by creation time (latest first)
+                                                                                $allRemarks = $interaction->remarks->sortByDesc('created_at');
+                                                                                
+                                                                                $rightPanelMessage = 'No action taken yet';
+                                                                                $rightPanelTimestamp = $interaction->created_at;
+                                                                                
+                                                                                // Check each remark in chronological order (latest first)
+                                                                                foreach ($allRemarks as $remark) {
+                                                                                    // Skip assignment/transfer remarks for RIGHT panel display
+                                                                                    if (strpos($remark->remark_text, 'Transferred from') !== false || 
+                                                                                        strpos($remark->remark_text, 'Completed & Transferred to') !== false ||
+                                                                                        strpos($remark->remark_text, '📅 Scheduled Assignment from') !== false) {
+                                                                                        continue; // Skip assignment remarks
+                                                                                    }
+                                                                                    
+                                                                                    // This is a work remark - show it
+                                                                                    $rightPanelMessage = $remark->remark_text;
+                                                                                    $rightPanelTimestamp = $remark->created_at;
+                                                                                    break; // Show the latest work remark
+                                                                                }
+                                                                                
+                                                                                // If no work remarks found, check if this person has assigned to someone else
+                                                                                if ($rightPanelMessage === 'No action taken yet') {
+                                                                                    // Look for assignment remarks where this person assigned to someone
+                                                                                    $assignmentRemark = $interaction->remarks->first(function($remark) {
+                                                                                        return strpos($remark->remark_text, 'Completed & Transferred to') !== false;
+                                                                                    });
+                                                                                    
+                                                                                    if ($assignmentRemark) {
+                                                                                        // Extract assignment message from "Notes:" section
+                                                                                        if (strpos($assignmentRemark->remark_text, 'Notes:') !== false) {
+                                                                                            $remarkParts = explode("\n", $assignmentRemark->remark_text);
+                                                                                            foreach ($remarkParts as $part) {
+                                                                                                if (strpos($part, 'Notes:') !== false) {
+                                                                                                    $rightPanelMessage = trim(str_replace('Notes:', '', $part));
+                                                                                                    $rightPanelTimestamp = $assignmentRemark->created_at;
+                                                                                                    break;
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            @endphp
+                                                                            
+                                                                            <div class="row">
+                                                                                <!-- LEFT PANEL: Last Message -->
+                                                                                <div class="col-md-6 mb-3">
+                                                                                    <div class="modern-card">
+                                                                                        <div class="card-header-modern">
+                                                                                            <i class="fas fa-user me-2"></i>
+                                                                                            <strong>
+                                                                                                @if($interaction->interaction_type === 'new')
+                                                                                                    Added By - {{ $interaction->createdBy->name ?? 'Unknown' }}
+                                                                                                @else
+                                                                                                    Assigned By - {{ $interaction->createdBy->name ?? 'Unknown' }}
+                                                                                                @endif
+                                                                                                @if($interaction->createdBy && $interaction->createdBy->branch)
+                                                                                                    ({{ $interaction->createdBy->branch->branch_name }})
+                                                                                                @endif
+                                                                                            </strong>
+                                                                                        </div>
+                                                                                        <div class="card-body-modern">
+                                                                                            <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.125rem;">
+                                                                                                Last Message -
+                                                                                            </small>
+                                                                                            <div class="highlighted-box notes-highlight">
+                                                                                                {{ $leftPanelMessage }}
+                                                                                            </div>
+                                                                                            <div class="remark-meta">
+                                                                                                <div class="remark-time">
+                                                                                                    <i class="fas fa-clock"></i>
+                                                                                                    {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($leftPanelTimestamp, 'M d, Y g:iA') }}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                
+                                                                                <!-- RIGHT PANEL: Latest Message -->
+                                                                                <div class="col-md-6 mb-3">
+                                                                                    <div class="modern-card">
+                                                                                        <div class="card-header-modern">
+                                                                                            <i class="fas fa-user-check me-2"></i>
+                                                                                            <strong>Attended by - {{ $interaction->meetingWith->name ?? 'Unknown' }}
+                                                                                            @if($interaction->meetingWith && $interaction->meetingWith->branch)
+                                                                                                ({{ $interaction->meetingWith->branch->branch_name }})
+                                                                                            @endif
+                                                                                            </strong>
+                                                                                        </div>
+                                                                                        <div class="card-body-modern">
+                                                                                            @if($rightPanelMessage && $rightPanelMessage !== 'No action taken yet')
+                                                                                                <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.125rem;">
+                                                                                                    Latest Message -
+                                                                                                </small>
+                                                                                            @else
+                                                                                                <div style="margin-top: -7px; margin-bottom: 0.125rem; height: 1.2rem;">
+                                                                                                    <!-- Empty spacer to align content boxes -->
+                                                                                                </div>
+                                                                                            @endif
+                                                                                            <div class="highlighted-box remarks-highlight">
+                                                                                                @if($rightPanelMessage === 'No action taken yet')
+                                                                                                    <div class="d-flex align-items-center text-warning">
+                                                                                                        <i class="fas fa-clock me-2"></i>
+                                                                                                        <span>{{ $rightPanelMessage }}</span>
+                                                                                                    </div>
+                                                                                                @else
+                                                                                                    {{ $rightPanelMessage }}
+                                                                                                @endif
+                                                                                            </div>
+                                                                                            <div class="remark-meta">
+                                                                                                <div class="remark-time">
+                                                                                                    <i class="fas fa-clock"></i>
+                                                                                                    {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($rightPanelTimestamp, 'M d, Y g:iA') }}
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
-                                                                        </div>
-                                                                        
-                                                                        <!-- Remarks Content - Side by side, right column on desktop -->
-                                                                        <div class="col-lg-8 col-12">
-                                                                                    @if($interaction->remarks->count() > 0)
-                                                                                        @foreach($interaction->remarks as $remark)
-                                                                                            @php
-                                                                                                // Check if this is a transfer remark and split it
-                                                                                                $isTransferRemark = strpos($remark->remark_text, 'Transferred from') !== false || strpos($remark->remark_text, 'Completed & Transferred to') !== false;
-                                                                                                $remarkParts = explode("\n", $remark->remark_text);
-                                                                                                $transferText = $isTransferRemark ? $remarkParts[0] : '';
-                                                                                                $notesText = $isTransferRemark && count($remarkParts) > 1 ? implode("\n", array_slice($remarkParts, 1)) : $remark->remark_text;
-                                                                                                
-                                                                                                // For transfer cases, modify the display text to show "Assigned to" format
-                                                                                                if ($isTransferRemark) {
-                                                                                                    if (strpos($transferText, 'Transferred from') !== false) {
-                                                                                                        // For "Transferred from [Person]" cases, we need to find who it was transferred TO
-                                                                                                        // This is stored in the interaction's meeting_with field (the new assignee)
-                                                                                                        $newAssignee = $interaction->meetingWith;
-                                                                                                        if ($newAssignee) {
-                                                                                                            $branchName = $newAssignee->branch ? $newAssignee->branch->branch_name : 'Unknown Branch';
-                                                                                                            $transferText = "Assigned to {$newAssignee->name} ({$branchName})";
-                                                                                                        } else {
-                                                                                                            // Fallback: extract from the original text but show it's a transfer
-                                                                                                            $transferText = "Transfer Case - " . $transferText;
-                                                                                                        }
-                                                                                                    } elseif (strpos($transferText, 'Completed & Transferred to') !== false) {
-                                                                                                        // Extract name and branch from "Completed & Transferred to [Name] ([Branch])"
-                                                                                                        if (preg_match('/Completed & Transferred to ([^(]+)\s*\(([^)]+)\)/', $transferText, $matches)) {
-                                                                                                            $transferredToName = trim($matches[1]);
-                                                                                                            $transferredToBranch = trim($matches[2]);
-                                                                                                            $transferText = "Assigned to {$transferredToName} ({$transferredToBranch})";
-                                                                                                        }
-                                                                                                    }
-                                                                                                }
-                                                                                            @endphp
-                                                                                            
-                                                                                            <div class="modern-card">
-                                                                                                @if(!$isTransferRemark)
-                                                                                                    <!-- Regular Remark: Show Attended by header -->
-                                                                                                    <div class="card-header-modern">
-                                                                                                        <i class="fas fa-comments me-2"></i>
-                                                                                                        <strong>Attended by - {{ $remark->addedBy?->name ?? 'Unknown' }}
-                                                                                                        @if($remark->addedBy && $remark->addedBy->branch)
-                                                                                                            ({{ $remark->addedBy->branch->branch_name }})
-                                                                                                        @endif
-                                                                                                        </strong>
-                                                                                                    </div>
-                                                                                                @endif
-                                                                                                
-                                                                                                <div class="card-body-modern">
-                                                                                                    
-                                                                                                    @if($isTransferRemark)
-                                                                                                        <!-- Transfer Case: Show transfer info and Transfer Notes header -->
-                                                                                                        @if($transferText)
-                                                                                                            <!-- Highlighted Transfer Text (compact) -->
-                                                                                                            <div class="transfer-highlight-compact">
-                                                                                                                <i class="fas fa-exchange-alt me-2"></i>{{ $transferText }}
-                                                                                                            </div>
-                                                                                                        @endif
-                                                                                                        
-                                                                                                        <!-- Transfer Notes Section Header -->
-                                                                                                        <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.25rem;">
-                                                                                                            Transfer Notes -
+                                                                            
+                                                                            <!-- Action Buttons for Expanded View -->
+                                                                            @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
+                                                                                @php
+                                                                                    $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
+                                                                                    $canAddRemark = ($badgeState === 'pending');
+                                                                                @endphp
+                                                                                
+                                                                                @if($canAddRemark)
+                                                                                    <div class="mt-3 text-center">
+                                                                                        <div class="modern-action-buttons justify-content-center">
+                                                                                            <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                <i class="fas fa-comment me-1"></i>Add Remark
+                                                                                            </button>
+                                                                                            <button class="btn btn-warning btn-sm" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                <i class="fas fa-exchange-alt me-1"></i>Assign
+                                                                                            </button>
+                                                                                            <button class="btn btn-success btn-sm" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
+                                                                                                <i class="fas fa-calendar-alt me-1"></i>Reschedule
+                                                                                            </button>
+                                                                                            <button class="btn btn-outline-success btn-sm" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                                <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                @endif
+                                                                            @endif
+                                                                            
+                                                                            <!-- File Attachments Section for Session Interactions - Independent of remarks -->
+                                                                            @if($interaction->attachments && $interaction->attachments->count() > 0)
+                                                                                <div class="mt-3">
+                                                                                    <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-2"></i>Attachments</h6>
+                                                                                    <div class="attachments-list">
+                                                                                        @foreach($interaction->attachments as $attachment)
+                                                                                            <div class="attachment-item d-flex align-items-center justify-content-between p-2 border rounded mb-2">
+                                                                                                <div class="d-flex align-items-center">
+                                                                                                    <i class="fas fa-{{ $attachment->getFileIcon() }} me-2 text-primary"></i>
+                                                                                                    <div>
+                                                                                                        <div class="fw-semibold">{{ $attachment->original_filename }}</div>
+                                                                                                        <small class="text-muted">
+                                                                                                            {{ $attachment->getFormattedFileSize() }} • 
+                                                                                                            {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($attachment->created_at, 'M d, Y g:iA') }} • 
+                                                                                                            by {{ $attachment->uploadedBy?->name ?? 'Unknown' }}
                                                                                                         </small>
-                                                                                                    @else
-                                                                                                        <!-- Regular Remark: Show After Meeting header -->
-                                                                                                        <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.25rem;">
-                                                                                                            After Meeting -
-                                                                                                        </small>
-                                                                                                    @endif
-                                                                                                    
-                                                                                                    <div class="highlighted-box remarks-highlight">
-                                                                                                        {{ $notesText }}
                                                                                                     </div>
-                                                                                                    
-                                                                                                    <!-- Date/Time at bottom - Same style as Interaction Added By -->
-                                                                                                    <div class="remark-meta">
-                                                                                                        <div class="remark-time">
-                                                                                                            <i class="fas fa-clock"></i>
-                                                                                                            {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, Y g:iA') }}
-                                                                                                        </div>
-                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="attachment-actions">
+                                                                                                    <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                                        <i class="fas fa-eye"></i> View
+                                                                                                    </a>
                                                                                                 </div>
                                                                                             </div>
                                                                                         @endforeach
-                                                                                        
-                                                                                        <!-- Show Add Remark button for transferred interactions (only if no work remarks exist) -->
-                                                                                        @if($interaction->meeting_with == auth()->user()->user_id && !$interaction->is_completed)
-                                                                                            @php
-                                                                                                $badgeState = getInteractionBadgeState($interaction, auth()->user()->user_id);
-                                                                                                $canAddRemarkAccordion = ($badgeState === 'pending');
-                                                                                            @endphp
-                                                                                                
-                                                                                                @if($canAddRemarkAccordion)
-                                                                                                    <div class="mt-3 text-center">
-                                                                                                        <div class="modern-action-buttons justify-content-center">
-                                                                                                            <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                                <i class="fas fa-comment me-1"></i>Add Remark
-                                                                                                            </button>
-                                                                                                            <button class="btn btn-warning btn-sm" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                                <i class="fas fa-exchange-alt me-1"></i>Assign
-                                                                                                            </button>
-                                                                                                            <button class="btn btn-success btn-sm" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                                <i class="fas fa-calendar-alt me-1"></i>Reschedule
-                                                                                                            </button>
-                                                                                                            <button class="btn btn-outline-success btn-sm" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                                <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                            </button>
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                @else
-                                                                                                    <!-- Only show "Scheduled for" text if no remarks have been added yet -->
-                                                                                                    @if($interaction->remarks->count() == 0)
-                                                                                                        <div class="mt-3 text-center">
-                                                                                                            <small class="text-muted">
-                                                                                                                <i class="fas fa-clock me-1"></i>
-                                                                                                                Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
-                                                                                                            </small>
-                                                                                                            <div class="mt-2">
-                                                                                                                <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                                    <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                                </button>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    @else
-                                                                                                        <!-- If remarks exist, just show the upload file button -->
-                                                                                                        <div class="mt-3 text-center">
-                                                                                                            <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                                <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                            </button>
-                                                                                                        </div>
-                                                                                                    @endif
-                                                                                                @endif
-                                                                                            @else
-                                                                                                <!-- Show Upload File button even after work remarks are added -->
-                                                                                                <div class="mt-3 text-center">
-                                                                                                    <button class="btn btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                    </button>
-                                                                                                </div>
-                                                                                            @endif
-                                                                                @else
-                                                                                        <div class="highlighted-box remarks-highlight empty">
-                                                                                            <i class="fas fa-comment-slash text-muted"></i>
-                                                                                            <span class="text-muted">No remarks</span>
-                                                                                            @if($interaction->meeting_with == auth()->user()->user_id)
-                                                                                                <div class="mt-2 modern-action-buttons justify-content-center">
-                                                                                                    <button class="btn btn-primary btn-sm" onclick="showSimpleRemarkModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                        <i class="fas fa-comment me-1"></i>Add Remark
-                                                                                                    </button>
-                                                                                                    <button class="btn btn-warning btn-sm" onclick="showFocusedAssignModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                        <i class="fas fa-exchange-alt me-1"></i>Assign
-                                                                                                    </button>
-                                                                                                    <button class="btn btn-success btn-sm" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
-                                                                                                        <i class="fas fa-calendar-alt me-1"></i>Reschedule
-                                                                                                    </button>
-                                                                                                    <button class="btn btn-outline-success btn-sm" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
-                                                                                                        <i class="fas fa-paperclip me-1"></i>Upload File
-                                                                                                    </button>
-                                                                                                </div>
-                                                                                            @else
-                                                                                                <div class="alert alert-info alert-sm mt-2">
-                                                                                                    <i class="fas fa-info-circle me-1"></i>
-                                                                                                    Assigned to: <strong>{{ $interaction->meetingWith->name ?? 'Unknown' }}</strong>
-                                                                                                </div>
-                                                                                            @endif
-                                                                                        </div>
-                                                                                @endif
-                                                                                    
-                                                                                    <!-- File Attachments Section for Session Interactions - Independent of remarks -->
-                                                                                    @if($interaction->attachments && $interaction->attachments->count() > 0)
-                                                                                        <div class="mt-3">
-                                                                                            <h6 class="text-muted mb-2"><i class="fas fa-paperclip me-2"></i>Attachments</h6>
-                                                                                            <div class="attachments-list">
-                                                                                                @foreach($interaction->attachments as $attachment)
-                                                                                                    <div class="attachment-item d-flex align-items-center justify-content-between p-2 border rounded mb-2">
-                                                                                                        <div class="d-flex align-items-center">
-                                                                                                            <i class="fas fa-{{ $attachment->getFileIcon() }} me-2 text-primary"></i>
-                                                                                                            <div>
-                                                                                                                <div class="fw-semibold">{{ $attachment->original_filename }}</div>
-                                                                                                                <small class="text-muted">
-                                                                                                                    {{ $attachment->getFormattedFileSize() }} • 
-                                                                                                                    {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($attachment->created_at, 'M d, Y g:iA') }} • 
-                                                                                                                    by {{ $attachment->uploadedBy?->name ?? 'Unknown' }}
-                                                                                                                </small>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                        <div class="attachment-actions">
-                                                                                                            <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                                                <i class="fas fa-eye"></i> View
-                                                                                                            </a>
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                @endforeach
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    @endif
+                                                                                    </div>
+                                                                                </div>
+                                                                            @endif
                                                                         </div>
                                                                     </div>
                                                                 </div>

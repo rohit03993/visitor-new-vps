@@ -24,6 +24,7 @@ class InteractionHistory extends Model
         'is_scheduled',
         'created_by',
         'created_by_role',
+        'interaction_type',
         'is_completed',
         'completed_at',
         'completed_by',
@@ -33,6 +34,10 @@ class InteractionHistory extends Model
     const MODE_IN_CAMPUS = 'In-Campus';
     const MODE_OUT_CAMPUS = 'Out-Campus';
     const MODE_TELEPHONIC = 'Telephonic';
+
+    // Interaction type constants
+    const TYPE_NEW = 'new';
+    const TYPE_ASSIGNED = 'assigned';
 
     // Available modes array
     public static $availableModes = [
