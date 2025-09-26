@@ -250,6 +250,29 @@
                         </div>
                     </div>
 
+                    <!-- File Upload (Optional) -->
+                    <div class="form-field mb-4">
+                        <div class="field-header">
+                            <div class="field-title">
+                                <h6 class="mb-1">Attach Files (Optional)</h6>
+                                <small class="text-muted">Upload documents, images, or other files related to this visit</small>
+                            </div>
+                        </div>
+                        <div class="field-content">
+                            <div class="file-upload-section">
+                                <button type="button" class="btn btn-outline-success" onclick="showVisitorFileUploadModal()">
+                                    <i class="fas fa-paperclip me-1"></i>Upload Files
+                                </button>
+                                <div id="visitorFileInfo" class="mt-2" style="display: none;">
+                                    <small class="text-success">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        <span id="visitorFileCount">0</span> file(s) selected
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Initial Notes (Optional) -->
                     <div class="form-field mb-4">
                         <div class="field-header">
@@ -1055,5 +1078,108 @@ document.getElementById('visitorForm').addEventListener('submit', function(e) {
         return false;
     }
 });
+
+// Visitor File Upload Functions - Reusing existing file upload system
+let visitorFiles = [];
+
+function showVisitorFileUploadModal() {
+    // Create a temporary interaction ID for visitor files
+    const tempInteractionId = 'visitor_' + Date.now();
+    document.getElementById('upload_interaction_id').value = tempInteractionId;
+    
+    // Clear previous file info
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = true;
+    
+    // Show the existing file upload modal
+    const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
+    modal.show();
+}
+
+// Override the existing submitFileUpload function for visitor files
+function submitFileUpload() {
+    const fileInput = document.getElementById('fileInput');
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a file to upload.');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('interaction_id', 'visitor_temp_' + Date.now()); // Temporary ID for validation
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    // Show uploading state
+    const uploadBtn = document.getElementById('uploadBtn');
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+    uploadBtn.disabled = true;
+    
+    // Try to upload to Google Drive using existing endpoint
+    fetch('/staff/upload-attachment', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Store the uploaded file info
+            visitorFiles.push({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                google_drive_file_id: data.attachment.id,
+                google_drive_url: data.attachment.url
+            });
+            
+            // Update file info display
+            document.getElementById('visitorFileCount').textContent = visitorFiles.length;
+            document.getElementById('visitorFileInfo').style.display = 'block';
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('fileUploadModal'));
+            modal.hide();
+            
+            // Clear file input
+            fileInput.value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            uploadBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Upload';
+            uploadBtn.disabled = true;
+        } else {
+            alert('Upload failed: ' + data.message);
+            uploadBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Upload';
+            uploadBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        alert('Upload failed: ' + error.message);
+        uploadBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Upload';
+        uploadBtn.disabled = false;
+    });
+}
+
+// Handle file uploads after visitor creation
+document.getElementById('visitorForm').addEventListener('submit', function(e) {
+    // Add visitor files to form data with Google Drive info
+    visitorFiles.forEach((fileData, index) => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'visitor_files[]';
+        hiddenInput.value = JSON.stringify({
+            name: fileData.name,
+            size: fileData.size,
+            type: fileData.type,
+            google_drive_file_id: fileData.google_drive_file_id,
+            google_drive_url: fileData.google_drive_url
+        });
+        this.appendChild(hiddenInput);
+    });
+});
+
 </script>
+
+@include('staff.modals.file-upload')
+
 @endsection

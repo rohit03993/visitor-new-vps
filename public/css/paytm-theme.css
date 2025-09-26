@@ -47,7 +47,92 @@
   --paytm-shadow-medium: rgba(0, 0, 0, 0.12);
   --paytm-shadow-dark: rgba(0, 0, 0, 0.16);
   
-  /* Paytm Brand Shadow */
+  /* Case Closed Section Styling */
+.case-closed-section {
+    margin-top: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.case-closed-header {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    padding: 0.75rem 1rem;
+    border: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.case-closed-body {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-left: 4px solid #28a745;
+}
+
+.case-closed-remark {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #495057;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.case-closed-info {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+.case-closed-info strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Case Closed - Goal Not Achieved (Red Theme) */
+.case-closed-section-not-achieved {
+    margin-top: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.case-closed-header-not-achieved {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    color: white;
+    padding: 0.75rem 1rem;
+    border: none;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.case-closed-section-not-achieved .case-closed-body {
+    background: #f8f9fa !important;
+    padding: 1rem;
+    border-left: 4px solid #dc3545 !important; /* Red border for not achieved */
+}
+
+.case-closed-section-not-achieved .case-closed-remark {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #495057;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+/* Override any existing case-closed-body styles for not achieved */
+.case-closed-section-not-achieved .case-closed-body {
+    border-left: 4px solid #dc3545 !important;
+    background: #f8f9fa !important;
+}
+
+/* Paytm Brand Shadow */
   --paytm-primary-shadow: rgba(57, 116, 252, 0.25);
   --paytm-primary-shadow-hover: rgba(57, 116, 252, 0.35);
 }

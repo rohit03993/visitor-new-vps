@@ -460,9 +460,16 @@
                                                     <div class="d-flex flex-column gap-2 align-items-end flex-shrink-0">
                                                         @if($session->status === 'active')
                                                             @if($canComplete)
+                                                                @php
+                                                                    // Check if assigned user has updated their remark
+                                                                    $badgeState = getInteractionBadgeState($latestInteraction, auth()->user()->user_id);
+                                                                    $canShowSessionComplete = ($badgeState === 'updated');
+                                                                @endphp
+                                                                @if($canShowSessionComplete)
                                                                 <button class="btn btn-sm btn-success modern-btn" onclick="completeSession({{ $session->session_id }})">
                                                                     <i class="fas fa-check me-1"></i>Complete
                                                                 </button>
+                                                                @endif
                                                             @endif
                                                         @elseif($session->status === 'completed')
                                                             @if($session->outcome === 'success')
@@ -716,9 +723,6 @@
                                                                                             </strong>
                                                                                         </div>
                                                                                         <div class="card-body-modern">
-                                                                                            <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.125rem;">
-                                                                                                Last Message -
-                                                                                            </small>
                                                                                             <div class="highlighted-box notes-highlight">
                                                                                                 {{ $leftPanelMessage }}
                                                                                             </div>
@@ -749,9 +753,6 @@
                                                                                         </div>
                                                                                         <div class="card-body-modern">
                                                                                             @if($rightPanelMessage && $rightPanelMessage !== 'No action taken yet')
-                                                                                                <small class="text-muted fw-semibold d-block" style="margin-top: -7px; margin-bottom: 0.125rem;">
-                                                                                                    Latest Message -
-                                                                                                </small>
                                                                                             @else
                                                                                                 <div style="margin-top: -7px; margin-bottom: 0.125rem; height: 1.2rem;">
                                                                                                     <!-- Empty spacer to align content boxes -->
@@ -835,6 +836,36 @@
                                                                             @endif
                                                                         </div>
                                                                     </div>
+                                                                    
+                                                                    <!-- Final Closer Remark - Only show for completed sessions in the latest interaction (first in the list) -->
+                                                                    @if($index === 0 && $session->status === 'completed' && $session->outcome_notes)
+                                                                        @php
+                                                                            $isGoalAchieved = $session->outcome === 'success';
+                                                                            $caseClosedClass = $isGoalAchieved ? 'case-closed-section' : 'case-closed-section-not-achieved';
+                                                                            $headerClass = $isGoalAchieved ? 'case-closed-header' : 'case-closed-header-not-achieved';
+                                                                            $iconClass = $isGoalAchieved ? 'fas fa-check-circle' : 'fas fa-times-circle';
+                                                                        @endphp
+                                                                        <div class="{{ $caseClosedClass }}">
+                                                                            <div class="{{ $headerClass }}">
+                                                                                <i class="{{ $iconClass }} me-2"></i>Case Closed
+                                                                            </div>
+                                                                            <div class="case-closed-body">
+                                                                                <div class="row">
+                                                                                    <div class="col-md-8">
+                                                                                        <h6 class="text-success mb-2">Final Closer Remark:</h6>
+                                                                                        <div class="case-closed-remark">{{ $session->outcome_notes }}</div>
+                                                                                    </div>
+                                                                                    <div class="col-md-4">
+                                                                                        <div class="case-closed-info">
+                                                                                            <strong>Closed by:</strong> {{ $session->completer->name ?? 'Unknown' }}<br>
+                                                                                            <strong>Branch:</strong> {{ $session->completer->branch->branch_name ?? 'No Branch' }}<br>
+                                                                                            <strong>Date:</strong> {{ $session->completed_at ? \App\Helpers\DateTimeHelper::formatIndianDateTime($session->completed_at, 'M d, Y g:i A') : 'Unknown' }}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endif
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1695,6 +1726,11 @@ function completeSession(sessionId) {
                 <strong>Interactions:</strong> ${data.session.interaction_count}
             `;
             
+            // Pre-fill outcome notes with latest remark
+            if (data.session.latest_remark) {
+                document.getElementById('outcome_notes').value = data.session.latest_remark;
+            }
+            
             // Show modal
             const modal = new bootstrap.Modal(document.getElementById('completeSessionModal'));
             modal.show();
@@ -1950,5 +1986,6 @@ function submitFileUpload() {
 </div>
 
 @include('staff.modals.file-upload')
+
 
 @endsection

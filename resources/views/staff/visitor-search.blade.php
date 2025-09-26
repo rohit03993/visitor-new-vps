@@ -14,7 +14,7 @@
                         <h4 class="search-main-title">
                             <i class="fas fa-mobile-alt me-3"></i>Quick Search
                         </h4>
-                        <p class="search-main-subtitle">Find visitor logs instantly by mobile number</p>
+                        <p class="search-main-subtitle">Find logs instantly by mobile number</p>
                     </div>
                     <div class="search-stats">
                         <div class="stat-item">
@@ -54,7 +54,7 @@
                         <div class="info-grid">
                             <div class="info-item">
                                 <i class="fas fa-search-plus"></i>
-                                <span>Search existing visitor logs</span>
+                                <span>Search existing logs</span>
                             </div>
                             <div class="info-item">
                                 <i class="fas fa-plus-circle"></i>

@@ -794,6 +794,11 @@ class StaffController extends Controller
             'is_completed' => false, // PENDING - will be completed after meeting
         ]);
 
+        // Handle visitor file uploads if any
+        if ($request->has('visitor_files') && is_array($request->visitor_files)) {
+            $this->handleVisitorFileUploads($request->visitor_files, $interaction->interaction_id, $user->user_id);
+        }
+
         // Send notification to assigned staff member
         $assignedUser = VmsUser::find($request->meeting_with);
         if ($assignedUser) {
@@ -1070,13 +1075,32 @@ class StaffController extends Controller
     public function showCompleteSessionModal($sessionId)
     {
         try {
-            $session = StudentSession::with(['visitor', 'starter'])->findOrFail($sessionId);
+            $session = StudentSession::with(['visitor', 'starter', 'interactions.remarks'])->findOrFail($sessionId);
             
             if (!$session->isActive()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Session is already completed or cancelled.'
                 ], 400);
+            }
+
+            // Get the latest interaction and its latest remark
+            $latestInteraction = $session->interactions()->with('remarks')->orderBy('created_at', 'desc')->first();
+            $latestRemark = null;
+            
+            if ($latestInteraction && $latestInteraction->remarks->count() > 0) {
+                // Get the latest remark from the latest interaction
+                $latestRemark = $latestInteraction->remarks()
+                    ->where('added_by', auth()->user()->user_id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                
+                // If no remark from current user, get the latest remark from any user
+                if (!$latestRemark) {
+                    $latestRemark = $latestInteraction->remarks()
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
             }
 
             return response()->json([
@@ -1089,6 +1113,7 @@ class StaffController extends Controller
                     'started_at' => $session->started_at->format('M d, Y H:i A'),
                     'started_by' => $session->starter->name ?? 'Unknown',
                     'interaction_count' => $session->interactions->count(),
+                    'latest_remark' => $latestRemark ? $latestRemark->remark_text : '',
                 ]
             ]);
         } catch (\Exception $e) {
@@ -1165,7 +1190,7 @@ class StaffController extends Controller
             
             // Get all interactions for this visitor
             $interactions = InteractionHistory::where('visitor_id', $visitorId)
-                ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession', 'attachments.uploadedBy'])
+                ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession.completer.branch', 'attachments.uploadedBy'])
                 ->orderBy('created_at', 'desc')
                 ->get();
             \Log::info('Interactions found: ' . $interactions->count());
@@ -1516,29 +1541,36 @@ class StaffController extends Controller
         try {
             $request->validate([
                 'file' => 'required|file|max:20480', // 20MB max
-                'interaction_id' => 'required|exists:interaction_history,interaction_id',
+                'interaction_id' => 'required|string', // Allow string for visitor uploads
             ]);
             
             $user = auth()->user();
             $interactionId = $request->interaction_id;
             $file = $request->file('file');
             
-            // Check if user has permission to add attachments to this interaction
-            $interaction = InteractionHistory::find($interactionId);
-            if (!$interaction || $interaction->meeting_with != $user->user_id) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You do not have permission to add attachments to this interaction.'
-                ], 403);
+            // Check if this is a visitor upload (temporary ID)
+            $isVisitorUpload = strpos($interactionId, 'visitor_temp_') === 0;
+            
+            if (!$isVisitorUpload) {
+                // Regular interaction upload - validate interaction exists
+                $interaction = InteractionHistory::find($interactionId);
+                if (!$interaction || $interaction->meeting_with != $user->user_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You do not have permission to add attachments to this interaction.'
+                    ], 403);
+                }
             }
             
-            // Check file limit per interaction (max 5 files)
-            $existingFiles = \App\Models\InteractionAttachment::where('interaction_id', $interactionId)->count();
-            if ($existingFiles >= 5) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Maximum 5 files allowed per interaction.'
-                ], 400);
+            // Check file limit per interaction (max 5 files) - skip for visitor uploads
+            if (!$isVisitorUpload) {
+                $existingFiles = \App\Models\InteractionAttachment::where('interaction_id', $interactionId)->count();
+                if ($existingFiles >= 5) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Maximum 5 files allowed per interaction.'
+                    ], 400);
+                }
             }
             
             // Initialize Google Drive service
@@ -1551,25 +1583,37 @@ class StaffController extends Controller
             $uploadResult = $googleDriveService->uploadFile($file, $interactionId);
             
             // Save attachment record to database
-            $attachment = \App\Models\InteractionAttachment::create([
-                'interaction_id' => $interactionId,
-                'original_filename' => $file->getClientOriginalName(),
-                'file_type' => strtolower($file->getClientOriginalExtension()),
-                'file_size' => $file->getSize(),
-                'google_drive_file_id' => $uploadResult['google_drive_file_id'],
-                'google_drive_url' => $uploadResult['google_drive_url'],
-                'uploaded_by' => $user->user_id,
-            ]);
+            if ($isVisitorUpload) {
+                // For visitor uploads, don't save to database yet - just return the file info
+                $attachment = [
+                    'id' => 'temp_' . time(),
+                    'filename' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'type' => strtolower($file->getClientOriginalExtension()),
+                    'url' => $uploadResult['google_drive_url'],
+                ];
+            } else {
+                // Regular interaction upload - save to database
+                $attachment = \App\Models\InteractionAttachment::create([
+                    'interaction_id' => $interactionId,
+                    'original_filename' => $file->getClientOriginalName(),
+                    'file_type' => strtolower($file->getClientOriginalExtension()),
+                    'file_size' => $file->getSize(),
+                    'google_drive_file_id' => $uploadResult['google_drive_file_id'],
+                    'google_drive_url' => $uploadResult['google_drive_url'],
+                    'uploaded_by' => $user->user_id,
+                ]);
+            }
             
             return response()->json([
                 'success' => true,
                 'message' => 'File uploaded successfully to Google Drive!',
                 'attachment' => [
-                    'id' => $attachment->id,
-                    'filename' => $attachment->original_filename,
-                    'size' => $attachment->getFileSizeFormatted(),
-                    'type' => $attachment->file_type,
-                    'url' => $attachment->google_drive_url,
+                    'id' => $isVisitorUpload ? $attachment['id'] : $attachment->id,
+                    'filename' => $isVisitorUpload ? $attachment['filename'] : $attachment->original_filename,
+                    'size' => $isVisitorUpload ? $attachment['size'] : $attachment->getFileSizeFormatted(),
+                    'type' => $isVisitorUpload ? $attachment['type'] : $attachment->file_type,
+                    'url' => $isVisitorUpload ? $attachment['url'] : $attachment->google_drive_url,
                 ]
             ]);
             
@@ -1641,4 +1685,39 @@ class StaffController extends Controller
             return back()->withErrors(['error' => 'An error occurred while changing password. Please try again.'])->withInput();
         }
     }
+
+    /**
+     * Handle visitor file uploads after interaction creation
+     */
+    private function handleVisitorFileUploads($visitorFiles, $interactionId, $userId)
+    {
+        try {
+            foreach ($visitorFiles as $fileData) {
+                // Decode the JSON data
+                $fileInfo = json_decode($fileData, true);
+                
+                if (!$fileInfo || !isset($fileInfo['name'])) {
+                    continue; // Skip invalid file data
+                }
+                
+                // Create the actual attachment record with Google Drive info
+                \App\Models\InteractionAttachment::create([
+                    'interaction_id' => $interactionId,
+                    'original_filename' => $fileInfo['name'],
+                    'file_type' => pathinfo($fileInfo['name'], PATHINFO_EXTENSION),
+                    'file_size' => $fileInfo['size'] ?? 0,
+                    'google_drive_file_id' => $fileInfo['google_drive_file_id'] ?? null,
+                    'google_drive_url' => $fileInfo['google_drive_url'] ?? null,
+                    'uploaded_by' => $userId,
+                ]);
+            }
+            
+            \Log::info("Processed " . count($visitorFiles) . " visitor files for interaction {$interactionId}");
+            
+        } catch (\Exception $e) {
+            \Log::error('Visitor file upload error: ' . $e->getMessage());
+            // Don't throw error - just log it and continue
+        }
+    }
+
 }
