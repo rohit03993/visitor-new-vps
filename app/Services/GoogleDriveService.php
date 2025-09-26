@@ -29,7 +29,11 @@ class GoogleDriveService
             $this->client->setApplicationName('Visitor Management CRM');
             $this->client->setClientId(env('GOOGLE_CLIENT_ID'));
             $this->client->setClientSecret(env('GOOGLE_CLIENT_SECRET'));
-            $this->client->setRedirectUri(env('GOOGLE_REDIRECT_URI'));
+            // Auto-detect redirect URI based on environment
+            $redirectUri = env('APP_ENV') === 'local' 
+                ? env('GOOGLE_REDIRECT_URI_LOCAL', 'http://localhost:8000/auth/google/callback')
+                : env('GOOGLE_REDIRECT_URI_PROD', 'https://motionagra.com/auth/google/callback');
+            $this->client->setRedirectUri($redirectUri);
             $this->client->addScope(Drive::DRIVE_FILE);
             
             // Get stored OAuth tokens
@@ -205,5 +209,47 @@ class GoogleDriveService
         }
         
         return true;
+    }
+    
+    /**
+     * Upload file from server path to Google Drive
+     */
+    public function uploadFileFromPath($filePath, $originalFilename, $interactionId = null)
+    {
+        try {
+            if (!file_exists($filePath)) {
+                throw new \Exception('File not found on server');
+            }
+            
+            $this->service = new Drive($this->client);
+            
+            // Create folder structure if needed
+            $folderId = $this->getOrCreateFolder($interactionId);
+            
+            // Prepare file metadata
+            $fileMetadata = new DriveFile([
+                'name' => $originalFilename,
+                'parents' => [$folderId]
+            ]);
+            
+            // Upload file
+            $content = file_get_contents($filePath);
+            $file = $this->service->files->create($fileMetadata, [
+                'data' => $content,
+                'mimeType' => mime_content_type($filePath),
+                'uploadType' => 'multipart',
+                'fields' => 'id,name,webViewLink,webContentLink'
+            ]);
+            
+            return [
+                'google_drive_file_id' => $file->getId(),
+                'google_drive_url' => $file->getWebViewLink(),
+                'download_url' => $file->getWebContentLink()
+            ];
+            
+        } catch (\Exception $e) {
+            Log::error('Google Drive upload from path error: ' . $e->getMessage());
+            throw new \Exception('Failed to upload file to Google Drive: ' . $e->getMessage());
+        }
     }
 }

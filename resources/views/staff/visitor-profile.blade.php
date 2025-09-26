@@ -84,6 +84,21 @@
         // No work remarks = pending (work needed)
         return 'pending';
     }
+    
+    // Function to get file URL (server or drive)
+    function getFileUrl($attachment) {
+        // Check if there's a corresponding file management record
+        $fileManagement = \App\Models\FileManagement::where('interaction_id', $attachment->interaction_id)
+            ->where('original_filename', $attachment->original_filename)
+            ->first();
+            
+        if ($fileManagement) {
+            return $fileManagement->getFileUrlAttribute();
+        }
+        
+        // Fallback to original Google Drive URL
+        return $attachment->google_drive_url;
+    }
 @endphp
 
 <div class="row">
@@ -400,7 +415,7 @@
                                                                                 </div>
                                                                             </div>
                                                                             <div class="attachment-actions">
-                                                                                <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                <a href="{{ getFileUrl($attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                                                     <i class="fas fa-eye"></i> View
                                                                                 </a>
                                                                             </div>
@@ -825,7 +840,7 @@
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <div class="attachment-actions">
-                                                                                                    <a href="{{ $attachment->google_drive_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                                    <a href="{{ getFileUrl($attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                                                                         <i class="fas fa-eye"></i> View
                                                                                                     </a>
                                                                                                 </div>
@@ -1926,7 +1941,7 @@ function submitFileUpload() {
     .then(data => {
         if (data.success) {
             bootstrap.Modal.getInstance(document.getElementById('fileUploadModal')).hide();
-            alert('File uploaded successfully to Google Drive!');
+            alert('File uploaded successfully!');
             window.location.reload(true);
         } else {
             alert('Upload failed: ' + (data.message || 'Unknown error'));

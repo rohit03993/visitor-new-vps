@@ -1152,4 +1152,217 @@ class AdminController extends Controller
         }
     }
 
+    /**
+     * Show file management interface
+     */
+    public function fileManagement()
+    {
+        try {
+            $files = \App\Models\FileManagement::with(['uploadedBy', 'transferredBy', 'interaction'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            $stats = [
+                'total_files' => \App\Models\FileManagement::count(),
+                'server_files' => \App\Models\FileManagement::where('status', 'server')->count(),
+                'drive_files' => \App\Models\FileManagement::where('status', 'drive')->count(),
+                'pending_files' => \App\Models\FileManagement::where('status', 'pending')->count(),
+                'failed_files' => \App\Models\FileManagement::where('status', 'failed')->count(),
+                'total_size' => \App\Models\FileManagement::sum('file_size'),
+            ];
+
+            return view('admin.file-management', compact('files', 'stats'));
+        } catch (\Exception $e) {
+            \Log::error('File management error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to load file management: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Transfer single file to Google Drive
+     */
+    public function transferFilesToDrive(Request $request)
+    {
+        try {
+            $request->validate([
+                'file_id' => 'required|exists:file_management,id',
+            ]);
+
+            $file = \App\Models\FileManagement::findOrFail($request->file_id);
+            
+            if ($file->status !== 'server') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File is not on server or already transferred'
+                ], 400);
+            }
+
+            // Initialize Google Drive service
+            $googleDriveService = new \App\Services\GoogleDriveService();
+            
+            // Get file from server
+            $serverPath = storage_path('app/public/' . $file->server_path);
+            if (!file_exists($serverPath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File not found on server'
+                ], 404);
+            }
+
+            // Upload to Google Drive
+            $uploadResult = $googleDriveService->uploadFileFromPath($serverPath, $file->original_filename, $file->interaction_id);
+
+            // Update file record
+            $file->update([
+                'status' => 'drive',
+                'google_drive_file_id' => $uploadResult['google_drive_file_id'],
+                'google_drive_url' => $uploadResult['google_drive_url'],
+                'transferred_by' => auth()->user()->user_id,
+                'transferred_at' => now(),
+            ]);
+
+            // Update InteractionAttachment if exists
+            if ($file->interaction_id) {
+                $attachment = \App\Models\InteractionAttachment::where('interaction_id', $file->interaction_id)
+                    ->where('original_filename', $file->original_filename)
+                    ->first();
+                
+                if ($attachment) {
+                    $attachment->update([
+                        'google_drive_file_id' => $uploadResult['google_drive_file_id'],
+                        'google_drive_url' => $uploadResult['google_drive_url'],
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'File transferred to Google Drive successfully!',
+                'file' => $file->fresh()
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('File transfer error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to transfer file: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk transfer files to Google Drive
+     */
+    public function bulkTransferFiles(Request $request)
+    {
+        try {
+            $request->validate([
+                'file_ids' => 'required|array',
+                'file_ids.*' => 'exists:file_management,id',
+            ]);
+
+            $files = \App\Models\FileManagement::whereIn('id', $request->file_ids)
+                ->where('status', 'server')
+                ->get();
+
+            if ($files->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No files found to transfer'
+                ], 400);
+            }
+
+            $googleDriveService = new \App\Services\GoogleDriveService();
+            $transferred = 0;
+            $failed = 0;
+            $errors = [];
+
+            foreach ($files as $file) {
+                try {
+                    $serverPath = storage_path('app/public/' . $file->server_path);
+                    if (!file_exists($serverPath)) {
+                        $errors[] = "File not found: {$file->original_filename}";
+                        $failed++;
+                        continue;
+                    }
+
+                    $uploadResult = $googleDriveService->uploadFileFromPath($serverPath, $file->original_filename, $file->interaction_id);
+
+                    $file->update([
+                        'status' => 'drive',
+                        'google_drive_file_id' => $uploadResult['google_drive_file_id'],
+                        'google_drive_url' => $uploadResult['google_drive_url'],
+                        'transferred_by' => auth()->user()->user_id,
+                        'transferred_at' => now(),
+                    ]);
+
+                    // Update InteractionAttachment if exists
+                    if ($file->interaction_id) {
+                        $attachment = \App\Models\InteractionAttachment::where('interaction_id', $file->interaction_id)
+                            ->where('original_filename', $file->original_filename)
+                            ->first();
+                        
+                        if ($attachment) {
+                            $attachment->update([
+                                'google_drive_file_id' => $uploadResult['google_drive_file_id'],
+                                'google_drive_url' => $uploadResult['google_drive_url'],
+                            ]);
+                        }
+                    }
+
+                    $transferred++;
+
+                } catch (\Exception $e) {
+                    $errors[] = "Failed to transfer {$file->original_filename}: " . $e->getMessage();
+                    $file->update(['status' => 'failed']);
+                    $failed++;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Transfer completed: {$transferred} successful, {$failed} failed",
+                'transferred' => $transferred,
+                'failed' => $failed,
+                'errors' => $errors
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Bulk transfer error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to transfer files: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get file management status
+     */
+    public function getFileManagementStatus()
+    {
+        try {
+            $stats = [
+                'total_files' => \App\Models\FileManagement::count(),
+                'server_files' => \App\Models\FileManagement::where('status', 'server')->count(),
+                'drive_files' => \App\Models\FileManagement::where('status', 'drive')->count(),
+                'pending_files' => \App\Models\FileManagement::where('status', 'pending')->count(),
+                'failed_files' => \App\Models\FileManagement::where('status', 'failed')->count(),
+                'total_size' => \App\Models\FileManagement::sum('file_size'),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'stats' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('File management status error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get file management status'
+            ], 500);
+        }
+    }
+
 }

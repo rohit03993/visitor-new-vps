@@ -592,6 +592,9 @@
                             <a class="nav-link {{ request()->routeIs('admin.analytics') ? 'active' : '' }}" href="{{ route('admin.analytics') }}" onclick="closeSidebar()">
                                 <i class="fas fa-chart-bar me-2"></i> Analytics
                             </a>
+                            <a class="nav-link {{ request()->routeIs('admin.file-management') ? 'active' : '' }}" href="{{ route('admin.file-management') }}" onclick="closeSidebar()">
+                                <i class="fas fa-folder-open me-2"></i> File Management
+                            </a>
                         @elseif(auth()->user()->isStaff())
                             <a class="nav-link {{ request()->routeIs('staff.visitor-search') ? 'active' : '' }}" href="{{ route('staff.visitor-search') }}" onclick="closeSidebar()">
                                 <i class="fas fa-search me-2"></i> Search Log

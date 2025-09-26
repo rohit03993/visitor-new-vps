@@ -1193,6 +1193,12 @@ class StaffController extends Controller
                 ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession.completer.branch', 'attachments.uploadedBy'])
                 ->orderBy('created_at', 'desc')
                 ->get();
+            
+            // Load file management data for each interaction
+            foreach ($interactions as $interaction) {
+                $fileManagement = \App\Models\FileManagement::where('interaction_id', $interaction->interaction_id)->get();
+                $interaction->file_management = $fileManagement;
+            }
             \Log::info('Interactions found: ' . $interactions->count());
             
             // Show ALL interactions for this visitor (staff can view all interactions)
@@ -1573,47 +1579,75 @@ class StaffController extends Controller
                 }
             }
             
-            // Initialize Google Drive service
-            $googleDriveService = new \App\Services\GoogleDriveService();
+            // Create uploads directory if it doesn't exist
+            $uploadPath = 'uploads/' . date('Y/m');
+            $fullPath = storage_path('app/public/' . $uploadPath);
+            if (!file_exists($fullPath)) {
+                mkdir($fullPath, 0755, true);
+            }
             
-            // Validate file
-            $googleDriveService->validateFile($file);
+            // Generate unique filename
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            $filename = time() . '_' . uniqid() . '.' . $extension;
+            $serverPath = $uploadPath . '/' . $filename;
             
-            // Upload to Google Drive
-            $uploadResult = $googleDriveService->uploadFile($file, $interactionId);
+            // Get file info BEFORE moving the file
+            $fileSize = $file->getSize();
+            $mimeType = $file->getMimeType();
             
-            // Save attachment record to database
+            // Move file to server storage
+            $file->move($fullPath, $filename);
+            
+            // Save to file management system
+            $fileManagement = \App\Models\FileManagement::create([
+                'original_filename' => $originalName,
+                'server_path' => $serverPath,
+                'file_type' => strtolower($extension),
+                'file_size' => $fileSize,
+                'status' => 'server',
+                'uploaded_by' => $user->user_id,
+                'interaction_id' => $isVisitorUpload ? null : $interactionId,
+                'mime_type' => $mimeType,
+            ]);
+            
+            // Prepare response
             if ($isVisitorUpload) {
-                // For visitor uploads, don't save to database yet - just return the file info
+                // For visitor uploads, return file info for temporary storage
                 $attachment = [
-                    'id' => 'temp_' . time(),
-                    'filename' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                    'type' => strtolower($file->getClientOriginalExtension()),
-                    'url' => $uploadResult['google_drive_url'],
+                    'id' => 'temp_' . $fileManagement->id,
+                    'filename' => $originalName,
+                    'size' => $fileSize,
+                    'type' => strtolower($extension),
+                    'url' => asset('storage/' . $serverPath),
+                    'file_management_id' => $fileManagement->id,
                 ];
             } else {
-                // Regular interaction upload - save to database
+                // Regular interaction upload - also create InteractionAttachment for compatibility
                 $attachment = \App\Models\InteractionAttachment::create([
                     'interaction_id' => $interactionId,
-                    'original_filename' => $file->getClientOriginalName(),
-                    'file_type' => strtolower($file->getClientOriginalExtension()),
-                    'file_size' => $file->getSize(),
-                    'google_drive_file_id' => $uploadResult['google_drive_file_id'],
-                    'google_drive_url' => $uploadResult['google_drive_url'],
+                    'original_filename' => $originalName,
+                    'file_type' => strtolower($extension),
+                    'file_size' => $fileSize,
+                    'google_drive_file_id' => null, // Will be updated when transferred to Drive
+                    'google_drive_url' => null, // Will be updated when transferred to Drive
                     'uploaded_by' => $user->user_id,
                 ]);
+                
+                // Update file management with interaction attachment ID
+                $fileManagement->update(['interaction_id' => $interactionId]);
             }
             
             return response()->json([
                 'success' => true,
-                'message' => 'File uploaded successfully to Google Drive!',
+                'message' => 'File uploaded successfully!',
                 'attachment' => [
                     'id' => $isVisitorUpload ? $attachment['id'] : $attachment->id,
                     'filename' => $isVisitorUpload ? $attachment['filename'] : $attachment->original_filename,
                     'size' => $isVisitorUpload ? $attachment['size'] : $attachment->getFileSizeFormatted(),
                     'type' => $isVisitorUpload ? $attachment['type'] : $attachment->file_type,
-                    'url' => $isVisitorUpload ? $attachment['url'] : $attachment->google_drive_url,
+                    'url' => $isVisitorUpload ? $attachment['url'] : asset('storage/' . $fileManagement->server_path),
+                    'file_management_id' => $fileManagement->id,
                 ]
             ]);
             
@@ -1626,7 +1660,7 @@ class StaffController extends Controller
             \Log::error('File upload error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Failed to upload file to server. Please try again.'
             ], 500);
         }
     }

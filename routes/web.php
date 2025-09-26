@@ -70,6 +70,12 @@ Route::middleware('auth')->group(function () {
         
         // System Reset Routes
         Route::get('/reset-stats', [AdminController::class, 'getResetStats'])->name('get-reset-stats');
+        
+        // File Management Routes
+        Route::get('/file-management', [AdminController::class, 'fileManagement'])->name('file-management');
+        Route::post('/transfer-files-to-drive', [AdminController::class, 'transferFilesToDrive'])->name('transfer-files-to-drive');
+        Route::post('/bulk-transfer-files', [AdminController::class, 'bulkTransferFiles'])->name('bulk-transfer-files');
+        Route::get('/file-management/status', [AdminController::class, 'getFileManagementStatus'])->name('file-management-status');
         Route::post('/reset-visitor-data', [AdminController::class, 'resetVisitorData'])->name('reset-visitor-data');
     });
 
