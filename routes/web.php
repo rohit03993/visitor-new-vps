@@ -147,3 +147,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/auth/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirectToGoogle'])->name('google.auth');
     Route::get('/auth/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
 });
+
+// File Access Route (for uploaded files)
+Route::get('/storage/uploads/{year}/{month}/{filename}', function ($year, $month, $filename) {
+    $filePath = storage_path("app/public/uploads/{$year}/{$month}/{$filename}");
+    
+    if (!file_exists($filePath)) {
+        abort(404);
+    }
+    
+    return response()->file($filePath);
+})->name('file.access');
