@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Assigned to Me - Log Book')
+@section('title', 'Assigned to Me - Task Book')
 @section('page-title', 'Assigned to Me')
 
 @section('content')
@@ -14,7 +14,7 @@
                         <h5 class="mb-1">
                             <i class="fas fa-tasks me-2"></i>My Tasks
                         </h5>
-                        <small class="opacity-75">Visitors assigned to you for follow-up</small>
+                        <small class="opacity-75">Tasks assigned to you for follow-up</small>
                     </div>
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-end">
@@ -240,8 +240,8 @@
                 @else
                     <div class="text-center py-4">
                         <i class="fas fa-user-check fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">No assigned visitors</h5>
-                        <p class="text-muted">You don't have any visitors assigned to you yet.</p>
+                        <h5 class="text-muted">No assigned tasks</h5>
+                        <p class="text-muted">You don't have any interactions assigned to you yet.</p>
                     </div>
                 @endif
             </div>

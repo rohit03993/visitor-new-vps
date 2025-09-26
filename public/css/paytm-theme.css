@@ -436,6 +436,67 @@
   box-shadow: 0 8px 32px var(--paytm-shadow-dark);
 }
 
+/* Ensure modals are centered - Higher specificity */
+.modal .modal-dialog {
+  margin: 0 auto !important;
+  max-width: 500px !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  top: 50% !important;
+  margin-top: -200px !important;
+}
+
+.modal .modal-dialog-centered {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 100vh !important;
+  padding: 0 !important;
+}
+
+.modal .modal-dialog-centered .modal-content {
+  width: 100% !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  margin: 0 !important;
+}
+
+/* Force center positioning for all modals */
+.modal.show .modal-dialog {
+  transform: translateY(-50%) !important;
+  left: 50% !important;
+  margin-left: -250px !important;
+  margin-top: 0 !important;
+  top: 50% !important;
+}
+
+/* Additional centering for smaller screens */
+@media (max-width: 576px) {
+  .modal.show .modal-dialog {
+    margin-left: -200px !important;
+  }
+}
+
+/* Override Bootstrap's modal positioning */
+.modal {
+  padding: 0 !important;
+}
+
+.modal-dialog {
+  margin: 0 auto !important;
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-width: 500px !important;
+  width: 90% !important;
+}
+
 .modal-paytm .modal-header {
   background: linear-gradient(135deg, var(--paytm-primary) 0%, var(--paytm-primary-dark) 100%);
   color: var(--paytm-white);

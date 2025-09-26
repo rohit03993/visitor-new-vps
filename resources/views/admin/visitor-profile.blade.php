@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Visitor Profile - Log Book')
+@section('title', 'Visitor Profile - Task Book')
 @section('page-title', 'Visitor Profile')
 
 @section('content')

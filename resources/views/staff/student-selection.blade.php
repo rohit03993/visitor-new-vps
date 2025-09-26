@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Select Student - Log Book')
+@section('title', 'Select Student - Task Book')
 @section('page-title', 'Multiple Students Found')
 
 @section('content')

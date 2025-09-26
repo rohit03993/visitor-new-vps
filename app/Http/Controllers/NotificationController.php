@@ -30,7 +30,7 @@ class NotificationController extends Controller
             echo "event: connected\n";
             echo "data: " . json_encode([
                 'type' => 'connected',
-                'message' => 'Connected to Log Book notification stream',
+                'message' => 'Connected to Task Book notification stream',
                 'user_id' => $user->user_id,
                 'timestamp' => now()->toISOString()
             ]) . "\n\n";

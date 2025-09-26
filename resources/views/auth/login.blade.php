@@ -308,7 +308,7 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1><i class="fas fa-book me-3"></i>LOG BOOK</h1>
+                <h1><i class="fas fa-book me-3"></i>TASK BOOK</h1>
                 <p>Create | Manage | Track</p>
             </div>
             <div class="login-body">

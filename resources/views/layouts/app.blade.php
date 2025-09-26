@@ -547,7 +547,7 @@
                 <div class="sidebar" id="sidebar">
                     <div class="p-3">
                         <h4 class="text-center mb-4">
-                            <i class="fas fa-users"></i> Log Book
+                            <i class="fas fa-users"></i> Task Book
                         </h4>
                         <div class="text-center mb-4 d-none d-md-block">
                             <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">

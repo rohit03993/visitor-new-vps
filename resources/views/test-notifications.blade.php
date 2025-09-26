@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Test Notifications - Log Book')
+@section('title', 'Test Notifications - Task Book')
 
 @section('content')
 <div class="container-fluid">

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Visitor Profile - Log Book')
+@section('title', 'Log - Task Book')
 @section('page-title', 'Visitor Profile')
 
 @section('content')
@@ -993,7 +993,6 @@
                         <label for="focusedTeamMember" class="form-label">Select Team Member <span class="text-danger">*</span></label>
                         <select class="form-select" id="focusedTeamMember" name="team_member_id" required>
                             <option value="">Choose a team member...</option>
-                            <option value="{{ auth()->user()->user_id }}">🔄 Assign to Myself</option>
                             @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
                                 <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
                             @endforeach
@@ -1002,10 +1001,10 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="focusedAssignNotes" class="form-label">Transfer Notes</label>
+                        <label for="focusedAssignNotes" class="form-label">Remark/Note <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="focusedAssignNotes" name="assignment_notes" rows="3" 
-                                  placeholder="Optional: Add notes about why you're transferring this interaction..."></textarea>
-                        <div class="form-text">Optional: Add notes that will be visible to the assigned team member</div>
+                                  placeholder="Add notes about why you're transferring this interaction..." required></textarea>
+                        <div class="form-text">Add notes that will be visible to the assigned team member</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1044,7 +1043,6 @@
                         <label for="teamMember" class="form-label">Select Team Member <span class="text-danger">*</span></label>
                         <select class="form-select" id="teamMember" name="team_member_id" required>
                             <option value="">Choose a team member...</option>
-                            <option value="{{ auth()->user()->user_id }}">🔄 Assign to Myself</option>
                             @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
                                 <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
                             @endforeach
@@ -1053,10 +1051,10 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="assignNotes" class="form-label">Transfer Notes</label>
+                        <label for="assignNotes" class="form-label">Remark/Note <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="assignNotes" name="assignment_notes" rows="3" 
-                                  placeholder="Optional: Add notes about why you're transferring this interaction..."></textarea>
-                        <div class="form-text">Optional: Add notes that will be visible to the assigned team member</div>
+                                  placeholder="Add notes about why you're transferring this interaction..." required></textarea>
+                        <div class="form-text">Add notes that will be visible to the assigned team member</div>
                     </div>
                     
                     <!-- Scheduling Section -->
@@ -1156,34 +1154,37 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="rescheduleHour" class="form-label">Hour <span class="text-danger">*</span></label>
-                        <select class="form-select" id="rescheduleHour" name="scheduled_hour">
-                            <option value="09">09 AM</option>
-                            <option value="10">10 AM</option>
-                            <option value="11">11 AM</option>
-                            <option value="12">12 PM</option>
-                            <option value="13">01 PM</option>
-                            <option value="14">02 PM</option>
-                            <option value="15" selected>03 PM</option>
-                            <option value="16">04 PM</option>
-                            <option value="17">05 PM</option>
-                            <option value="18">06 PM</option>
-                            <option value="19">07 PM</option>
-                            <option value="20">08 PM</option>
-                        </select>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="rescheduleHour" class="form-label">Hour <span class="text-danger">*</span></label>
+                                <select class="form-select" id="rescheduleHour" name="scheduled_hour">
+                                    <option value="09">09 AM</option>
+                                    <option value="10">10 AM</option>
+                                    <option value="11">11 AM</option>
+                                    <option value="12">12 PM</option>
+                                    <option value="13">01 PM</option>
+                                    <option value="14">02 PM</option>
+                                    <option value="15" selected>03 PM</option>
+                                    <option value="16">04 PM</option>
+                                    <option value="17">05 PM</option>
+                                    <option value="18">06 PM</option>
+                                    <option value="19">07 PM</option>
+                                    <option value="20">08 PM</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="rescheduleMinute" class="form-label">Minute <span class="text-danger">*</span></label>
+                                <select class="form-select" id="rescheduleMinute" name="scheduled_minute">
+                                    @for($i = 0; $i < 60; $i++)
+                                        <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="rescheduleMinute" class="form-label">Minute <span class="text-danger">*</span></label>
-                        <select class="form-select" id="rescheduleMinute" name="scheduled_minute">
-                            @for($i = 0; $i < 60; $i++)
-                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
-                            @endfor
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="rescheduleNotes" class="form-label">Reschedule Notes <span class="text-danger">*</span></label>
+                        <label for="rescheduleNotes" class="form-label">Remark/Note <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="rescheduleNotes" name="assignment_notes" rows="3" 
                                   placeholder="Required: Explain why you're rescheduling this interaction..." required></textarea>
                         <div class="form-text">Required: Add notes explaining why you're rescheduling this interaction</div>
@@ -1987,5 +1988,42 @@ function submitFileUpload() {
 
 @include('staff.modals.file-upload')
 
+<script>
+// Force modal centering on show
+document.addEventListener('DOMContentLoaded', function() {
+    // Get all modals
+    const modals = document.querySelectorAll('.modal');
+    
+    modals.forEach(modal => {
+        modal.addEventListener('show.bs.modal', function() {
+            // Force center positioning
+            const dialog = modal.querySelector('.modal-dialog');
+            if (dialog) {
+                dialog.style.position = 'fixed';
+                dialog.style.top = '50%';
+                dialog.style.left = '50%';
+                dialog.style.transform = 'translate(-50%, -50%)';
+                dialog.style.margin = '0';
+                dialog.style.maxWidth = '500px';
+                dialog.style.width = '90%';
+            }
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // Additional centering after modal is shown
+            const dialog = modal.querySelector('.modal-dialog');
+            if (dialog) {
+                dialog.style.position = 'fixed';
+                dialog.style.top = '50%';
+                dialog.style.left = '50%';
+                dialog.style.transform = 'translate(-50%, -50%)';
+                dialog.style.margin = '0';
+                dialog.style.maxWidth = '500px';
+                dialog.style.width = '90%';
+            }
+        });
+    });
+});
+</script>
 
 @endsection

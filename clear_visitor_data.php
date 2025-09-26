@@ -14,7 +14,7 @@ $app = require_once 'bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-echo "🧹 Log Book - Visitor Data Cleanup Script\n";
+echo "🧹 Task Book - Visitor Data Cleanup Script\n";
 echo "==========================================\n\n";
 
 try {
@@ -126,7 +126,7 @@ try {
     echo "   • Locations: {$locationCount}\n";
     echo "   • Tags: {$tagCount}\n\n";
     
-    echo "🎯 Your Log Book CRM is now clean and ready for fresh data!\n";
+    echo "🎯 Your Task Book CRM is now clean and ready for fresh data!\n";
     echo "🔔 Notification system will continue working for new assignments.\n\n";
     
 } catch (Exception $e) {

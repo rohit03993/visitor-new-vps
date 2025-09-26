@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Filter Visitors by Tags - Log Book')
+@section('title', 'Filter Visitors by Tags - Task Book')
 @section('page-title', 'Filter Visitors by Tags')
 
 @section('content')

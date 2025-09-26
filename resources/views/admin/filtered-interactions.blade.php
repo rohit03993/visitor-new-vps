@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Filter Interactions by Tags - Log Book')
+@section('title', 'Filter Interactions by Tags - Task Book')
 @section('page-title', 'Filter Interactions by Tags')
 
 @section('content')

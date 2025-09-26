@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Manage Courses - Log Book')
+@section('title', 'Manage Courses - Task Book')
 @section('page-title', 'Course Management')
 
 @section('content')

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Change Password - Log Book')
+@section('title', 'Change Password - Task Book')
 @section('page-title', 'Change Password')
 
 @section('content')
