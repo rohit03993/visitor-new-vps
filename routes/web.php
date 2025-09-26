@@ -119,7 +119,7 @@ Route::middleware('auth')->group(function () {
         
         // Password Change Routes (NEW FEATURE)
         Route::get('/change-password', [StaffController::class, 'showChangePasswordForm'])->name('change-password');
-        Route::post('/change-password', [StaffController::class, 'changePassword'])->name('change-password');
+        Route::post('/change-password', [StaffController::class, 'changePassword'])->name('change-password.store');
         
         // Notification Routes (Available to staff)
         Route::prefix('notifications')->name('notifications.')->group(function () {

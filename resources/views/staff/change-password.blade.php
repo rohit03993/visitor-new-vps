@@ -13,7 +13,7 @@
                 </h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('staff.change-password') }}" id="changePasswordForm">
+                <form method="POST" action="{{ route('staff.change-password.store') }}" id="changePasswordForm">
                     @csrf
                     
                     <!-- Current Password -->
