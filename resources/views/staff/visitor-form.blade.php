@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Add Visitor - Task Book')
-@section('page-title', 'Add New Visitor')
+@section('title', 'Add Log - Task Book')
+@section('page-title', 'Add New Log')
 
 @section('content')
 <div class="row justify-content-center">
@@ -81,6 +81,30 @@
                         </div>
                     </div>
 
+                    <!-- Purpose -->
+                    <div class="form-field mb-4">
+                        <div class="field-header">
+                            <div class="field-title">
+                                <h6 class="mb-1">Purpose</h6>
+                                <small class="text-muted">Select the purpose of this visit</small>
+                            </div>
+                        </div>
+                        <div class="field-content">
+                            <select class="form-select modern-input" id="purpose" name="purpose" required>
+                                <option value="">Select Purpose</option>
+                                @foreach($tags as $tag)
+                                    <option value="{{ $tag->id }}" 
+                                            {{ (isset($lastInteractionDetails) && in_array($tag->id, $lastInteractionDetails['tags'])) ? 'selected' : '' }}>
+                                        {{ $tag->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('purpose')
+                                <div class="text-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
                     <!-- Course -->
                     <div class="form-field mb-4">
                         <div class="field-header">
@@ -112,29 +136,6 @@
                     <div class="row">
                         <!-- Left Column -->
                         <div class="col-lg-6 col-12">
-                            <!-- Purpose -->
-                            <div class="form-field mb-4">
-                                <div class="field-header">
-                                    <div class="field-title">
-                                        <h6 class="mb-1">Purpose</h6>
-                                        <small class="text-muted">Select the purpose of this visit</small>
-                                    </div>
-                                </div>
-                                <div class="field-content">
-                                    <select class="form-select modern-input" id="purpose" name="purpose" required>
-                                        <option value="">Select Purpose</option>
-                                        @foreach($tags as $tag)
-                                            <option value="{{ $tag->id }}" 
-                                                    {{ (isset($lastInteractionDetails) && in_array($tag->id, $lastInteractionDetails['tags'])) ? 'selected' : '' }}>
-                                                {{ $tag->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('purpose')
-                                        <div class="text-danger mt-2">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
 
                             <!-- Student Name (Conditional) -->
                             <div class="form-field mb-4" id="student_name_container" style="display: none;">
@@ -154,6 +155,52 @@
                                 </div>
                             </div>
 
+                            <!-- Visit Mode -->
+                            <div class="form-field mb-4">
+                                <div class="field-header">
+                                    <div class="field-title">
+                                        <h6 class="mb-1">Visit Mode</h6>
+                                    </div>
+                                </div>
+                                <div class="field-content">
+                                    <select class="form-select modern-input" id="mode" name="mode" required>
+                                <option value="">Select Mode</option>
+                                <option value="In-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'In-Campus') ? 'selected' : '' }}>In-Campus</option>
+                                <option value="Out-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Out-Campus') ? 'selected' : '' }}>Out-Campus</option>
+                                <option value="Telephonic" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Telephonic') ? 'selected' : '' }}>Telephonic</option>
+                            </select>
+                            @error('mode')
+                                        <div class="text-danger mt-2">{{ $message }}</div>
+                            @enderror
+                        </div>
+                            </div>
+
+                            <!-- File Upload (Optional) -->
+                            <div class="form-field mb-4">
+                                <div class="field-header">
+                                    <div class="field-title">
+                                        <h6 class="mb-1">Attach Files (Optional)</h6>
+                                        <small class="text-muted">Upload documents, images, or other files related to this visit</small>
+                                    </div>
+                                </div>
+                                <div class="field-content">
+                                    <div class="file-upload-section">
+                                        <button type="button" class="btn btn-outline-success" onclick="showVisitorFileUploadModal()">
+                                            <i class="fas fa-paperclip me-1"></i>Upload Files
+                                        </button>
+                                        <div id="visitorFileInfo" class="mt-2" style="display: none;">
+                                            <small class="text-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                <span id="visitorFileCount">0</span> file(s) selected
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-lg-6 col-12">
                             <!-- Father's Name (Conditional) -->
                             <div class="form-field mb-4" id="father_name_container" style="display: none;">
                                 <div class="field-header">
@@ -170,7 +217,7 @@
                                             <input class="form-check-input" type="checkbox" id="copy_visitor_name" 
                                                    onchange="toggleFatherNameCopy()">
                                             <label class="form-check-label" for="copy_visitor_name">
-                                                <small>Same as Visitor</small>
+                                                <small>Same as Contact Person</small>
                                             </label>
                                         </div>
                                     </div>
@@ -179,39 +226,14 @@
                             @enderror
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- Right Column -->
-                        <div class="col-lg-6 col-12">
-                            <!-- Visit Mode -->
-                            <div class="form-field mb-4">
-                                <div class="field-header">
-                                    <div class="field-title">
-                                        <h6 class="mb-1">Visit Mode</h6>
-                                        <small class="text-muted">How is the visitor meeting with you?</small>
-                        </div>
-                    </div>
-                                <div class="field-content">
-                                    <select class="form-select modern-input" id="mode" name="mode" required>
-                                <option value="">Select Mode</option>
-                                <option value="In-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'In-Campus') ? 'selected' : '' }}>In-Campus</option>
-                                <option value="Out-Campus" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Out-Campus') ? 'selected' : '' }}>Out-Campus</option>
-                                <option value="Telephonic" {{ (isset($lastInteractionDetails) && $lastInteractionDetails['mode'] == 'Telephonic') ? 'selected' : '' }}>Telephonic</option>
-                            </select>
-                            @error('mode')
-                                        <div class="text-danger mt-2">{{ $message }}</div>
-                            @enderror
-                        </div>
-                            </div>
 
                             <!-- Assign To -->
                             <div class="form-field mb-4">
                                 <div class="field-header">
                                     <div class="field-title">
                                         <h6 class="mb-1">Assign To</h6>
-                                        <small class="text-muted">You can assign this visitor to yourself or any other employee</small>
-                        </div>
-                    </div>
+                                    </div>
+                                </div>
                                 <div class="field-content">
                                     <select class="form-select modern-input" id="meeting_with" name="meeting_with" required>
                                 <option value="">Select Employee</option>
@@ -228,17 +250,17 @@
                         </div>
                     </div>
 
-                            <!-- Address -->
+                            <!-- Landmark -->
                             <div class="form-field mb-4">
                                 <div class="field-header">
                                     <div class="field-title">
-                                        <h6 class="mb-1">Address</h6>
-                                        <small class="text-muted">Type to search or add new address</small>
+                                        <h6 class="mb-1">Landmark</h6>
+                                        <small class="text-muted">Type to search or add new landmark</small>
                                     </div>
                                 </div>
                                 <div class="field-content">
                                     <input type="text" class="form-control modern-input" id="address" name="address_input"
-                                   placeholder="Type to search or add new address" autocomplete="off" required
+                                   placeholder="Type to search or add new landmark" autocomplete="off" required
                                    value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['address_name'] : '' }}">
                             <input type="hidden" id="address_id" name="address_id" value="{{ isset($lastInteractionDetails) ? $lastInteractionDetails['address_id'] : '' }}">
                             <div id="addressSuggestions" class="list-group mt-2" style="display: none;"></div>
@@ -250,40 +272,17 @@
                         </div>
                     </div>
 
-                    <!-- File Upload (Optional) -->
+                    <!-- Initial Notes (Required) -->
                     <div class="form-field mb-4">
                         <div class="field-header">
                             <div class="field-title">
-                                <h6 class="mb-1">Attach Files (Optional)</h6>
-                                <small class="text-muted">Upload documents, images, or other files related to this visit</small>
-                            </div>
-                        </div>
-                        <div class="field-content">
-                            <div class="file-upload-section">
-                                <button type="button" class="btn btn-outline-success" onclick="showVisitorFileUploadModal()">
-                                    <i class="fas fa-paperclip me-1"></i>Upload Files
-                                </button>
-                                <div id="visitorFileInfo" class="mt-2" style="display: none;">
-                                    <small class="text-success">
-                                        <i class="fas fa-check-circle me-1"></i>
-                                        <span id="visitorFileCount">0</span> file(s) selected
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Initial Notes (Optional) -->
-                    <div class="form-field mb-4">
-                        <div class="field-header">
-                            <div class="field-title">
-                                <h6 class="mb-1">Initial Notes (Optional)</h6>
+                                <h6 class="mb-1">Initial Notes</h6>
                                 <small class="text-muted">Maximum 500 characters - These are just initial notes, detailed remarks will be added after the meeting</small>
                             </div>
                         </div>
                         <div class="field-content">
                             <textarea class="form-control modern-input" id="initial_notes" name="initial_notes" rows="4" 
-                                      maxlength="500" placeholder="Enter any initial notes about this visit (optional)..."></textarea>
+                                      maxlength="500" required placeholder="Enter initial notes about this visit..."></textarea>
                             @error('initial_notes')
                                 <div class="text-danger mt-2">{{ $message }}</div>
                             @enderror
@@ -296,7 +295,7 @@
                             <i class="fas fa-arrow-left me-1"></i>Cancel
                         </a>
                         <button type="submit" class="btn btn-paytm-primary">
-                            <i class="fas fa-save me-1"></i>Save Visitor Entry
+                            <i class="fas fa-save me-1"></i>Save Entry
                         </button>
                     </div>
                 </form>
@@ -350,6 +349,9 @@
     justify-content: space-between;
     border-bottom: 1px solid #f0f0f0;
     position: relative;
+    min-height: 60px;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .field-header::after {
@@ -370,6 +372,8 @@
 
 .field-title {
     flex-grow: 1;
+    min-width: 0;
+    flex-basis: 60%;
 }
 
 .field-title h6 {
@@ -389,6 +393,8 @@
 .visitor-status {
     display: flex;
     align-items: center;
+    flex-shrink: 0;
+    margin-left: 1rem;
 }
 
 .field-content {
@@ -1048,6 +1054,15 @@ document.getElementById('visitorForm').addEventListener('submit', function(e) {
     if (!name || !courseId || !mode || !purpose || !meetingWith) {
         e.preventDefault();
         alert('Please fill in all required fields, including purpose selection.');
+        return false;
+    }
+
+    // Check if initial notes is provided
+    const initialNotes = document.getElementById('initial_notes').value.trim();
+    if (!initialNotes) {
+        e.preventDefault();
+        alert('Please enter initial notes about this visit.');
+        document.getElementById('initial_notes').focus();
         return false;
     }
 

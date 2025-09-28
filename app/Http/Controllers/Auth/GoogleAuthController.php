@@ -15,9 +15,46 @@ class GoogleAuthController extends Controller
      */
     public function redirectToGoogle()
     {
-        return Socialite::driver('google')
-            ->scopes(['https://www.googleapis.com/auth/drive.file'])
-            ->redirect();
+        try {
+            // Debug: Log the attempt
+            \Log::info('Google OAuth redirect attempted');
+            
+            // Check if user is logged in
+            $user = Auth::user();
+            if (!$user) {
+                \Log::info('User not authenticated, redirecting to login');
+                return redirect()->route('login')->with('error', 'Please login first to authorize Google Drive.');
+            }
+            
+            \Log::info('User authenticated: ' . $user->name);
+            
+            // Create direct Google OAuth URL
+            $clientId = env('GOOGLE_CLIENT_ID');
+            $redirectUri = env('APP_ENV') === 'local' 
+                ? env('GOOGLE_REDIRECT_URI_LOCAL', 'http://localhost:8000/auth/google/callback')
+                : env('GOOGLE_REDIRECT_URI_PROD', 'https://motionagra.com/auth/google/callback');
+            
+            $scope = 'https://www.googleapis.com/auth/drive.file';
+            $state = 'google_oauth_' . time();
+            
+            $googleUrl = "https://accounts.google.com/oauth/authorize?" . http_build_query([
+                'client_id' => $clientId,
+                'redirect_uri' => $redirectUri,
+                'scope' => $scope,
+                'response_type' => 'code',
+                'state' => $state,
+                'access_type' => 'offline',
+                'prompt' => 'consent'
+            ]);
+            
+            \Log::info('Direct Google OAuth URL: ' . $googleUrl);
+            
+            return redirect($googleUrl);
+                
+        } catch (\Exception $e) {
+            \Log::error('Google OAuth redirect error: ' . $e->getMessage());
+            return redirect()->route('staff.visitor-search')->with('error', 'Google OAuth setup error: ' . $e->getMessage());
+        }
     }
     
     /**
