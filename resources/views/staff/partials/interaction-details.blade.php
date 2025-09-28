@@ -163,6 +163,9 @@
                                             <span class="remark-date">
                                                 <i class="fas fa-clock me-1"></i>
                                                 {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, Y g:i A') }}
+                                                @if($remark->meeting_duration)
+                                                    • <i class="fas fa-stopwatch me-1"></i>{{ $remark->meeting_duration }} mins
+                                                @endif
                                             </span>
                                             <span class="remark-author">
                                                 by <strong>{{ $remark->addedBy?->name ?? 'Unknown' }}</strong>

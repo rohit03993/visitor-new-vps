@@ -2702,3 +2702,131 @@ a[href*="assigned-to-me"].btn-paytm-secondary:hover {
         margin-top: 0.5rem;
     }
 }
+
+/* ========== MOBILE MODAL CENTERING FIXES ========== */
+
+/* Force modal centering on mobile devices */
+@media (max-width: 768px) {
+    .modal-dialog {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        max-width: 90vw !important;
+        width: 90vw !important;
+        max-height: 90vh !important;
+        z-index: 1055 !important;
+    }
+    
+    .modal-dialog-centered {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        max-width: 90vw !important;
+        width: 90vw !important;
+        max-height: 90vh !important;
+        z-index: 1055 !important;
+    }
+    
+    .modal-content {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+        max-height: 90vh !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Ensure modals don't overflow on small screens */
+    .modal-body {
+        max-height: calc(90vh - 120px) !important;
+        overflow-y: auto !important;
+    }
+}
+
+/* Extra small devices (phones, 375px and down) */
+@media (max-width: 375px) {
+    .modal-dialog {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        max-width: 95vw !important;
+        width: 95vw !important;
+        max-height: 95vh !important;
+        z-index: 1055 !important;
+    }
+    
+    .modal-dialog-centered {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        max-width: 95vw !important;
+        width: 95vw !important;
+        max-height: 95vh !important;
+        z-index: 1055 !important;
+    }
+    
+    .modal-content {
+        font-size: 0.9rem !important;
+        max-height: 95vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .modal-header {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    .modal-body {
+        padding: 1rem !important;
+        max-height: calc(95vh - 120px) !important;
+        overflow-y: auto !important;
+    }
+    
+    .modal-footer {
+        padding: 0.75rem 1rem !important;
+    }
+}
+
+/* Force override Bootstrap modal positioning on mobile */
+@media (max-width: 768px) {
+    .modal {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    .modal.show {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .modal-dialog,
+    .modal-dialog-centered {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        max-width: 90vw !important;
+        width: 90vw !important;
+        max-height: 90vh !important;
+        z-index: 1055 !important;
+    }
+    
+    @media (max-width: 375px) {
+        .modal-dialog,
+        .modal-dialog-centered {
+            max-width: 95vw !important;
+            width: 95vw !important;
+            max-height: 95vh !important;
+        }
+    }
+}

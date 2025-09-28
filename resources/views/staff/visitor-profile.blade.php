@@ -296,7 +296,13 @@
                                                         @if($interaction->remarks->count() > 0)
                                                             @foreach($interaction->remarks as $remark)
                                                                 <div class="alert alert-light mb-2">
-                                                                    <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, Y g:iA') }} by {{ $remark->addedBy?->name ?? 'Unknown' }}</small><br>
+                                                                    <small class="text-muted">
+                                                                        {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, Y g:iA') }}
+                                                                        @if($remark->meeting_duration)
+                                                                            • Meeting Duration: {{ $remark->meeting_duration }} mins
+                                                                        @endif
+                                                                        by {{ $remark->addedBy?->name ?? 'Unknown' }}
+                                                                    </small><br>
                                                                     {{ $remark->remark_text }}
                                                                 </div>
                                                             @endforeach
@@ -524,6 +530,14 @@
                                                                                     @if($interaction->meetingWith && $interaction->meetingWith->branch)
                                                                                         <span class="text-muted">({{ $interaction->meetingWith->branch->branch_name }})</span>
                                                                                     @endif
+                                                                                    @if($interaction->remarks->count() > 0)
+                                                                                        @php
+                                                                                            $latestRemark = $interaction->remarks->sortByDesc('created_at')->first();
+                                                                                        @endphp
+                                                                                        @if($latestRemark && $latestRemark->meeting_duration)
+                                                                                            <span class="badge bg-info ms-2">Duration: {{ $latestRemark->meeting_duration }} mins</span>
+                                                                                        @endif
+                                                                                    @endif
                                                                                 </small>
                                                                             </div>
                                                                         </div>
@@ -745,6 +759,9 @@
                                                                                                 <div class="remark-time">
                                                                                                     <i class="fas fa-clock"></i>
                                                                                                     {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($leftPanelTimestamp, 'M d, Y g:iA') }}
+                                                                                                    @if(isset($leftPanelRemark) && $leftPanelRemark->meeting_duration)
+                                                                                                        • Meeting Duration: {{ $leftPanelRemark->meeting_duration }} mins
+                                                                                                    @endif
                                                                                                 </div>
                                                                                             </div>
                                                                                         </div>
@@ -787,6 +804,9 @@
                                                                                                 <div class="remark-time">
                                                                                                     <i class="fas fa-clock"></i>
                                                                                                     {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($rightPanelTimestamp, 'M d, Y g:iA') }}
+                                                                                                    @if(isset($rightPanelRemark) && $rightPanelRemark->meeting_duration)
+                                                                                                        • Meeting Duration: {{ $rightPanelRemark->meeting_duration }} mins
+                                                                                                    @endif
                                                                                                 </div>
                                                                                             </div>
                                                                                         </div>
@@ -863,7 +883,7 @@
                                                                         <div class="{{ $caseClosedClass }}">
                                                                             <div class="{{ $headerClass }}">
                                                                                 <i class="{{ $iconClass }} me-2"></i>Case Closed
-                                                                            </div>
+                                                                </div>
                                                                             <div class="case-closed-body">
                                                                                 <div class="row">
                                                                                     <div class="col-md-8">
@@ -926,6 +946,17 @@
                     
                     
                     <div class="mb-3">
+                        <label for="meetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
+                        <select class="form-select" id="meetingDuration" name="meeting_duration" required>
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
+                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
+                            @endfor
+                        </select>
+                        <div class="form-text">Select the duration of your meeting (5-180 minutes)</div>
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="remarkText" class="form-label">Remark/Note <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="remarkText" name="remark_text" rows="4" 
                                   placeholder="Enter your remark/note about this interaction..." required></textarea>
@@ -964,6 +995,17 @@
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Interaction Details:</strong>
                         <div id="simpleInteractionDetails" class="mt-2"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="simpleMeetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
+                        <select class="form-select" id="simpleMeetingDuration" name="meeting_duration" required>
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
+                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
+                            @endfor
+                        </select>
+                        <div class="form-text">Select the duration of your meeting (5-180 minutes)</div>
                     </div>
                     
                     <div class="mb-3">
@@ -1021,6 +1063,17 @@
                                   placeholder="Add notes about why you're transferring this interaction..." required></textarea>
                         <div class="form-text">Add notes that will be visible to the assigned team member</div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label for="focusedAssignMeetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
+                        <select class="form-select" id="focusedAssignMeetingDuration" name="meeting_duration" required>
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
+                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
+                            @endfor
+                        </select>
+                        <div class="form-text">Select the expected duration of the meeting (5-180 minutes)</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -1070,6 +1123,17 @@
                         <textarea class="form-control" id="assignNotes" name="assignment_notes" rows="3" 
                                   placeholder="Add notes about why you're transferring this interaction..." required></textarea>
                         <div class="form-text">Add notes that will be visible to the assigned team member</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="assignMeetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
+                        <select class="form-select" id="assignMeetingDuration" name="meeting_duration" required>
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
+                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
+                            @endfor
+                        </select>
+                        <div class="form-text">Select the expected duration of the meeting (5-180 minutes)</div>
                     </div>
                     
                     <!-- Scheduling Section -->
@@ -1171,29 +1235,29 @@
                     <div class="mb-3">
                         <div class="row">
                             <div class="col-md-6">
-                                <label for="rescheduleHour" class="form-label">Hour <span class="text-danger">*</span></label>
-                                <select class="form-select" id="rescheduleHour" name="scheduled_hour">
-                                    <option value="09">09 AM</option>
-                                    <option value="10">10 AM</option>
-                                    <option value="11">11 AM</option>
-                                    <option value="12">12 PM</option>
-                                    <option value="13">01 PM</option>
-                                    <option value="14">02 PM</option>
-                                    <option value="15" selected>03 PM</option>
-                                    <option value="16">04 PM</option>
-                                    <option value="17">05 PM</option>
-                                    <option value="18">06 PM</option>
-                                    <option value="19">07 PM</option>
-                                    <option value="20">08 PM</option>
-                                </select>
-                            </div>
+                        <label for="rescheduleHour" class="form-label">Hour <span class="text-danger">*</span></label>
+                        <select class="form-select" id="rescheduleHour" name="scheduled_hour">
+                            <option value="09">09 AM</option>
+                            <option value="10">10 AM</option>
+                            <option value="11">11 AM</option>
+                            <option value="12">12 PM</option>
+                            <option value="13">01 PM</option>
+                            <option value="14">02 PM</option>
+                            <option value="15" selected>03 PM</option>
+                            <option value="16">04 PM</option>
+                            <option value="17">05 PM</option>
+                            <option value="18">06 PM</option>
+                            <option value="19">07 PM</option>
+                            <option value="20">08 PM</option>
+                        </select>
+                    </div>
                             <div class="col-md-6">
-                                <label for="rescheduleMinute" class="form-label">Minute <span class="text-danger">*</span></label>
-                                <select class="form-select" id="rescheduleMinute" name="scheduled_minute">
-                                    @for($i = 0; $i < 60; $i++)
-                                        <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
-                                    @endfor
-                                </select>
+                        <label for="rescheduleMinute" class="form-label">Minute <span class="text-danger">*</span></label>
+                        <select class="form-select" id="rescheduleMinute" name="scheduled_minute">
+                            @for($i = 0; $i < 60; $i++)
+                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                            @endfor
+                        </select>
                             </div>
                         </div>
                     </div>
@@ -1794,11 +1858,8 @@ document.getElementById('completeSessionForm').addEventListener('submit', functi
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, setting up phone number handlers');
-    
     // Add Phone Number Modal Handler
     const addPhoneForm = document.getElementById('addPhoneForm');
-    console.log('Add phone form found:', addPhoneForm);
     
     if (addPhoneForm) {
         addPhoneForm.addEventListener('submit', function(e) {
@@ -1808,27 +1869,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const visitorId = {{ $visitor->visitor_id }};
     const url = `/staff/visitor/${visitorId}/add-phone`;
     
-    console.log('=== FORM SUBMISSION DEBUG ===');
-    console.log('Phone Number:', phoneNumber);
-    console.log('Visitor ID:', visitorId);
-    console.log('URL:', url);
     
     const formData = new FormData();
     formData.append('phone_number', phoneNumber);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
     
-    console.log('Form Data:', Object.fromEntries(formData));
     
     fetch(url, {
         method: 'POST',
         body: formData
     })
     .then(response => {
-        console.log('Response status:', response.status);
         return response.json();
     })
     .then(data => {
-        console.log('Response data:', data);
         if (data.success) {
             alert('Phone number added successfully!');
             bootstrap.Modal.getInstance(document.getElementById('addPhoneModal')).hide();
@@ -1847,7 +1901,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Remove Phone Number Handler
     const removeButtons = document.querySelectorAll('.remove-phone-btn');
-    console.log('Remove buttons found:', removeButtons.length);
     
     removeButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -1855,7 +1908,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const phoneNumber = this.getAttribute('data-phone-number');
             const visitorId = {{ $visitor->visitor_id }};
             
-            console.log('Remove button clicked:', phoneId, phoneNumber);
             
             if (confirm(`Are you sure you want to remove phone number ${phoneNumber}?`)) {
                 const formData = new FormData();
@@ -2011,7 +2063,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     modals.forEach(modal => {
         modal.addEventListener('show.bs.modal', function() {
-            // Force center positioning
+            // Force center positioning with mobile responsiveness
             const dialog = modal.querySelector('.modal-dialog');
             if (dialog) {
                 dialog.style.position = 'fixed';
@@ -2019,8 +2071,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 dialog.style.left = '50%';
                 dialog.style.transform = 'translate(-50%, -50%)';
                 dialog.style.margin = '0';
-                dialog.style.maxWidth = '500px';
-                dialog.style.width = '90%';
+                
+                // Mobile responsive sizing
+                if (window.innerWidth <= 375) {
+                    dialog.style.maxWidth = '95vw';
+                    dialog.style.width = '95vw';
+                    dialog.style.maxHeight = '95vh';
+                } else if (window.innerWidth <= 768) {
+                    dialog.style.maxWidth = '90vw';
+                    dialog.style.width = '90vw';
+                    dialog.style.maxHeight = '90vh';
+                } else {
+                    dialog.style.maxWidth = '500px';
+                    dialog.style.width = '90%';
+                }
             }
         });
         
@@ -2033,10 +2097,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 dialog.style.left = '50%';
                 dialog.style.transform = 'translate(-50%, -50%)';
                 dialog.style.margin = '0';
+                
+                // Mobile responsive sizing
+                if (window.innerWidth <= 375) {
+                    dialog.style.maxWidth = '95vw';
+                    dialog.style.width = '95vw';
+                    dialog.style.maxHeight = '95vh';
+                } else if (window.innerWidth <= 768) {
+                    dialog.style.maxWidth = '90vw';
+                    dialog.style.width = '90vw';
+                    dialog.style.maxHeight = '90vh';
+                } else {
+                    dialog.style.maxWidth = '500px';
+                    dialog.style.width = '90%';
+                }
+            }
+        });
+    });
+});
+
+// Handle window resize for mobile orientation changes
+window.addEventListener('resize', function() {
+    const openModals = document.querySelectorAll('.modal.show');
+    openModals.forEach(modal => {
+        const dialog = modal.querySelector('.modal-dialog');
+        if (dialog) {
+            dialog.style.position = 'fixed';
+            dialog.style.top = '50%';
+            dialog.style.left = '50%';
+            dialog.style.transform = 'translate(-50%, -50%)';
+            dialog.style.margin = '0';
+            
+            // Mobile responsive sizing
+            if (window.innerWidth <= 768) {
+                dialog.style.maxWidth = '95vw';
+                dialog.style.width = '95vw';
+                dialog.style.maxHeight = '90vh';
+            } else if (window.innerWidth <= 375) {
+                dialog.style.maxWidth = '98vw';
+                dialog.style.width = '98vw';
+                dialog.style.maxHeight = '95vh';
+            } else {
                 dialog.style.maxWidth = '500px';
                 dialog.style.width = '90%';
             }
-        });
+        }
     });
 });
 </script>

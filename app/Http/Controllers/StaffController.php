@@ -835,8 +835,10 @@ class StaffController extends Controller
 
     public function updateRemark(Request $request, $interactionId)
     {
+        
         $request->validate([
             'remark_text' => 'required|string|max:1000',
+            'meeting_duration' => 'required|integer|min:5|max:180',
         ]);
 
         $user = auth()->user();
@@ -848,13 +850,16 @@ class StaffController extends Controller
         }
 
         // Create new remark (simple remark, no outcome)
-        Remark::create([
+        $remarkData = [
             'interaction_id' => $interactionId,
             'remark_text' => $request->remark_text,
+            'meeting_duration' => $request->meeting_duration,
             'outcome' => 'in_process', // Always in_process for simple remarks
             'added_by' => $user->user_id,
             'added_by_name' => $user->name,
-        ]);
+        ];
+        
+        $remark = Remark::create($remarkData);
 
         // Update interaction (don't mark as completed, just update tracking)
         $interaction->update([
@@ -1190,9 +1195,12 @@ class StaffController extends Controller
             
             // Get all interactions for this visitor
             $interactions = InteractionHistory::where('visitor_id', $visitorId)
-                ->with(['meetingWith.branch', 'address', 'remarks.addedBy.branch', 'studentSession.completer.branch', 'attachments.uploadedBy'])
+                ->with(['meetingWith.branch', 'address', 'remarks' => function($query) {
+                    $query->select('remark_id', 'interaction_id', 'remark_text', 'meeting_duration', 'outcome', 'added_by', 'added_by_name', 'created_at');
+                }, 'remarks.addedBy.branch', 'studentSession.completer.branch', 'attachments.uploadedBy'])
                 ->orderBy('created_at', 'desc')
                 ->get();
+            
             
             // Load file management data for each interaction
             foreach ($interactions as $interaction) {
@@ -1252,13 +1260,12 @@ class StaffController extends Controller
     {
         try {
             $user = Auth::user();
-            \Log::info('assignInteraction called with interaction ID: ' . $interactionId);
-            \Log::info('Request data: ' . json_encode($request->all()));
             
             // Validate the request
             $request->validate([
                 'team_member_id' => 'required|exists:vms_users,user_id',
                 'assignment_notes' => 'nullable|string|max:500',
+                'meeting_duration' => 'required|integer|min:5|max:180',
                 'scheduled_date' => 'nullable|date|after_or_equal:today',
                 'scheduled_hour' => 'nullable|string',
                 'scheduled_minute' => 'nullable|string',
@@ -1266,7 +1273,6 @@ class StaffController extends Controller
             
             // Get the interaction
             $interaction = InteractionHistory::findOrFail($interactionId);
-            \Log::info('Found interaction: ' . json_encode($interaction->toArray()));
             
             // Check if the current user has permission to assign this interaction
             if ($interaction->meeting_with != $user->user_id) {
@@ -1303,6 +1309,7 @@ class StaffController extends Controller
             $remark = \App\Models\Remark::create([
                 'interaction_id' => $interactionId,
                 'remark_text' => $remarkText,
+                'meeting_duration' => $request->meeting_duration,
                 'added_by' => $user->user_id,
                 'added_by_name' => $user->name,
                 'created_at' => now(),
@@ -1400,9 +1407,6 @@ class StaffController extends Controller
             ]);
             
         } catch (\Exception $e) {
-            \Log::error('assignInteraction Error: ' . $e->getMessage());
-            \Log::error('assignInteraction Stack Trace: ' . $e->getTraceAsString());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to transfer interaction: ' . $e->getMessage()
@@ -1559,23 +1563,23 @@ class StaffController extends Controller
             
             if (!$isVisitorUpload) {
                 // Regular interaction upload - validate interaction exists
-                $interaction = InteractionHistory::find($interactionId);
-                if (!$interaction || $interaction->meeting_with != $user->user_id) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'You do not have permission to add attachments to this interaction.'
-                    ], 403);
+            $interaction = InteractionHistory::find($interactionId);
+            if (!$interaction || $interaction->meeting_with != $user->user_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to add attachments to this interaction.'
+                ], 403);
                 }
             }
             
             // Check file limit per interaction (max 5 files) - skip for visitor uploads
             if (!$isVisitorUpload) {
-                $existingFiles = \App\Models\InteractionAttachment::where('interaction_id', $interactionId)->count();
-                if ($existingFiles >= 5) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Maximum 5 files allowed per interaction.'
-                    ], 400);
+            $existingFiles = \App\Models\InteractionAttachment::where('interaction_id', $interactionId)->count();
+            if ($existingFiles >= 5) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Maximum 5 files allowed per interaction.'
+                ], 400);
                 }
             }
             
@@ -1624,15 +1628,15 @@ class StaffController extends Controller
                 ];
             } else {
                 // Regular interaction upload - also create InteractionAttachment for compatibility
-                $attachment = \App\Models\InteractionAttachment::create([
-                    'interaction_id' => $interactionId,
+            $attachment = \App\Models\InteractionAttachment::create([
+                'interaction_id' => $interactionId,
                     'original_filename' => $originalName,
                     'file_type' => strtolower($extension),
                     'file_size' => $fileSize,
                     'google_drive_file_id' => null, // Will be updated when transferred to Drive
                     'google_drive_url' => null, // Will be updated when transferred to Drive
-                    'uploaded_by' => $user->user_id,
-                ]);
+                'uploaded_by' => $user->user_id,
+            ]);
                 
                 // Update file management with interaction attachment ID
                 $fileManagement->update(['interaction_id' => $interactionId]);

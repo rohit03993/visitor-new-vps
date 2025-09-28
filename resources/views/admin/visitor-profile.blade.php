@@ -129,7 +129,12 @@
                                                 <div class="remark-timeline">
                                                     @foreach($interaction->remarks as $remark)
                                                         <div class="remark-item mb-1">
-                                                            <small class="text-muted">{{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}</small>
+                                                            <small class="text-muted">
+                                                                {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}
+                                                                @if($remark->meeting_duration)
+                                                                    • {{ $remark->meeting_duration }} mins
+                                                                @endif
+                                                            </small>
                                                             <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded">
                                                                 {{ $remark->remark_text }}
                                                             </div>
@@ -225,6 +230,9 @@
                                                             <small class="text-muted d-block mb-1">
                                                                 <i class="fas fa-clock me-1"></i>
                                                                 {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, g:i A') }}
+                                                                @if($remark->meeting_duration)
+                                                                    • <i class="fas fa-stopwatch me-1"></i>{{ $remark->meeting_duration }} mins
+                                                                @endif
                                                             </small>
                                                             <div class="remark-text bg-{{ $remark->remark_text == 'NA' ? 'warning' : 'success' }} {{ $remark->remark_text == 'NA' ? 'text-dark' : 'text-white' }} p-2 rounded mb-1">
                                                                 {{ $remark->remark_text }}
