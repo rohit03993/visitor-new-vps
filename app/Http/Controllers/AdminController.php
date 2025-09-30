@@ -17,6 +17,7 @@ use App\Helpers\DateTimeHelper;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use App\Models\Setting;
 
 class AdminController extends Controller
 {
@@ -1362,6 +1363,59 @@ class AdminController extends Controller
                 'success' => false,
                 'message' => 'Failed to get file management status'
             ], 500);
+        }
+    }
+
+    /**
+     * Show app settings page
+     */
+    public function settings()
+    {
+        // Check if settings table exists
+        if (!\Schema::hasTable('settings')) {
+            return view('admin.settings', [
+                'currentLogo' => 'images/logos/default-logo.svg',
+                'tableNotExists' => true
+            ]);
+        }
+
+        $currentLogo = Setting::get('app_logo', 'images/logos/default-logo.svg');
+        
+        return view('admin.settings', compact('currentLogo'));
+    }
+
+    /**
+     * Upload company logo
+     */
+    public function uploadLogo(Request $request)
+    {
+        // Check if settings table exists
+        if (!\Schema::hasTable('settings')) {
+            return back()->with('error', 'Settings table not found. Please run: php artisan migrate');
+        }
+
+        $request->validate([
+            'logo' => 'required|image|mimes:jpeg,png,jpg,svg|max:2048',
+        ]);
+
+        try {
+            if ($request->hasFile('logo')) {
+                $file = $request->file('logo');
+                $filename = 'company-logo-' . time() . '.' . $file->getClientOriginalExtension();
+                $path = $file->move(public_path('images/logos'), $filename);
+
+                // Update setting
+                Setting::set('app_logo', 'images/logos/' . $filename);
+
+                return redirect()->route('admin.settings')
+                    ->with('success', 'Logo uploaded successfully!');
+            }
+
+            return back()->with('error', 'No file uploaded');
+
+        } catch (\Exception $e) {
+            \Log::error('Logo upload error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to upload logo: ' . $e->getMessage());
         }
     }
 

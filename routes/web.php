@@ -77,6 +77,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/bulk-transfer-files', [AdminController::class, 'bulkTransferFiles'])->name('bulk-transfer-files');
         Route::get('/file-management/status', [AdminController::class, 'getFileManagementStatus'])->name('file-management-status');
         Route::post('/reset-visitor-data', [AdminController::class, 'resetVisitorData'])->name('reset-visitor-data');
+        
+        // App Settings Routes
+        Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
+        Route::post('/upload-logo', [AdminController::class, 'uploadLogo'])->name('upload-logo');
     });
 
 

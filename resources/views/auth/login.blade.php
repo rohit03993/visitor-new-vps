@@ -72,10 +72,32 @@
         .login-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 1.5rem 1.5rem;
+            padding: 2rem 1.5rem 1.5rem;
             text-align: center;
             position: relative;
             overflow: hidden;
+        }
+        
+        /* Login Logo Container - Professional styling */
+        .login-logo-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            display: inline-block;
+            max-width: 250px;
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .login-logo {
+            width: 100%;
+            height: auto;
+            max-height: 100px;
+            object-fit: contain;
+            display: block;
         }
         
         .login-header::before {
@@ -244,6 +266,43 @@
             margin-top: 1rem;
         }
         
+        /* Powered By Footer - Stylish */
+        .powered-by-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .powered-by-footer p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+            font-weight: 400;
+            margin: 0;
+            letter-spacing: 0.5px;
+        }
+        
+        .taskbook-brand {
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .powered-by-footer:hover .taskbook-brand {
+            background: linear-gradient(135deg, #ffffff 0%, #a0a0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transform: scale(1.05);
+        }
+        
         /* Mobile adjustments */
         @media (max-width: 576px) {
             body {
@@ -308,7 +367,11 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
-                <h1><i class="fas fa-book me-3"></i>TASK BOOK</h1>
+                <div class="text-center mb-3">
+                    <div class="login-logo-container">
+                        <img src="{{ \App\Models\Setting::logo() }}" alt="Company Logo" class="login-logo">
+                    </div>
+                </div>
                 <p>Create | Manage | Track</p>
             </div>
             <div class="login-body">
@@ -361,6 +424,11 @@
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Powered By Footer -->
+        <div class="powered-by-footer">
+            <p>Powered by <span class="taskbook-brand">TaskBook</span></p>
         </div>
     </div>
 

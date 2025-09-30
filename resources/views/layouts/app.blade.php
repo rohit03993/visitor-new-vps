@@ -32,6 +32,42 @@
             z-index: 1050;
             transition: left 0.3s ease;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar nav {
+            flex: 1;
+            padding-bottom: 80px; /* Space for footer */
+        }
+        
+        .sidebar-footer {
+            margin-top: auto;
+        }
+        
+        /* Logo Container - Professional styling */
+        .logo-container {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            max-width: 180px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        
+        .logo-container:hover {
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .company-logo {
+            width: 100%;
+            height: auto;
+            max-height: 80px;
+            object-fit: contain;
+            display: block;
         }
         
         .sidebar.show {
@@ -546,9 +582,13 @@
             <div class="col-md-3 col-lg-2 px-0">
                 <div class="sidebar" id="sidebar">
                     <div class="p-3">
-                        <h4 class="text-center mb-4">
-                            <i class="fas fa-users"></i> Task Book
-                        </h4>
+                        <!-- Company Logo -->
+                        <div class="text-center mb-4">
+                            <div class="logo-container">
+                                <img src="{{ \App\Models\Setting::logo() }}" alt="Company Logo" class="company-logo">
+                            </div>
+                        </div>
+                        
                         <div class="text-center mb-4 d-none d-md-block">
                             <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
                                 <i class="fas fa-user text-primary"></i>
@@ -595,6 +635,9 @@
                             <a class="nav-link {{ request()->routeIs('admin.file-management') ? 'active' : '' }}" href="{{ route('admin.file-management') }}" onclick="closeSidebar()">
                                 <i class="fas fa-folder-open me-2"></i> File Management
                             </a>
+                            <a class="nav-link {{ request()->routeIs('admin.settings') ? 'active' : '' }}" href="{{ route('admin.settings') }}" onclick="closeSidebar()">
+                                <i class="fas fa-cog me-2"></i> App Settings
+                            </a>
                         @elseif(auth()->user()->isStaff())
                             <a class="nav-link {{ request()->routeIs('staff.visitor-search') ? 'active' : '' }}" href="{{ route('staff.visitor-search') }}" onclick="closeSidebar()">
                                 <i class="fas fa-search me-2"></i> Search Log
@@ -616,6 +659,13 @@
                             </button>
                         </form>
                     </nav>
+                    
+                    <!-- Powered By Footer -->
+                    <div class="sidebar-footer text-center p-3 mt-auto" style="border-top: 1px solid rgba(255,255,255,0.2);">
+                        <small style="color: rgba(255,255,255,0.7); font-size: 0.75rem;">
+                            Powered by <strong style="color: white;">TaskBook</strong>
+                        </small>
+                    </div>
                 </div>
             </div>
 
