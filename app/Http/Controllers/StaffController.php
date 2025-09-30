@@ -1261,11 +1261,15 @@ class StaffController extends Controller
         try {
             $user = Auth::user();
             
+            // Check if this is a reschedule (assigning to self) or transfer (assigning to someone else)
+            $isRescheduling = ($request->team_member_id == $user->user_id);
+            
             // Validate the request
             $request->validate([
                 'team_member_id' => 'required|exists:vms_users,user_id',
                 'assignment_notes' => 'nullable|string|max:500',
-                'meeting_duration' => 'required|integer|min:5|max:180',
+                // Meeting duration is optional for reschedule, required for transfer
+                'meeting_duration' => $isRescheduling ? 'nullable|integer|min:5|max:180' : 'required|integer|min:5|max:180',
                 'scheduled_date' => 'nullable|date|after_or_equal:today',
                 'scheduled_hour' => 'nullable|string',
                 'scheduled_minute' => 'nullable|string',
@@ -1309,7 +1313,7 @@ class StaffController extends Controller
             $remark = \App\Models\Remark::create([
                 'interaction_id' => $interactionId,
                 'remark_text' => $remarkText,
-                'meeting_duration' => $request->meeting_duration,
+                'meeting_duration' => $request->meeting_duration ?? null, // Optional for reschedule
                 'added_by' => $user->user_id,
                 'added_by_name' => $user->name,
                 'created_at' => now(),
