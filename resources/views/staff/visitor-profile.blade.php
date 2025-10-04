@@ -99,6 +99,33 @@
         // Fallback to original Google Drive URL
         return $attachment->google_drive_url;
     }
+    
+    // Check if file is deleted
+    function isFileDeleted($attachment) {
+        $fileManagement = \App\Models\FileManagement::where('interaction_id', $attachment->interaction_id)
+            ->where('original_filename', $attachment->original_filename)
+            ->first();
+            
+        return $fileManagement && $fileManagement->deleted_at;
+    }
+    
+    // Get file deletion info
+    function getFileDeletionInfo($attachment) {
+        $fileManagement = \App\Models\FileManagement::with('deletedBy')
+            ->where('interaction_id', $attachment->interaction_id)
+            ->where('original_filename', $attachment->original_filename)
+            ->first();
+            
+        if ($fileManagement && $fileManagement->deleted_at) {
+            return [
+                'deleted_at' => $fileManagement->deleted_at,
+                'deleted_by' => $fileManagement->deletedBy?->name ?? 'Admin',
+                'deletion_reason' => $fileManagement->deletion_reason
+            ];
+        }
+        
+        return null;
+    }
 @endphp
 
 <div class="row">
@@ -421,9 +448,21 @@
                                                                                 </div>
                                                                             </div>
                                                                             <div class="attachment-actions">
-                                                                                <a href="{{ getFileUrl($attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                    <i class="fas fa-eye"></i> View
-                                                                                </a>
+                                                                                @php
+                                                                                    $deletionInfo = getFileDeletionInfo($attachment);
+                                                                                @endphp
+                                                                                @if($deletionInfo)
+                                                                                    <span class="badge bg-danger" title="Deleted by {{ $deletionInfo['deleted_by'] }} on {{ $deletionInfo['deleted_at']->format('M d, Y') }}">
+                                                                                        <i class="fas fa-trash me-1"></i>File Deleted
+                                                                                    </span>
+                                                                                    @if($deletionInfo['deletion_reason'])
+                                                                                        <br><small class="text-muted">{{ $deletionInfo['deletion_reason'] }}</small>
+                                                                                    @endif
+                                                                                @else
+                                                                                    <a href="{{ getFileUrl($attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                        <i class="fas fa-eye"></i> View
+                                                                                    </a>
+                                                                                @endif
                                                                             </div>
                                                                         </div>
                                                                     @endforeach
@@ -859,11 +898,23 @@
                                                                                                         </small>
                                                                                                     </div>
                                                                                                 </div>
-                                                                                                <div class="attachment-actions">
-                                                                                                    <a href="{{ getFileUrl($attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                                                                        <i class="fas fa-eye"></i> View
-                                                                                                    </a>
-                                                                                                </div>
+                                                                                <div class="attachment-actions">
+                                                                                    @php
+                                                                                        $deletionInfo = getFileDeletionInfo($attachment);
+                                                                                    @endphp
+                                                                                    @if($deletionInfo)
+                                                                                        <span class="badge bg-danger" title="Deleted by {{ $deletionInfo['deleted_by'] }} on {{ $deletionInfo['deleted_at']->format('M d, Y') }}">
+                                                                                            <i class="fas fa-trash me-1"></i>File Deleted
+                                                                                        </span>
+                                                                                        @if($deletionInfo['deletion_reason'])
+                                                                                            <br><small class="text-muted">{{ $deletionInfo['deletion_reason'] }}</small>
+                                                                                        @endif
+                                                                                    @else
+                                                                                        <a href="{{ getFileUrl($attachment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                                                            <i class="fas fa-eye"></i> View
+                                                                                        </a>
+                                                                                    @endif
+                                                                                </div>
                                                                                             </div>
                                                                                         @endforeach
                                                                                     </div>

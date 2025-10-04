@@ -69,6 +69,14 @@
                         </div>
                     </div>
                     <div class="col-md-2">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body text-center">
+                                <h4 class="mb-1">{{ $stats['deleted_files'] }}</h4>
+                                <small>Deleted</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
                         <div class="card bg-secondary text-white">
                             <div class="card-body text-center">
                                 <h4 class="mb-1">{{ number_format($stats['total_size'] / 1024 / 1024, 1) }} MB</h4>
@@ -184,6 +192,9 @@
                                                     <i class="fas fa-external-link-alt"></i>
                                                 </a>
                                             @endif
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFile({{ $file->id }}, '{{ $file->original_filename }}')" title="Delete File">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -230,6 +241,47 @@
                     </div>
                     <div id="transferStatus" class="text-muted"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete File Modal -->
+<div class="modal fade" id="deleteFileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-trash me-2"></i>Delete File
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteFileId">
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone. The file will be permanently removed from the server.
+                </div>
+                
+                <p class="mb-3">
+                    <strong>File to delete:</strong><br>
+                    <span id="deleteFileName" class="text-danger"></span>
+                </p>
+                
+                <div class="mb-3">
+                    <label for="deletionReason" class="form-label">Reason for Deletion (Optional)</label>
+                    <textarea class="form-control" id="deletionReason" rows="3" placeholder="e.g., File too large, Wrong file uploaded, Duplicate file, etc."></textarea>
+                    <div class="form-text">This will be saved in the audit log</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Delete File
+                </button>
             </div>
         </div>
     </div>
@@ -405,5 +457,57 @@ function showAlert(type, message) {
         }
     }, 5000);
 }
+
+// Delete file function
+function deleteFile(fileId, fileName) {
+    // Set modal data
+    document.getElementById('deleteFileId').value = fileId;
+    document.getElementById('deleteFileName').textContent = fileName;
+    document.getElementById('deletionReason').value = '';
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('deleteFileModal'));
+    modal.show();
+}
+
+// Handle delete confirmation
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    const fileId = document.getElementById('deleteFileId').value;
+    const reason = document.getElementById('deletionReason').value || 'Deleted by admin';
+    const btn = this;
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+    
+    fetch(`/admin/file-management/${fileId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            deletion_reason: reason
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('deleteFileModal')).hide();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', data.message);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Failed to delete file');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+});
 </script>
 @endsection

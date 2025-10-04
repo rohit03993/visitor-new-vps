@@ -1159,23 +1159,71 @@ class AdminController extends Controller
     public function fileManagement()
     {
         try {
-            $files = \App\Models\FileManagement::with(['uploadedBy', 'transferredBy', 'interaction'])
+            // Show only non-deleted files
+            $files = \App\Models\FileManagement::with(['uploadedBy', 'transferredBy', 'interaction', 'deletedBy'])
+                ->whereNull('deleted_at')
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
 
             $stats = [
-                'total_files' => \App\Models\FileManagement::count(),
-                'server_files' => \App\Models\FileManagement::where('status', 'server')->count(),
-                'drive_files' => \App\Models\FileManagement::where('status', 'drive')->count(),
-                'pending_files' => \App\Models\FileManagement::where('status', 'pending')->count(),
-                'failed_files' => \App\Models\FileManagement::where('status', 'failed')->count(),
-                'total_size' => \App\Models\FileManagement::sum('file_size'),
+                'total_files' => \App\Models\FileManagement::whereNull('deleted_at')->count(),
+                'server_files' => \App\Models\FileManagement::where('status', 'server')->whereNull('deleted_at')->count(),
+                'drive_files' => \App\Models\FileManagement::where('status', 'drive')->whereNull('deleted_at')->count(),
+                'pending_files' => \App\Models\FileManagement::where('status', 'pending')->whereNull('deleted_at')->count(),
+                'failed_files' => \App\Models\FileManagement::where('status', 'failed')->whereNull('deleted_at')->count(),
+                'deleted_files' => \App\Models\FileManagement::whereNotNull('deleted_at')->count(),
+                'total_size' => \App\Models\FileManagement::whereNull('deleted_at')->sum('file_size'),
             ];
 
             return view('admin.file-management', compact('files', 'stats'));
         } catch (\Exception $e) {
             \Log::error('File management error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to load file management: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete a file (soft delete with physical file removal)
+     */
+    public function deleteFile(Request $request, $fileId)
+    {
+        try {
+            $file = \App\Models\FileManagement::findOrFail($fileId);
+            
+            // Check if already deleted
+            if ($file->isDeleted()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'File is already deleted'
+                ], 400);
+            }
+            
+            // Delete physical file if on server
+            if ($file->status === 'server' && $file->server_path) {
+                $fullPath = storage_path('app/public/' . $file->server_path);
+                if (file_exists($fullPath)) {
+                    unlink($fullPath);
+                }
+            }
+            
+            // Mark as deleted in database (keep original status for audit)
+            $file->update([
+                'deleted_at' => now(),
+                'deleted_by' => auth()->id(),
+                'deletion_reason' => $request->deletion_reason ?? 'Deleted by admin'
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'File deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('File deletion error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete file: ' . $e->getMessage()
+            ], 500);
         }
     }
 

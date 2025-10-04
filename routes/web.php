@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/transfer-files-to-drive', [AdminController::class, 'transferFilesToDrive'])->name('transfer-files-to-drive');
         Route::post('/bulk-transfer-files', [AdminController::class, 'bulkTransferFiles'])->name('bulk-transfer-files');
         Route::get('/file-management/status', [AdminController::class, 'getFileManagementStatus'])->name('file-management-status');
+        Route::delete('/file-management/{fileId}', [AdminController::class, 'deleteFile'])->name('delete-file');
         Route::post('/reset-visitor-data', [AdminController::class, 'resetVisitorData'])->name('reset-visitor-data');
         
         // App Settings Routes

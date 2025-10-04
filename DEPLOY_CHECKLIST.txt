@@ -1,0 +1,145 @@
+================================================================================
+        🚀 LOGO FEATURE DEPLOYMENT - SIMPLE CHECKLIST
+================================================================================
+
+✅ motionagra.com - COMPLETED!
+⏳ motion.taskbook.co.in - TODO
+⏳ horizon.taskbook.co.in - TODO
+
+================================================================================
+                    📋 COMMANDS FOR EACH SITE
+================================================================================
+
+STEP 1: SSH into server
+----------------------------------------
+ssh root@srv988879
+
+STEP 2: Navigate to site directory
+----------------------------------------
+For motionagra.com:
+cd /home/motionagra/htdocs/motionagra.com
+
+For motion.taskbook.co.in:
+cd /home/taskbook-motion/htdocs/motion.taskbook.co.in
+
+For horizon.taskbook.co.in:
+cd /home/taskbook-horizon/htdocs/horizon.taskbook.co.in
+
+STEP 3: Pull code from GitHub
+----------------------------------------
+git pull origin master
+
+STEP 4: Run migration
+----------------------------------------
+php artisan migrate
+
+STEP 5: Clear caches
+----------------------------------------
+php artisan cache:clear
+php artisan route:clear
+php artisan config:clear
+php artisan view:clear
+
+STEP 6: Fix LOGO upload permissions
+----------------------------------------
+mkdir -p public/images/logos
+
+For motionagra.com:
+chown -R motionagra:motionagra public/images
+chmod -R 775 public/images
+
+For motion.taskbook.co.in:
+chown -R taskbook-motion:taskbook-motion public/images
+chmod -R 775 public/images
+
+For horizon.taskbook.co.in:
+chown -R taskbook-horizon:taskbook-horizon public/images
+chmod -R 775 public/images
+
+STEP 7: Fix STORAGE permissions (for attachments)
+----------------------------------------
+For motionagra.com:
+chown -h motionagra:motionagra public/storage
+
+For motion.taskbook.co.in:
+chown -h taskbook-motion:taskbook-motion public/storage
+
+For horizon.taskbook.co.in:
+chown -h taskbook-horizon:taskbook-horizon public/storage
+
+Then for ALL sites:
+chmod -R 755 storage/app/public/uploads
+find storage/app/public/uploads -type f -exec chmod 644 {} \;
+
+STEP 8: Test in browser
+----------------------------------------
+1. Go to: https://[SITE-URL]/login
+2. Check if default logo shows
+3. Login as admin
+4. Go to: https://[SITE-URL]/admin/settings
+5. Upload company logo
+6. Verify logo appears on login page
+7. Verify logo appears in sidebar
+
+================================================================================
+                    🔑 KEY POINTS TO REMEMBER
+================================================================================
+
+1. Each site has its OWN user:
+   - motionagra.com → motionagra
+   - motion.taskbook.co.in → taskbook-motion
+   - horizon.taskbook.co.in → taskbook-horizon
+
+2. ALWAYS use the site-specific user in chown commands
+
+3. If logo upload fails, check:
+   - Directory ownership (must match site user)
+   - Directory permissions (must be 775)
+
+4. If you see 403 errors on files:
+   - Fix storage symlink ownership
+   - Fix uploads directory permissions
+
+================================================================================
+                    ⚡ SUPER QUICK ONE-LINER
+================================================================================
+
+Copy entire block for each site:
+
+FOR MOTION.TASKBOOK.CO.IN:
+cd /home/taskbook-motion/htdocs/motion.taskbook.co.in && git pull origin master && php artisan migrate && php artisan cache:clear && php artisan route:clear && mkdir -p public/images/logos && chown -R taskbook-motion:taskbook-motion public/images && chmod -R 775 public/images && chown -h taskbook-motion:taskbook-motion public/storage && chmod -R 755 storage/app/public/uploads
+
+FOR HORIZON.TASKBOOK.CO.IN:
+cd /home/taskbook-horizon/htdocs/horizon.taskbook.co.in && git pull origin master && php artisan migrate && php artisan cache:clear && php artisan route:clear && mkdir -p public/images/logos && chown -R taskbook-horizon:taskbook-horizon public/images && chmod -R 775 public/images && chown -h taskbook-horizon:taskbook-horizon public/storage && chmod -R 755 storage/app/public/uploads
+
+================================================================================
+                    ✅ DEPLOYMENT COMPLETE WHEN:
+================================================================================
+
+- [ ] Logo upload works from admin panel
+- [ ] Logo shows on login page with rounded white container
+- [ ] Logo shows in sidebar with rounded white container
+- [ ] "Powered by TaskBook" shows at bottom of login page
+- [ ] "Powered by TaskBook" shows at bottom of sidebar
+- [ ] File attachments work (no 403 errors)
+- [ ] All CRM features working normally
+
+================================================================================
+                    📞 TROUBLESHOOTING
+================================================================================
+
+Problem: "Unable to write to logos directory"
+Solution: Make sure you used the CORRECT user (not www-data!)
+          Check: ls -la public/ | grep images
+          Should show: drwxrwxr-x [SITE-USER] [SITE-USER] ... images/
+
+Problem: "Route [admin.settings] not defined"
+Solution: php artisan route:clear && php artisan cache:clear
+
+Problem: 403 Forbidden on uploaded files
+Solution: chown -h [SITE-USER]:[SITE-USER] public/storage
+          chmod -R 755 storage/app/public/uploads
+
+================================================================================
+
+Save this file for future reference! 📚

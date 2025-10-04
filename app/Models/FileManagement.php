@@ -23,11 +23,15 @@ class FileManagement extends Model
         'interaction_id',
         'mime_type',
         'transferred_at',
-        'transfer_notes'
+        'transfer_notes',
+        'deleted_at',
+        'deleted_by',
+        'deletion_reason'
     ];
 
     protected $casts = [
         'transferred_at' => 'datetime',
+        'deleted_at' => 'datetime',
         'file_size' => 'integer'
     ];
 
@@ -47,6 +51,11 @@ class FileManagement extends Model
         return $this->belongsTo(InteractionHistory::class, 'interaction_id', 'interaction_id');
     }
 
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(VmsUser::class, 'deleted_by', 'user_id');
+    }
+
     // Helper methods
     public function getFileUrlAttribute(): string
     {
@@ -54,7 +63,13 @@ class FileManagement extends Model
             return $this->google_drive_url;
         }
         
-        return asset('storage/uploads/' . basename($this->server_path));
+        // Use full server path (includes date folders like 2025/10)
+        return asset('storage/' . $this->server_path);
+    }
+    
+    public function isDeleted(): bool
+    {
+        return !is_null($this->deleted_at);
     }
 
     public function getFileSizeFormattedAttribute(): string
