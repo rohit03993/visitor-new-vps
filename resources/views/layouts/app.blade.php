@@ -10,6 +10,101 @@
     <title>@yield('title', 'LogBook - Create | Manage | Track')</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <link rel="shortcut icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#007bff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="VMS CRM">
+    
+    <!-- Firebase Web SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
+        
+// Firebase configuration - Auto-detects environment
+const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+const firebaseConfig = {
+    apiKey: "AIzaSyB5H0dX6IxDUAhSYMnqhD5VIighv6N7OX8",
+    authDomain: "vms-crm-notifications.firebaseapp.com",
+    projectId: "vms-crm-notifications",
+    storageBucket: "vms-crm-notifications.firebasestorage.app",
+    messagingSenderId: "197047969653",
+    appId: "1:197047969653:web:785933db1521840ffa953c",
+    measurementId: "G-FP86BQXRYR"
+};
+
+// Log environment for debugging
+console.log('🌍 Environment:', isProduction ? 'Production' : 'Development');
+console.log('🌍 Hostname:', window.location.hostname);
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const messaging = getMessaging(app);
+        
+        // Make messaging and functions available globally
+        window.firebaseMessaging = messaging;
+        window.getToken = getToken;
+        window.firebaseInitialized = true;
+        
+        console.log('✅ Firebase SDK loaded and available globally');
+        
+        // Request permission and get FCM token
+        async function initializeFirebaseNotifications() {
+            try {
+                // Request permission
+                const permission = await Notification.requestPermission();
+                console.log('🔔 Firebase notification permission:', permission);
+                
+                if (permission === 'granted') {
+                    // Register Firebase service worker and wait for it to be active
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    await navigator.serviceWorker.ready;
+                    
+                    // Get FCM token with active service worker
+                    const token = await getToken(messaging, {
+                        vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8'
+                    });
+                    
+                    if (token) {
+                        console.log('✅ Firebase FCM token obtained:', token.substring(0, 20) + '...');
+                        
+                        // Store FCM token in session
+                        await fetch('/api/notifications/store-fcm-token', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({ fcm_token: token })
+                        });
+                        
+                        console.log('✅ FCM token stored successfully');
+                    } else {
+                        console.log('❌ No FCM token available');
+                    }
+                } else {
+                    console.log('❌ Notification permission denied');
+                }
+            } catch (error) {
+                console.error('❌ Firebase initialization error:', error);
+            }
+        }
+        
+        // Listen for foreground messages (let Service Worker handle all notifications)
+        onMessage(messaging, (payload) => {
+            console.log('📨 Firebase foreground message received:', payload);
+            // Service Worker will handle showing the notification
+        });
+        
+        // Initialize Firebase notifications when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeFirebaseNotifications);
+        } else {
+            initializeFirebaseNotifications();
+        }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/paytm-theme.css') }}?v={{ filemtime(public_path('css/paytm-theme.css')) }}" rel="stylesheet">
@@ -645,6 +740,10 @@
                             <a class="nav-link {{ request()->routeIs('staff.assigned-to-me') ? 'active' : '' }}" href="{{ route('staff.assigned-to-me') }}" onclick="closeSidebar()">
                                 <i class="fas fa-user-check me-2"></i> Assigned Logs
                             </a>
+                            <!-- Push Notification Subscription Button -->
+                            <button class="nav-link btn btn-link text-start w-100 p-0" id="pushNotificationBtn" onclick="togglePushNotifications()">
+                                <i class="fas fa-bell me-2"></i> <span id="pushNotificationText">Enable Notifications</span>
+                            </button>
                             <a class="nav-link {{ request()->routeIs('staff.change-password') ? 'active' : '' }}" href="{{ route('staff.change-password') }}" onclick="closeSidebar()">
                                 <i class="fas fa-key me-2"></i> Change Password
                             </a>
@@ -765,8 +864,161 @@
         });
     </script>
     
+    <!-- Push Notification Subscription Handler -->
+    <script>
+        async function togglePushNotifications() {
+            const btn = document.getElementById('pushNotificationBtn');
+            const text = document.getElementById('pushNotificationText');
+            
+            try {
+                // Check if notifications are supported
+                if (!('Notification' in window)) {
+                    alert('This browser does not support notifications.');
+                    return;
+                }
+                
+                // Check if Service Worker is supported
+                if (!('serviceWorker' in navigator)) {
+                    alert('This browser does not support Service Workers.');
+                    return;
+                }
+                
+                // Request notification permission
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    // Initialize Firebase notifications
+                    if (window.firebaseInitialized && window.firebaseMessaging && window.getToken) {
+                        try {
+                            // Get FCM token
+                            const token = await window.getToken(window.firebaseMessaging, {
+                                vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8'
+                            });
+                            
+                            if (token) {
+                                // Store FCM token in session
+                                const storeResponse = await fetch('/api/notifications/store-fcm-token', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                    },
+                                    body: JSON.stringify({ fcm_token: token })
+                                });
+                                
+                                if (storeResponse.ok) {
+                                    // Update button text
+                                    text.textContent = 'Firebase Notifications ✅';
+                                    btn.style.color = '#28a745';
+                                    
+                                    // Show success message
+                                    alert('🔔 Firebase notifications enabled! You will now receive native desktop notifications when logs are assigned to you.');
+                                } else {
+                                    alert('Failed to store FCM token. Please refresh the page and try again.');
+                                }
+                            } else {
+                                alert('Failed to get FCM token. Please refresh the page and try again.');
+                            }
+                        } catch (error) {
+                            console.error('Firebase notification error:', error);
+                            alert('Error setting up Firebase notifications: ' + error.message);
+                        }
+                    } else {
+                        console.error('Firebase SDK not available:', {
+                            firebaseInitialized: window.firebaseInitialized,
+                            firebaseMessaging: !!window.firebaseMessaging,
+                            getToken: !!window.getToken
+                        });
+                        alert('Firebase SDK not loaded. Please refresh the page and try again.');
+                    }
+                } else if (permission === 'denied') {
+                    alert('❌ Notifications blocked. Please enable notifications in your browser settings.');
+                    text.textContent = 'Enable Notifications (Blocked)';
+                    btn.style.color = '#dc3545';
+                } else {
+                    alert('Notifications permission was dismissed.');
+                }
+            } catch (error) {
+                console.error('Push notification error:', error);
+                alert('Error setting up notifications: ' + error.message);
+            }
+        }
+        
+        // Check Firebase notification status on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            const text = document.getElementById('pushNotificationText');
+            const btn = document.getElementById('pushNotificationBtn');
+            
+            if (text && btn) {
+                // Check Firebase notification status
+                try {
+                    const response = await fetch('/api/notifications/status', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.isSubscribed && data.fcm_token) {
+                        text.textContent = 'Firebase Notifications ✅';
+                        btn.style.color = '#28a745';
+                        console.log('✅ Firebase notifications enabled in sidebar');
+                    } else {
+                        text.textContent = 'Enable Firebase Notifications';
+                        btn.style.color = '';
+                        console.log('❌ Firebase notifications not enabled in sidebar');
+                    }
+                } catch (error) {
+                    console.error('Error checking Firebase status:', error);
+                    text.textContent = 'Enable Notifications';
+                    btn.style.color = '';
+                }
+            }
+        });
+    </script>
+    
     <!-- Notification System -->
     <script src="{{ asset('js/notifications.js') }}"></script>
+    
+    <!-- Debug Notification System -->
+    <script>
+        console.log('🔍 DEBUG: Checking notification system...');
+        console.log('🔍 Body classes:', document.body.className);
+        console.log('🔍 Auth check:', {{ auth()->check() ? 'true' : 'false' }});
+        
+        setTimeout(() => {
+            console.log('🔍 Notification system after 2s:', window.notificationSystem);
+            if (window.notificationSystem) {
+                console.log('✅ Notification system is loaded');
+                console.log('🔍 Permission:', Notification.permission);
+                console.log('🔍 Browser support:', 'Notification' in window);
+            } else {
+                console.log('❌ Notification system NOT loaded');
+            }
+            
+            // Check Service Worker status
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(registration => {
+                    console.log('🔍 Service Worker registration:', registration);
+                    if (registration) {
+                        console.log('✅ Service Worker is registered:', registration.scope);
+                        console.log('🔍 Service Worker state:', registration.active ? registration.active.state : 'No active worker');
+                        
+                        // Test Service Worker notification
+                        if (registration.active) {
+                            console.log('🧪 Testing Service Worker notification...');
+                            registration.active.postMessage({ action: 'test-notification' });
+                        }
+                    } else {
+                        console.log('❌ No Service Worker registered');
+                    }
+                });
+            }
+        }, 2000);
+    </script>
     
     @yield('scripts')
 </body>

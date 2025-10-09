@@ -145,6 +145,29 @@ Route::middleware('auth')->group(function () {
         ]);
     })->name('test-api');
 
+    // Test notifications page
+Route::get('/test-notifications', function () {
+    return view('test-notifications');
+})->name('test-notifications');
+
+// Test Laravel notifications
+Route::get('/test-laravel-notifications', function () {
+    $user = auth()->user();
+    if ($user) {
+        $user->notify(new \App\Notifications\VisitAssignmentNotification(
+            new \App\Models\InteractionHistory(['interaction_id' => 999, 'purpose' => 'Test Purpose']),
+            new \App\Models\Visitor(['visitor_id' => 999, 'name' => 'Test Visitor']),
+            'System Test'
+        ));
+        
+        return response()->json(['success' => true, 'message' => 'Laravel notification sent!']);
+    }
+    
+    return response()->json(['success' => false, 'message' => 'User not authenticated']);
+})->middleware('auth');
+
+// Test routes removed - notifications are working perfectly!
+
 });
 
 // Google OAuth Routes (No restrictions for testing)

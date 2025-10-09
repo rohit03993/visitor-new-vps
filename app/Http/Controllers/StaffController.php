@@ -802,17 +802,48 @@ class StaffController extends Controller
         // Send notification to assigned staff member
         $assignedUser = VmsUser::find($request->meeting_with);
         if ($assignedUser) {
-            // Send notification to assigned staff member (including self for testing)
-            $notificationController = new \App\Http\Controllers\NotificationController();
-            $success = $notificationController->sendVisitAssignmentNotification(
-                $interaction->interaction_id,
-                $assignedUser->user_id,
-                $request->name,
-                $purpose
-            );
+            // HYBRID APPROACH: Send both file-based and push notifications
             
-            // Log notification status for debugging
-            \Log::info("Notification sent for interaction {$interaction->interaction_id} to user {$assignedUser->user_id}: " . ($success ? 'SUCCESS' : 'FAILED'));
+            // 1. Send file-based notification (working)
+            $fileSuccess = false;
+            try {
+                $notificationController = new \App\Http\Controllers\NotificationController();
+                $fileSuccess = $notificationController->sendVisitAssignmentNotification(
+                    $interaction->interaction_id,
+                    $assignedUser->user_id,
+                    $request->name,
+                    $purpose
+                );
+                \Log::info("File notification sent for interaction {$interaction->interaction_id} to user {$assignedUser->user_id}: " . ($fileSuccess ? 'SUCCESS' : 'FAILED'));
+            } catch (\Exception $e) {
+                \Log::error("File notification failed for interaction {$interaction->interaction_id}: " . $e->getMessage());
+            }
+            
+            // 2. Send push notification (SAFE APPROACH - no user switching)
+            \Log::info("🔔 SENDING PUSH NOTIFICATION FOR NEW VISITOR ASSIGNMENT - Interaction {$interaction->interaction_id} to user {$assignedUser->user_id}");
+            
+            try {
+                $pushController = new \App\Http\Controllers\PushNotificationController();
+                
+                $result = $pushController->sendPushNotificationToUser(
+                    $assignedUser->user_id,
+                    'New Visit Assigned to You!',
+                    "You have been assigned a new visit: {$request->name} - {$purpose}",
+                    [
+                        'interaction_id' => $interaction->interaction_id,
+                        'visitor_name' => $request->name,
+                        'purpose' => $purpose,
+                        'assigned_by' => auth()->user()->name,
+                        'url' => '/staff/assigned-to-me'
+                    ]
+                );
+                
+                \Log::info("Push notification result for new assignment {$interaction->interaction_id}: " . json_encode($result));
+                
+            } catch (\Exception $e) {
+                \Log::error("Push notification error for new assignment {$interaction->interaction_id}: " . $e->getMessage());
+                \Log::error("Push notification stack trace: " . $e->getTraceAsString());
+            }
         }
 
         // Clear cache
@@ -1389,6 +1420,7 @@ class StaffController extends Controller
             // Send notification to assigned staff member
             $visitor = \App\Models\Visitor::find($interaction->visitor_id);
             if ($visitor) {
+                // 1. Send file-based notification (existing)
                 $notificationController = new \App\Http\Controllers\NotificationController();
                 $notificationController->sendVisitAssignmentNotification(
                     $newInteraction->interaction_id,
@@ -1396,6 +1428,33 @@ class StaffController extends Controller
                     $visitor->name,
                     $interaction->purpose
                 );
+                
+                // 2. Send push notification (NEW)
+                \Log::info("🔔 SENDING PUSH NOTIFICATION FOR TRANSFER - Interaction {$newInteraction->interaction_id} to user {$targetMember->user_id}");
+                
+                try {
+                    // SAFE APPROACH: Send push notification without user switching
+                    $pushController = new \App\Http\Controllers\PushNotificationController();
+                    
+                    $result = $pushController->sendPushNotificationToUser(
+                        $targetMember->user_id,
+                        'New Visit Transferred to You!',
+                        "You have been assigned a transferred visit: {$visitor->name} - {$interaction->purpose}",
+                        [
+                            'interaction_id' => $newInteraction->interaction_id,
+                            'visitor_name' => $visitor->name,
+                            'purpose' => $interaction->purpose,
+                            'transferred_by' => auth()->user()->name,
+                            'url' => '/staff/assigned-to-me'
+                        ]
+                    );
+                    
+                    \Log::info("Push notification result for transfer {$newInteraction->interaction_id}: " . json_encode($result));
+                    
+                } catch (\Exception $e) {
+                    \Log::error("Push notification error for transfer {$newInteraction->interaction_id}: " . $e->getMessage());
+                    \Log::error("Push notification stack trace: " . $e->getTraceAsString());
+                }
             }
 
             // Log the assignment

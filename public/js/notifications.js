@@ -33,19 +33,23 @@ class NotificationSystem {
      */
     async init() {
         try {
-            console.log('🔔 Initializing notification system...');
+            // Register Service Worker
+            await this.registerServiceWorker();
             
             // Request notification permission
             const permissionGranted = await this.requestPermission();
-            console.log('🔔 Permission granted:', permissionGranted);
+            
+            // Initialize Firebase notifications (handled in app.blade.php)
             
             // Start checking for notifications
             this.startNotificationCheck();
-            console.log('🔔 Notification checking started');
             
             // Add event listeners
             this.addEventListeners();
-            console.log('🔔 Event listeners added');
+            
+            // Setup PWA features
+            this.setupPWAFeatures();
+            console.log('📱 PWA features initialized');
             
             // Test voice synthesis availability
             if ('speechSynthesis' in window) {
@@ -64,14 +68,43 @@ class NotificationSystem {
                 this.initializeAssignedPageState();
             }
             
-            console.log('✅ Smart notification system initialized successfully');
-            console.log('🔔 System features:');
-            console.log('   • Real-time notifications for new assignments');
-            console.log('   • Smart refresh - only when data actually changes');
-            console.log('   • No unnecessary page reloads');
-            console.log('   • Efficient resource usage');
+            // Smart notification system initialized successfully
         } catch (error) {
             console.error('❌ Failed to initialize notification system:', error);
+        }
+    }
+
+    /**
+     * Register Service Worker - For PWA features only
+     */
+    async registerServiceWorker() {
+        console.log('🔧 Registering Service Worker for PWA features...');
+        
+        if ('serviceWorker' in navigator) {
+            try {
+                // Register the Service Worker for PWA features only
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                console.log('✅ Service Worker registered successfully for PWA:', registration.scope);
+                
+                // Handle updates
+                registration.addEventListener('updatefound', () => {
+                    console.log('🔄 Service Worker update found');
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('🆕 New Service Worker installed, reload to activate');
+                        }
+                    });
+                });
+                
+                return registration;
+            } catch (error) {
+                console.error('❌ Service Worker registration failed:', error);
+                return null;
+            }
+        } else {
+            console.log('❌ Service Worker not supported in this browser');
+            return null;
         }
     }
 
@@ -101,6 +134,233 @@ class NotificationSystem {
         }
     }
 
+
+    /**
+     * Setup enhanced PWA features for mobile
+     */
+    setupPWAFeatures() {
+        console.log('📱 Setting up enhanced PWA features...');
+        
+        // Add to Home Screen prompt
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 PWA install prompt available');
+            
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            
+            // Show custom install button with mobile optimization
+            this.showEnhancedInstallPrompt(deferredPrompt);
+        });
+
+        // Handle app installed
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('✅ PWA app installed successfully');
+            this.hideInstallPrompt();
+            
+            // Show success message
+            this.showPWASuccessMessage();
+        });
+
+        // Enhanced mobile detection and features
+        if (this.isMobileDevice()) {
+            this.setupMobilePWAFeatures();
+        }
+    }
+
+    /**
+     * Setup mobile-specific PWA features
+     */
+    setupMobilePWAFeatures() {
+        console.log('📱 Setting up mobile-specific PWA features...');
+        
+        // Add mobile-specific meta tags dynamically
+        this.addMobileMetaTags();
+        
+        // Setup mobile notification handling
+        this.setupMobileNotifications();
+        
+        // Add mobile-specific styles
+        this.addMobileStyles();
+    }
+
+    /**
+     * Add mobile-specific meta tags
+     */
+    addMobileMetaTags() {
+        const metaTags = [
+            { name: 'mobile-web-app-capable', content: 'yes' },
+            { name: 'apple-mobile-web-app-capable', content: 'yes' },
+            { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
+            { name: 'format-detection', content: 'telephone=no' }
+        ];
+
+        metaTags.forEach(tag => {
+            let meta = document.querySelector(`meta[name="${tag.name}"]`);
+            if (!meta) {
+                meta = document.createElement('meta');
+                meta.name = tag.name;
+                meta.content = tag.content;
+                document.head.appendChild(meta);
+            }
+        });
+    }
+
+    /**
+     * Setup mobile-specific notifications
+     */
+    setupMobileNotifications() {
+        // Enhanced mobile notification handling
+        if ('Notification' in window && Notification.permission === 'granted') {
+            console.log('📱 Mobile notifications enabled');
+            
+            // Add mobile-specific notification settings
+            this.mobileNotificationSettings = {
+                vibrate: true,
+                sound: true,
+                badge: true,
+                persistent: true
+            };
+        }
+    }
+
+    /**
+     * Add mobile-specific styles
+     */
+    addMobileStyles() {
+        const style = document.createElement('style');
+        style.textContent = `
+            /* Mobile notification styles */
+            @media (max-width: 768px) {
+                .notification-toast {
+                    font-size: 16px;
+                    padding: 16px;
+                    margin: 10px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+                }
+                
+                .notification-toast .toast-header {
+                    font-size: 18px;
+                    font-weight: 600;
+                }
+                
+                .notification-toast .toast-body {
+                    font-size: 16px;
+                    line-height: 1.5;
+                }
+            }
+            
+            /* PWA install button styles */
+            .pwa-install-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 10000;
+                background: linear-gradient(135deg, #007bff, #0056b3);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                padding: 12px 20px;
+                font-size: 14px;
+                font-weight: 600;
+                box-shadow: 0 4px 20px rgba(0,123,255,0.4);
+                cursor: pointer;
+                transition: all 0.3s ease;
+                animation: pulse 2s infinite;
+            }
+            
+            .pwa-install-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 25px rgba(0,123,255,0.6);
+            }
+            
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+
+    /**
+     * Show enhanced install prompt
+     */
+    showEnhancedInstallPrompt(deferredPrompt) {
+        // Create enhanced install button
+        const installBtn = document.createElement('button');
+        installBtn.innerHTML = this.isMobileDevice() ? '📱 Install App' : '💻 Install App';
+        installBtn.className = 'pwa-install-btn';
+        
+        installBtn.onclick = () => {
+            // Show the install prompt
+            deferredPrompt.prompt();
+            
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('✅ User accepted the install prompt');
+                    this.showInstallSuccessMessage();
+                } else {
+                    console.log('❌ User dismissed the install prompt');
+                }
+                
+                // Clear the deferredPrompt
+                deferredPrompt = null;
+                this.hideInstallPrompt();
+            });
+        };
+        
+        document.body.appendChild(installBtn);
+        this.installButton = installBtn;
+        
+        // Auto-hide timing based on device
+        const autoHideTime = this.isMobileDevice() ? 15000 : 10000;
+        setTimeout(() => {
+            this.hideInstallPrompt();
+        }, autoHideTime);
+    }
+
+    /**
+     * Show install success message
+     */
+    showInstallSuccessMessage() {
+        this.showInPageNotification({
+            type: 'success',
+            title: '🎉 App Installed!',
+            message: 'VMS CRM has been installed successfully! You can now access it from your home screen.',
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    /**
+     * Show PWA success message
+     */
+    showPWASuccessMessage() {
+        this.showInPageNotification({
+            type: 'success',
+            title: '🚀 PWA Ready!',
+            message: 'Your VMS CRM is now running as a Progressive Web App with enhanced mobile features!',
+            timestamp: new Date().toISOString()
+        });
+    }
+
+    /**
+     * Hide install prompt
+     */
+    hideInstallPrompt() {
+        if (this.installButton) {
+            this.installButton.remove();
+            this.installButton = null;
+        }
+    }
+
     /**
      * Start lightweight notification checking
      */
@@ -111,8 +371,7 @@ class NotificationSystem {
         // Start simple polling every 15 seconds (lightweight)
         this.startLightweightPolling();
         
-        console.log('🔔 Lightweight notification system started');
-        console.log('🔔 Checking for notifications every 15 seconds');
+        // Lightweight notification system started
     }
 
     /**
@@ -136,20 +395,66 @@ class NotificationSystem {
     }
 
     /**
-     * Start smart polling - lightweight checks with conditional refresh
+     * Start enhanced smart polling with visibility detection
      */
     startLightweightPolling() {
-        console.log('🔄 Starting smart polling mode (every 15 seconds)');
+        console.log('🔄 Starting enhanced smart polling mode');
         
         // Clear any existing interval
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);
         }
         
-        // Smart polling every 15 seconds
+        // Enhanced polling based on browser state
+        this.startSmartPolling();
+        
+        // Add visibility change detection for better background handling
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.startBackgroundPolling();
+            } else {
+                this.startActivePolling();
+            }
+        });
+    }
+
+    /**
+     * Smart polling based on browser state
+     */
+    startSmartPolling() {
+        if (document.hidden) {
+            this.startBackgroundPolling();
+        } else {
+            this.startActivePolling();
+        }
+    }
+
+    /**
+     * Active polling when browser tab is visible
+     */
+    startActivePolling() {
+        
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+        }
+        
         this.pollingInterval = setInterval(() => {
             this.smartCheck();
-        }, 15000);
+        }, 10000); // More frequent when active
+    }
+
+    /**
+     * Background polling when browser tab is hidden
+     */
+    startBackgroundPolling() {
+        
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+        }
+        
+        this.pollingInterval = setInterval(() => {
+            this.smartCheck();
+        }, 30000); // Less frequent in background
     }
 
     /**
@@ -174,7 +479,6 @@ class NotificationSystem {
      */
     async checkForNotifications() {
         try {
-            console.log('🔔 Checking for pending notifications...');
             const response = await fetch('/staff/notifications/get', {
                 method: 'GET',
                 headers: {
@@ -189,29 +493,20 @@ class NotificationSystem {
 
             const data = await response.json();
             
-            // Debug logging
-            console.log('🔍 Notification response:', data);
+            // Process notification response
             
             if (data.success && data.notifications && data.notifications.length > 0) {
-                console.log(`🔔 Found ${data.notifications.length} pending notifications`);
-                console.log('🔍 Notifications data:', data.notifications);
-                
                 // Process each notification
-                data.notifications.forEach((notification, index) => {
-                    console.log(`🔔 Processing notification ${index + 1}:`, notification);
-                    console.log(`👤 Notification for user: ${notification.user_name} (ID: ${notification.user_id})`);
-                    console.log(`📋 Message: ${notification.message}`);
+                for (const [index, notification] of data.notifications.entries()) {
                     
-                    this.showNotification(notification);
+                    await this.showNotification(notification);
                     
                     // If it's a visit assignment, refresh the assigned list
                     if (notification.type === 'visit_assigned') {
                         this.refreshAssignedToMeList();
                     }
-                });
+                }
             } else {
-                console.log('🔔 No pending notifications found');
-                console.log('🔍 Debug info:', data.debug || 'No debug info');
                 if (data.success === false) {
                     console.error('❌ Notification API returned error:', data.message);
                 }
@@ -368,7 +663,7 @@ class NotificationSystem {
     /**
      * Show notification to user
      */
-    showNotification(notification) {
+    async showNotification(notification) {
         try {
             // Show desktop notification
             if (this.permissionGranted) {
@@ -383,6 +678,13 @@ class NotificationSystem {
             // Show in-page notification
             this.showInPageNotification(notification);
 
+            // Send Firebase push notification for background delivery
+            await this.sendFirebaseNotification(
+                notification.title,
+                notification.message,
+                notification.data || {}
+            );
+
             console.log('🔔 Notification shown:', notification.title);
         } catch (error) {
             console.error('❌ Error showing notification:', error);
@@ -390,7 +692,7 @@ class NotificationSystem {
     }
 
     /**
-     * Show desktop notification
+     * Show enhanced desktop notification with mobile optimization
      */
     showDesktopNotification(notification) {
         if (!this.permissionGranted) {
@@ -398,61 +700,128 @@ class NotificationSystem {
             return;
         }
 
-        console.log('🔔 Showing desktop notification:', notification.title);
-
-        const options = {
-            body: notification.message,
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
-            tag: notification.type + '_' + Date.now(), // Unique tag to prevent replacement
-            requireInteraction: true,
-            silent: false, // Make sure it makes a sound
-            vibrate: [200, 100, 200], // Vibration pattern for mobile
-            actions: [
-                {
-                    action: 'view',
-                    title: 'View Details'
-                },
-                {
-                    action: 'dismiss',
-                    title: 'Dismiss'
-                }
-            ]
-        };
+        console.log('🔔 Showing enhanced desktop notification:', notification.title);
 
         try {
-            const desktopNotification = new Notification(notification.title, options);
+            // Enhanced notification options with mobile support
+            const notificationOptions = {
+                body: notification.message,
+                icon: '/favicon.ico',
+                badge: '/favicon.ico',
+                tag: notification.type + '_' + Date.now(),
+                requireInteraction: this.isMobileDevice() ? true : false, // Keep open longer on mobile
+                silent: false,
+                vibrate: this.isMobileDevice() ? [200, 100, 200, 100, 200] : [200, 100, 200],
+                data: notification.data || {},
+                actions: this.isMobileDevice() ? [] : [
+                    {
+                        action: 'view',
+                        title: 'View Details'
+                    },
+                    {
+                        action: 'dismiss',
+                        title: 'Dismiss'
+                    }
+                ]
+            };
 
-            // Handle notification click
+            // Use direct Notification API
+            const desktopNotification = new Notification(notification.title, notificationOptions);
+
+            // Enhanced click handling
             desktopNotification.onclick = function() {
                 console.log('🔔 Desktop notification clicked');
-                window.focus();
+                
+                // Focus window and close notification
+                if (window.focus) {
+                    window.focus();
+                }
                 desktopNotification.close();
                 
-                // If it's a visit assignment, you could redirect to the visitor profile
+                // Mobile-specific handling
                 if (notification.type === 'visit_assigned' && notification.data.interaction_id) {
                     console.log('Visit assigned notification clicked:', notification.data);
-                    // You can add custom logic here to redirect to specific page
+                    
+                    // For mobile, try to open in app if installed
+                    if (this.isMobileDevice()) {
+                        this.handleMobileNotificationClick(notification);
+                    }
                 }
-            };
+            }.bind(this);
 
-            // Handle notification show
+            // Enhanced event handlers
             desktopNotification.onshow = function() {
-                console.log('🔔 Desktop notification shown');
-            };
+                console.log('🔔 Desktop notification shown successfully');
+                
+                // Mobile-specific feedback
+                if (this.isMobileDevice()) {
+                    this.playMobileNotificationSound();
+                }
+            }.bind(this);
 
-            // Handle notification error
             desktopNotification.onerror = function(error) {
                 console.error('❌ Desktop notification error:', error);
             };
 
-            // Auto-close after 15 seconds
+            // Auto-close timing based on device
+            const autoCloseTime = this.isMobileDevice() ? 20000 : 15000; // Longer on mobile
             setTimeout(() => {
                 desktopNotification.close();
-            }, 15000);
+            }, autoCloseTime);
+
+            console.log('✅ Enhanced desktop notification created successfully');
 
         } catch (error) {
             console.error('❌ Error creating desktop notification:', error);
+        }
+    }
+
+    /**
+     * Check if device is mobile
+     */
+    isMobileDevice() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+
+    /**
+     * Handle mobile notification click
+     */
+    handleMobileNotificationClick(notification) {
+        // Try to open in app if it's a PWA
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('📱 App is in standalone mode');
+            // Already in app, just focus
+            window.focus();
+        } else {
+            console.log('📱 Opening in browser');
+            // Open in browser
+            window.focus();
+        }
+    }
+
+    /**
+     * Play mobile notification sound
+     */
+    playMobileNotificationSound() {
+        try {
+            // Create audio context for mobile sound
+            if ('AudioContext' in window || 'webkitAudioContext' in window) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            }
+        } catch (error) {
+            console.log('🔊 Mobile sound not available:', error);
         }
     }
 
@@ -653,7 +1022,7 @@ class NotificationSystem {
     /**
      * Test notification system
      */
-    testNotification() {
+    async testNotification() {
         const testNotification = {
             type: 'test',
             title: '🔔 Notification System Test',
@@ -665,7 +1034,7 @@ class NotificationSystem {
             timestamp: new Date().toISOString()
         };
 
-        this.showNotification(testNotification);
+        await this.showNotification(testNotification);
     }
 
     /**
@@ -675,6 +1044,78 @@ class NotificationSystem {
         this.stopNotificationCheck();
         console.log('🔔 Notification system destroyed');
     }
+
+    /**
+     * Check Firebase notification status (Firebase handled in app.blade.php)
+     */
+    async checkFirebaseStatus() {
+        try {
+            const response = await fetch('/api/notifications/status', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📱 Firebase status:', data);
+                return data;
+            } else {
+                console.error('❌ Failed to get Firebase status:', response.status);
+                return { success: false, isSubscribed: false };
+            }
+            
+        } catch (error) {
+            console.error('❌ Error getting Firebase status:', error);
+            return { success: false, isSubscribed: false };
+        }
+    }
+
+    /**
+     * Send Firebase push notification for visit assignment
+     */
+    async sendFirebaseNotification(title, body, data = {}) {
+        try {
+            console.log('🚀 Sending Firebase notification:', title);
+            
+            const response = await fetch('/api/notifications/send-push', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    title: title,
+                    body: body,
+                    data: {
+                        ...data,
+                        timestamp: Date.now(),
+                        source: 'vms-crm-assignment'
+                    }
+                })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('✅ Firebase notification sent successfully');
+                return true;
+            } else {
+                console.error('❌ Firebase notification failed:', result.message);
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('❌ Error sending Firebase notification:', error);
+            return false;
+        }
+    }
+
+
+
 }
 
 // Initialize notification system when DOM is loaded
