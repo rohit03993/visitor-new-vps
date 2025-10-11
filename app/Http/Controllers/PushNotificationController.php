@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use App\Models\UserFcmToken;
 
 class PushNotificationController extends Controller
 {
@@ -125,7 +126,32 @@ wmkdZwhZIiACDf/1uCvxzlU=
     private function getUserFCMToken($userId)
     {
         try {
-            // Get all sessions from storage/framework/sessions
+            // Get the latest FCM token for the user from database
+            $fcmToken = UserFcmToken::forUser($userId)->first();
+            
+            if ($fcmToken) {
+                Log::info("✅ Found FCM token for user {$userId} in database");
+                // Update last used timestamp
+                $fcmToken->markAsUsed();
+                return $fcmToken->fcm_token;
+            }
+            
+            Log::warning("No FCM token found for user {$userId} in database");
+            return null;
+            
+        } catch (\Exception $e) {
+            Log::error("Error getting FCM token for user {$userId}: " . $e->getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Get user's push subscription from session storage (DEPRECATED - kept for compatibility)
+     */
+    private function getUserPushSubscription($userId)
+    {
+        try {
+            // Get all sessions from storage/framework/sessions (correct Laravel path)
             $sessionsPath = storage_path('framework/sessions');
             
             if (!is_dir($sessionsPath)) {
@@ -134,7 +160,7 @@ wmkdZwhZIiACDf/1uCvxzlU=
             }
             
             $sessionFiles = glob($sessionsPath . '/*');
-            Log::info("Checking " . count($sessionFiles) . " session files for user {$userId} FCM token");
+            Log::info("Checking " . count($sessionFiles) . " session files for user {$userId} subscription");
             
             foreach ($sessionFiles as $sessionFile) {
                 try {
@@ -184,65 +210,6 @@ wmkdZwhZIiACDf/1uCvxzlU=
         }
     }
 
-    /**
-     * Get user's push subscription from session storage
-     */
-    private function getUserPushSubscription($userId)
-    {
-        try {
-            // Get all sessions from storage/framework/sessions (correct Laravel path)
-            $sessionsPath = storage_path('framework/sessions');
-            
-            if (!is_dir($sessionsPath)) {
-                Log::warning("Sessions directory not found: {$sessionsPath}");
-                return null;
-            }
-            
-            $sessionFiles = glob($sessionsPath . '/*');
-            Log::info("Checking " . count($sessionFiles) . " session files for user {$userId} subscription");
-            
-            foreach ($sessionFiles as $sessionFile) {
-                try {
-                    // Skip if not a file
-                    if (!is_file($sessionFile)) {
-                        continue;
-                    }
-                    
-                    // Read and decode session file
-                    $sessionData = file_get_contents($sessionFile);
-                    
-                    // Laravel sessions are serialized differently, try to unserialize
-                    $decoded = @unserialize($sessionData);
-                    
-                    // If unserialize fails, try base64 decode first (some Laravel configs)
-                    if ($decoded === false) {
-                        $decoded = @unserialize(base64_decode($sessionData));
-                    }
-                    
-                    // Check if this session has push subscription for our user
-                    if (is_array($decoded) && 
-                        isset($decoded['push_subscription']) && 
-                        isset($decoded['push_subscription']['user_id']) && 
-                        $decoded['push_subscription']['user_id'] == $userId) {
-                        
-                        Log::info("✅ Found push subscription for user {$userId} in session file: " . basename($sessionFile));
-                        return $decoded['push_subscription'];
-                    }
-                    
-                } catch (\Exception $fileError) {
-                    // Skip this file if there's an error reading it
-                    continue;
-                }
-            }
-            
-            Log::info("❌ No push subscription found for user {$userId} after checking all sessions");
-            return null;
-            
-        } catch (\Exception $e) {
-            Log::error("Error getting push subscription for user {$userId}: " . $e->getMessage());
-            return null;
-        }
-    }
 
     /**
      * Send push notification directly (FIREBASE FCM TOKENS)
@@ -639,10 +606,19 @@ wmkdZwhZIiACDf/1uCvxzlU=
                 'fcm_token' => 'required|string',
             ]);
 
-            // Store FCM token in session
-            session(['fcm_token' => $request->fcm_token]);
+            // Store or update FCM token in database
+            $deviceInfo = $request->header('User-Agent', 'Unknown Device');
+            
+            UserFcmToken::updateOrCreate(
+                ['fcm_token' => $request->fcm_token],
+                [
+                    'user_id' => $user->user_id,
+                    'device_info' => $deviceInfo,
+                    'last_used_at' => now(),
+                ]
+            );
 
-            Log::info("User {$user->user_id} stored FCM token: " . substr($request->fcm_token, 0, 20) . "...");
+            Log::info("User {$user->user_id} stored FCM token in database: " . substr($request->fcm_token, 0, 20) . "...");
 
             return response()->json([
                 'success' => true,
