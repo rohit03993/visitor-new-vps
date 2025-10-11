@@ -7,14 +7,15 @@ console.log('🔧 Service Worker loaded - UNIFIED NOTIFICATION SYSTEM');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-// Firebase configuration
+// Firebase configuration - MUST MATCH FRONTEND
 const firebaseConfig = {
-    apiKey: "AIzaSyBvOkBwJ7hJ5Kj8L9mN2pQ3rS4tU5vW6xY",
-    authDomain: "taskbook-horizon.firebaseapp.com",
-    projectId: "taskbook-horizon",
-    storageBucket: "taskbook-horizon.appspot.com",
-    messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef1234567890"
+    apiKey: "AIzaSyB5H0dX6IxDUAhSYMnqhD5VIighv6N7OX8",
+    authDomain: "vms-crm-notifications.firebaseapp.com",
+    projectId: "vms-crm-notifications",
+    storageBucket: "vms-crm-notifications.firebasestorage.app",
+    messagingSenderId: "197047969653",
+    appId: "1:197047969653:web:785933db1521840ffa953c",
+    measurementId: "G-FP86BQXRYR"
 };
 
 // Initialize Firebase

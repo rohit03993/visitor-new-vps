@@ -151,18 +151,23 @@ wmkdZwhZIiACDf/1uCvxzlU=
                     
                     // Check if this session has FCM token for our user
                     if (is_array($decoded) && isset($decoded['fcm_token'])) {
-                        // Look for login session key that matches our user ID
-                        // The actual session key format is: login_web_[provider_hash]
-                        $loginKey = 'login_web_59ba36addc2b2f9401580f014c7f58ea4e30989d';
                         Log::info("Checking session file: " . basename($sessionFile) . " for user {$userId}");
-                        Log::info("Login key: {$loginKey}");
-                        Log::info("Session login value: " . (isset($decoded[$loginKey]) ? $decoded[$loginKey] : 'NOT_SET'));
-                        Log::info("Target user ID: {$userId}");
+                        Log::info("Session data keys: " . implode(', ', array_keys($decoded)));
                         
-                        if (isset($decoded[$loginKey]) && $decoded[$loginKey] == $userId) {
-                            Log::info("✅ Found FCM token for user {$userId} in session file: " . basename($sessionFile));
-                            return $decoded['fcm_token'];
+                        // Look for any login session key that matches our user ID
+                        // Session keys can be: login_web_[hash] or similar
+                        foreach ($decoded as $key => $value) {
+                            if (strpos($key, 'login_web_') === 0 && $value == $userId) {
+                                Log::info("✅ Found matching login key: {$key} = {$value} for user {$userId}");
+                                Log::info("✅ Found FCM token for user {$userId} in session file: " . basename($sessionFile));
+                                return $decoded['fcm_token'];
+                            }
                         }
+                        
+                        // If no login key matches, but we have an FCM token, let's check if this is the right user
+                        // by looking at the session file name or other indicators
+                        Log::info("No matching login key found, but FCM token exists. Session: " . basename($sessionFile));
+                        Log::info("FCM token: " . substr($decoded['fcm_token'], 0, 20) . "...");
                     }
                     
                 } catch (\Exception $fileError) {

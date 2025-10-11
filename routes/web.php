@@ -126,6 +126,35 @@ Route::middleware('auth')->group(function () {
         Route::get('/change-password', [StaffController::class, 'showChangePasswordForm'])->name('change-password');
         Route::post('/change-password', [StaffController::class, 'changePassword'])->name('change-password.store');
         
+        // Test Notification Route (DEBUGGING)
+        Route::get('/test-notification', function() {
+            $user = auth()->user();
+            if (!$user) {
+                return 'Not logged in';
+            }
+            
+            try {
+                $pushController = new \App\Http\Controllers\PushNotificationController();
+                $result = $pushController->sendPushNotificationToUser(
+                    $user->user_id,
+                    'Test Notification',
+                    'This is a test notification to verify the system works',
+                    ['test' => true, 'source' => 'unified_notification']
+                );
+                
+                return response()->json([
+                    'user_id' => $user->user_id,
+                    'user_name' => $user->name,
+                    'result' => $result
+                ]);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+        })->name('test-notification');
+        
         // Notification Routes (Available to staff) - DISABLED FOR DEBUGGING
         // Route::prefix('notifications')->name('notifications.')->group(function () {
         //     // Route::get('/stream', [NotificationController::class, 'stream'])->name('stream'); // Disabled for now
