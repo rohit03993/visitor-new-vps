@@ -25,7 +25,7 @@ Route::get('/addresses/search', [AddressController::class, 'search'])->name('api
 Route::post('/addresses/store', [AddressController::class, 'store'])->name('api.addresses.store');
 
 // Push Notification API routes - ENABLED FOR UNIFIED SYSTEM
-Route::middleware(['web'])->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     // Route::post('/notifications/subscribe', [App\Http\Controllers\PushNotificationController::class, 'subscribe'])->name('api.notifications.subscribe');
     // Route::post('/notifications/unsubscribe', [NotificationController::class, 'unsubscribe'])->name('api.notifications.unsubscribe');
     Route::get('/notifications/status', [App\Http\Controllers\PushNotificationController::class, 'getStatus'])->name('api.notifications.status'); // ENABLED FOR UNIFIED SYSTEM

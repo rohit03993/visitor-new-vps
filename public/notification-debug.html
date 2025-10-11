@@ -240,8 +240,10 @@
                                     method: 'POST',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 'no-csrf'
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 'no-csrf',
+                                        'X-Requested-With': 'XMLHttpRequest'
                                     },
+                                    credentials: 'same-origin',
                                     body: JSON.stringify({ fcm_token: token })
                                 });
                                 
@@ -309,7 +311,13 @@
             log('=== TESTING SERVER NOTIFICATION ===');
             
             try {
-                const response = await fetch('/test-notification');
+                const response = await fetch('/test-notification', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
                 const result = await response.json();
                 
                 log(`Server notification test result: ${JSON.stringify(result)}`);

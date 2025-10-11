@@ -1,0 +1,356 @@
+@extends('layouts.app')
+
+@section('title', 'Notification System Debug')
+
+@section('content')
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bug me-2"></i>🔔 Notification System Debug
+                    </h5>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="test-section info">
+                        <h3>System Information</h3>
+                        <div id="system-info"></div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h3>Step 1: Basic Checks</h3>
+                        <button class="btn btn-primary" onclick="checkBasicSupport()">Check Basic Support</button>
+                        <div id="basic-checks"></div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h3>Step 2: Firebase SDK</h3>
+                        <button class="btn btn-primary" onclick="checkFirebase()">Check Firebase SDK</button>
+                        <div id="firebase-checks"></div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h3>Step 3: Service Worker</h3>
+                        <button class="btn btn-primary" onclick="checkServiceWorker()">Check Service Worker</button>
+                        <div id="sw-checks"></div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h3>Step 4: Permission & Token</h3>
+                        <button class="btn btn-primary" onclick="checkPermissionAndToken()">Check Permission & Get Token</button>
+                        <div id="permission-checks"></div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h3>Step 5: Test Notification</h3>
+                        <button class="btn btn-success" onclick="sendTestNotification()">Send Test Notification</button>
+                        <button class="btn btn-warning" onclick="testServerNotification()">Test Server Notification</button>
+                        <div id="notification-tests"></div>
+                    </div>
+                    
+                    <div class="test-section">
+                        <h3>Debug Logs</h3>
+                        <button class="btn btn-warning" onclick="clearLogs()">Clear Logs</button>
+                        <div id="logs"></div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+    .pass { color: #28a745; }
+    .fail { color: #dc3545; }
+    .pending { color: #ffc107; }
+    #logs { background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+</style>
+
+<script>
+    let logs = [];
+    let testResults = {};
+    
+    function log(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+        logs.push(logEntry);
+        document.getElementById('logs').textContent = logs.join('\n');
+        console.log(logEntry);
+    }
+    
+    function clearLogs() {
+        logs = [];
+        document.getElementById('logs').textContent = '';
+    }
+    
+    function showSystemInfo() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const systemInfo = `
+            <strong>Device:</strong> ${isMobile ? 'Mobile' : 'Desktop'}<br>
+            <strong>Browser:</strong> ${navigator.userAgent}<br>
+            <strong>URL:</strong> ${window.location.href}<br>
+            <strong>HTTPS:</strong> ${location.protocol === 'https:' ? 'Yes' : 'No'}<br>
+            <strong>Service Worker Support:</strong> ${'serviceWorker' in navigator ? 'Yes' : 'No'}<br>
+            <strong>Notification Support:</strong> ${'Notification' in window ? 'Yes' : 'No'}<br>
+            <strong>Firebase SDK:</strong> ${typeof firebase !== 'undefined' ? 'Loaded' : 'Not Loaded'}<br>
+            <strong>User:</strong> {{ auth()->user()->name ?? 'Not logged in' }}
+        `;
+        document.getElementById('system-info').innerHTML = systemInfo;
+    }
+    
+    async function checkBasicSupport() {
+        log('=== BASIC SUPPORT CHECKS ===');
+        const results = [];
+        
+        // Check Notification API
+        if ('Notification' in window) {
+            results.push('<span class="pass">✓ Notification API supported</span>');
+            log('Notification API: Supported');
+        } else {
+            results.push('<span class="fail">✗ Notification API not supported</span>');
+            log('Notification API: NOT SUPPORTED', 'error');
+        }
+        
+        // Check Service Worker
+        if ('serviceWorker' in navigator) {
+            results.push('<span class="pass">✓ Service Worker supported</span>');
+            log('Service Worker: Supported');
+        } else {
+            results.push('<span class="fail">✗ Service Worker not supported</span>');
+            log('Service Worker: NOT SUPPORTED', 'error');
+        }
+        
+        // Check HTTPS
+        if (location.protocol === 'https:') {
+            results.push('<span class="pass">✓ HTTPS enabled</span>');
+            log('HTTPS: Enabled');
+        } else {
+            results.push('<span class="warning">⚠ Not HTTPS (required for notifications)</span>');
+            log('HTTPS: NOT ENABLED - REQUIRED FOR NOTIFICATIONS', 'warning');
+        }
+        
+        document.getElementById('basic-checks').innerHTML = results.join('<br>');
+        testResults.basic = results.every(r => r.includes('pass'));
+    }
+    
+    async function checkFirebase() {
+        log('=== FIREBASE SDK CHECKS ===');
+        const results = [];
+        
+        try {
+            // Check if Firebase is already loaded from the main app
+            if (window.firebaseMessaging && window.firebaseGetToken) {
+                results.push('<span class="pass">✓ Firebase SDK loaded from main app</span>');
+                log('Firebase SDK: Already loaded from main app');
+            } else {
+                // Import Firebase modules
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+                
+                results.push('<span class="pass">✓ Firebase modules imported</span>');
+                log('Firebase modules: Imported successfully');
+                
+                // Initialize Firebase
+                const firebaseConfig = {
+                    apiKey: "AIzaSyB5H0dX6IxDUAhSYMnqhD5VIighv6N7OX8",
+                    authDomain: "vms-crm-notifications.firebaseapp.com",
+                    projectId: "vms-crm-notifications",
+                    storageBucket: "vms-crm-notifications.firebasestorage.app",
+                    messagingSenderId: "197047969653",
+                    appId: "1:197047969653:web:785933db1521840ffa953c",
+                    measurementId: "G-FP86BQXRYR"
+                };
+                
+                const app = initializeApp(firebaseConfig);
+                const messaging = getMessaging(app);
+                
+                results.push('<span class="pass">✓ Firebase initialized</span>');
+                log('Firebase: Initialized successfully');
+                
+                // Store globally for later use
+                window.firebaseApp = app;
+                window.firebaseMessaging = messaging;
+                window.firebaseGetToken = getToken;
+            }
+            
+        } catch (error) {
+            results.push(`<span class="fail">✗ Firebase error: ${error.message}</span>`);
+            log(`Firebase error: ${error.message}`, 'error');
+        }
+        
+        document.getElementById('firebase-checks').innerHTML = results.join('<br>');
+        testResults.firebase = results.every(r => r.includes('pass'));
+    }
+    
+    async function checkServiceWorker() {
+        log('=== SERVICE WORKER CHECKS ===');
+        const results = [];
+        
+        try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            await navigator.serviceWorker.ready;
+            
+            results.push('<span class="pass">✓ Service Worker registered</span>');
+            log('Service Worker: Registered successfully');
+            
+            if (registration.active) {
+                results.push('<span class="pass">✓ Service Worker active</span>');
+                log('Service Worker: Active');
+            } else {
+                results.push('<span class="warning">⚠ Service Worker not active</span>');
+                log('Service Worker: Not active', 'warning');
+            }
+            
+        } catch (error) {
+            results.push(`<span class="fail">✗ Service Worker error: ${error.message}</span>`);
+            log(`Service Worker error: ${error.message}`, 'error');
+        }
+        
+        document.getElementById('sw-checks').innerHTML = results.join('<br>');
+        testResults.serviceWorker = results.every(r => r.includes('pass'));
+    }
+    
+    async function checkPermissionAndToken() {
+        log('=== PERMISSION & TOKEN CHECKS ===');
+        const results = [];
+        
+        try {
+            // Check current permission
+            let permission = Notification.permission;
+            results.push(`<span class="${permission === 'granted' ? 'pass' : 'warning'}">${permission === 'granted' ? '✓' : '⚠'} Permission: ${permission}</span>`);
+            log(`Permission status: ${permission}`);
+            
+            if (permission !== 'granted') {
+                permission = await Notification.requestPermission();
+                results.push(`<span class="${permission === 'granted' ? 'pass' : 'fail'}">${permission === 'granted' ? '✓' : '✗'} Permission after request: ${permission}</span>`);
+                log(`Permission after request: ${permission}`);
+            }
+            
+            if (permission === 'granted' && window.firebaseMessaging && window.firebaseGetToken) {
+                try {
+                    const token = await window.firebaseGetToken(window.firebaseMessaging, {
+                        vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8'
+                    });
+                    
+                    if (token) {
+                        results.push(`<span class="pass">✓ FCM Token obtained: ${token.substring(0, 20)}...</span>`);
+                        log(`FCM Token: ${token.substring(0, 20)}...`);
+                        
+                        // Store token globally
+                        window.fcmToken = token;
+                        
+                        // Try to store token on server
+                        try {
+                            const response = await fetch('/api/notifications/store-fcm-token', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                },
+                                credentials: 'same-origin',
+                                body: JSON.stringify({ fcm_token: token })
+                            });
+                            
+                            const result = await response.json();
+                            if (result.success) {
+                                results.push('<span class="pass">✓ FCM Token stored on server</span>');
+                                log('FCM Token: Stored on server successfully');
+                            } else {
+                                results.push(`<span class="fail">✗ FCM Token storage failed: ${result.message}</span>`);
+                                log(`FCM Token storage failed: ${result.message}`, 'error');
+                            }
+                        } catch (error) {
+                            results.push(`<span class="warning">⚠ FCM Token storage error: ${error.message}</span>`);
+                            log(`FCM Token storage error: ${error.message}`, 'warning');
+                        }
+                    } else {
+                        results.push('<span class="fail">✗ No FCM Token received</span>');
+                        log('FCM Token: NOT RECEIVED', 'error');
+                    }
+                } catch (error) {
+                    results.push(`<span class="fail">✗ FCM Token error: ${error.message}</span>`);
+                    log(`FCM Token error: ${error.message}`, 'error');
+                }
+            }
+            
+        } catch (error) {
+            results.push(`<span class="fail">✗ Permission check error: ${error.message}</span>`);
+            log(`Permission check error: ${error.message}`, 'error');
+        }
+        
+        document.getElementById('permission-checks').innerHTML = results.join('<br>');
+        testResults.permission = results.every(r => r.includes('pass'));
+    }
+    
+    async function sendTestNotification() {
+        log('=== SENDING TEST NOTIFICATION ===');
+        
+        try {
+            if (Notification.permission !== 'granted') {
+                log('Permission not granted for notifications', 'error');
+                return;
+            }
+            
+            const notification = new Notification('Test Notification', {
+                body: 'This is a test notification to verify the system works',
+                icon: '/favicon.svg',
+                badge: '/favicon.svg',
+                tag: 'test-notification'
+            });
+            
+            log('Test notification sent successfully');
+            
+            notification.onclick = function() {
+                log('Test notification clicked');
+                window.focus();
+                notification.close();
+            };
+            
+        } catch (error) {
+            log(`Test notification error: ${error.message}`, 'error');
+        }
+    }
+    
+    async function testServerNotification() {
+        log('=== TESTING SERVER NOTIFICATION ===');
+        
+        try {
+            const response = await fetch('/test-notification', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            });
+            const result = await response.json();
+            
+            log(`Server notification test result: ${JSON.stringify(result)}`);
+            
+            if (result.result && result.result.success) {
+                document.getElementById('notification-tests').innerHTML = '<span class="pass">✓ Server notification sent successfully</span>';
+            } else {
+                document.getElementById('notification-tests').innerHTML = `<span class="fail">✗ Server notification failed: ${result.result?.message || result.error}</span>`;
+            }
+            
+        } catch (error) {
+            log(`Server notification test error: ${error.message}`, 'error');
+            document.getElementById('notification-tests').innerHTML = `<span class="fail">✗ Server notification test error: ${error.message}</span>`;
+        }
+    }
+    
+    // Initialize
+    window.addEventListener('load', function() {
+        showSystemInfo();
+        log('Notification debug page loaded');
+    });
+</script>
+@endsection

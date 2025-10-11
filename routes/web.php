@@ -155,6 +155,11 @@ Route::middleware('auth')->group(function () {
             }
         })->name('test-notification');
         
+        // Notification Debug Page (Laravel route with authentication)
+        Route::get('/notification-debug', function() {
+            return view('notification-debug');
+        })->name('notification-debug');
+        
         // Notification Routes (Available to staff) - DISABLED FOR DEBUGGING
         // Route::prefix('notifications')->name('notifications.')->group(function () {
         //     // Route::get('/stream', [NotificationController::class, 'stream'])->name('stream'); // Disabled for now
