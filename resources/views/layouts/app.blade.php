@@ -18,7 +18,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="VMS CRM">
     
-    <!-- Firebase Web SDK -->
+    <!-- Firebase Web SDK - UNIFIED NOTIFICATION SYSTEM -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js';
@@ -62,9 +62,10 @@ console.log('🌍 Hostname:', window.location.hostname);
                     const registration = await navigator.serviceWorker.register('/sw.js');
                     await navigator.serviceWorker.ready;
                     
-                    // Get FCM token with active service worker
+                    // Get FCM token with our custom service worker
                     const token = await getToken(messaging, {
-                        vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8'
+                        vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8',
+                        serviceWorkerRegistration: registration
                     });
                     
                     if (token) {
@@ -104,7 +105,7 @@ console.log('🌍 Hostname:', window.location.hostname);
         } else {
             initializeFirebaseNotifications();
         }
-    </script>
+    </script> <!-- FIREBASE SDK ENABLED FOR UNIFIED NOTIFICATIONS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="{{ asset('css/paytm-theme.css') }}?v={{ filemtime(public_path('css/paytm-theme.css')) }}" rel="stylesheet">
@@ -890,9 +891,14 @@ console.log('🌍 Hostname:', window.location.hostname);
                     // Initialize Firebase notifications
                     if (window.firebaseInitialized && window.firebaseMessaging && window.getToken) {
                         try {
-                            // Get FCM token
+                            // Ensure Service Worker is registered and active
+                            const registration = await navigator.serviceWorker.register('/sw.js');
+                            await navigator.serviceWorker.ready;
+                            
+                            // Get FCM token with our custom Service Worker
                             const token = await window.getToken(window.firebaseMessaging, {
-                                vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8'
+                                vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8',
+                                serviceWorkerRegistration: registration
                             });
                             
                             if (token) {
@@ -981,7 +987,7 @@ console.log('🌍 Hostname:', window.location.hostname);
     </script>
     
     <!-- Notification System -->
-    <script src="{{ asset('js/notifications.js') }}"></script>
+    <!-- NOTIFICATIONS.JS COMPLETELY REMOVED FOR DEBUGGING -->
     
     <!-- Debug Notification System -->
     <script>

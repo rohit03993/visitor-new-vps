@@ -362,16 +362,17 @@ class NotificationSystem {
     }
 
     /**
-     * Start lightweight notification checking
+     * Start lightweight notification checking - DISABLED FOR UNIFIED SYSTEM
      */
     startNotificationCheck() {
-        // Check for any pending notifications immediately
-        this.checkForNotifications();
+        console.log('📨 File-based polling system disabled - using unified Firebase notifications');
         
-        // Start simple polling every 15 seconds (lightweight)
-        this.startLightweightPolling();
+        // DISABLED: File-based polling system
+        // All notifications now handled by Firebase unified system
+        // this.checkForNotifications();
+        // this.startLightweightPolling();
         
-        // Lightweight notification system started
+        // Unified notification system active
     }
 
     /**
@@ -458,65 +459,32 @@ class NotificationSystem {
     }
 
     /**
-     * Smart check - notifications + conditional assigned list refresh
+     * Smart check - notifications + conditional assigned list refresh - DISABLED FOR UNIFIED SYSTEM
      */
     async smartCheck() {
-        try {
-            // Always check for notifications
-            await this.checkForNotifications();
-            
-            // Only check assigned changes if on assigned page
-            if (this.isAssignedPage) {
-                await this.checkAssignedChanges();
-            }
-        } catch (error) {
-            console.error('❌ Error in smart check:', error);
+        console.log('📨 Smart check DISABLED - using unified Firebase notifications');
+        
+        // DISABLED: This was calling checkForNotifications() which triggered duplicate notifications
+        // All notifications now handled by Firebase unified system
+        
+        // Only check assigned changes if on assigned page (keep this for list refresh)
+        if (this.isAssignedPage) {
+            await this.checkAssignedChanges();
         }
     }
 
     /**
-     * Check for new notifications and refresh assigned list if needed
+     * Check for new notifications and refresh assigned list if needed - DISABLED FOR UNIFIED SYSTEM
      */
     async checkForNotifications() {
-        try {
-            const response = await fetch('/staff/notifications/get', {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
-            // Process notification response
-            
-            if (data.success && data.notifications && data.notifications.length > 0) {
-                // Process each notification
-                for (const [index, notification] of data.notifications.entries()) {
-                    
-                    await this.showNotification(notification);
-                    
-                    // If it's a visit assignment, refresh the assigned list
-                    if (notification.type === 'visit_assigned') {
-                        this.refreshAssignedToMeList();
-                    }
-                }
-            } else {
-                if (data.success === false) {
-                    console.error('❌ Notification API returned error:', data.message);
-                }
-            }
-            
-            // Note: Smart assigned checking is now handled separately in smartCheck()
-            
-        } catch (error) {
-            console.error('❌ Error checking for notifications:', error);
-        }
+        console.log('📨 File-based notification checking DISABLED - using unified Firebase notifications');
+        
+        // DISABLED: This was causing duplicate notifications
+        // All notifications now handled by Firebase unified system
+        // The /staff/notifications/get endpoint was triggering additional notifications
+        
+        // Unified notification system active
+        return;
     }
 
     /**
@@ -663,7 +631,7 @@ class NotificationSystem {
     /**
      * Show notification to user
      */
-    async showNotification(notification) {
+    showNotification(notification) {
         try {
             // Show desktop notification
             if (this.permissionGranted) {
@@ -678,12 +646,9 @@ class NotificationSystem {
             // Show in-page notification
             this.showInPageNotification(notification);
 
-            // Send Firebase push notification for background delivery
-            await this.sendFirebaseNotification(
-                notification.title,
-                notification.message,
-                notification.data || {}
-            );
+            // Note: Firebase push notifications are sent directly from the backend
+            // when assignments are created, so no need to send them again here.
+            // This prevents duplicate notifications (3 popups → 1 popup)
 
             console.log('🔔 Notification shown:', notification.title);
         } catch (error) {
@@ -1022,7 +987,7 @@ class NotificationSystem {
     /**
      * Test notification system
      */
-    async testNotification() {
+    testNotification() {
         const testNotification = {
             type: 'test',
             title: '🔔 Notification System Test',
@@ -1034,7 +999,7 @@ class NotificationSystem {
             timestamp: new Date().toISOString()
         };
 
-        await this.showNotification(testNotification);
+        this.showNotification(testNotification);
     }
 
     /**
@@ -1074,44 +1039,19 @@ class NotificationSystem {
     }
 
     /**
-     * Send Firebase push notification for visit assignment
+     * Send Firebase push notification for visit assignment - DISABLED FOR UNIFIED SYSTEM
      */
     async sendFirebaseNotification(title, body, data = {}) {
-        try {
-            console.log('🚀 Sending Firebase notification:', title);
-            
-            const response = await fetch('/api/notifications/send-push', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    title: title,
-                    body: body,
-                    data: {
-                        ...data,
-                        timestamp: Date.now(),
-                        source: 'vms-crm-assignment'
-                    }
-                })
-            });
-
-            const result = await response.json();
-            
-            if (result.success) {
-                console.log('✅ Firebase notification sent successfully');
-                return true;
-            } else {
-                console.error('❌ Firebase notification failed:', result.message);
-                return false;
-            }
-            
-        } catch (error) {
-            console.error('❌ Error sending Firebase notification:', error);
-            return false;
-        }
+        console.log('🚀 Firebase notification sending DISABLED - using unified backend system');
+        console.log('📨 Title:', title);
+        console.log('📨 Body:', body);
+        console.log('📨 Data:', data);
+        
+        // DISABLED: This was causing duplicate notifications
+        // Firebase notifications are now sent directly from the backend
+        // when assignments are created, providing unified PWA-style notifications
+        
+        return true; // Return success to prevent errors
     }
 
 

@@ -304,4 +304,111 @@ class NotificationController extends Controller
             return false;
         }
     }
+
+    /**
+     * Subscribe user to push notifications
+     */
+    public function subscribe(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $request->validate([
+                'endpoint' => 'required|string',
+                'keys' => 'required|array',
+                'keys.p256dh' => 'required|string',
+                'keys.auth' => 'required|string',
+            ]);
+
+            // Store push subscription in user's session or database
+            $subscription = [
+                'endpoint' => $request->endpoint,
+                'keys' => $request->keys,
+                'subscribed_at' => now()->toISOString(),
+            ];
+
+            // Store in session for now (you can move to database later)
+            session(['push_subscription' => $subscription]);
+
+            \Log::info("User {$user->user_id} subscribed to push notifications");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully subscribed to push notifications',
+                'subscription' => $subscription
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Push subscription error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to subscribe'], 500);
+        }
+    }
+
+    /**
+     * Unsubscribe user from push notifications
+     */
+    public function unsubscribe(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            // Remove push subscription from session
+            session()->forget('push_subscription');
+
+            \Log::info("User {$user->user_id} unsubscribed from push notifications");
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Successfully unsubscribed from push notifications'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Push unsubscription error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to unsubscribe'], 500);
+        }
+    }
+
+    /**
+     * Get push notification status
+     */
+    public function getStatus(Request $request)
+    {
+        try {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $subscription = session('push_subscription');
+            $isSubscribed = !empty($subscription);
+
+            return response()->json([
+                'success' => true,
+                'isSubscribed' => $isSubscribed,
+                'subscription' => $subscription,
+                'supportsPush' => $this->supportsPushNotifications()
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Get push status error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to get status'], 500);
+        }
+    }
+
+    /**
+     * Check if browser supports push notifications
+     */
+    private function supportsPushNotifications()
+    {
+        return request()->header('User-Agent') && 
+               (strpos(request()->header('User-Agent'), 'Chrome') !== false ||
+                strpos(request()->header('User-Agent'), 'Firefox') !== false ||
+                strpos(request()->header('User-Agent'), 'Safari') !== false);
+    }
 }

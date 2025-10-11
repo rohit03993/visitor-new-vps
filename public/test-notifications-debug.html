@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification System Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .test-section { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+        .info { color: #17a2b8; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 4px; max-height: 300px; overflow-y: scroll; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔔 Notification System Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>📊 System Status</h2>
+        <div id="systemStatus">Checking...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🧪 Test Actions</h2>
+        <button class="btn-primary" onclick="testBasicNotification()">Test Basic Notification</button>
+        <button class="btn-success" onclick="testFirebaseNotification()">Test Firebase Notification</button>
+        <button class="btn-warning" onclick="testVoiceAlert()">Test Voice Alert</button>
+        <button class="btn-danger" onclick="testFileNotification()">Test File Notification</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>📝 Debug Log</h2>
+        <div id="debugLog" class="log"></div>
+        <button class="btn-primary" onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <script>
+        const debugLog = document.getElementById('debugLog');
+        const systemStatus = document.getElementById('systemStatus');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+            debugLog.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span><br>`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            debugLog.innerHTML = '';
+        }
+        
+        async function checkSystemStatus() {
+            log('🔍 Checking system status...');
+            
+            // Check browser support
+            const notificationSupport = 'Notification' in window;
+            const serviceWorkerSupport = 'serviceWorker' in navigator;
+            const pushManagerSupport = 'PushManager' in window;
+            
+            log(`Browser Notification Support: ${notificationSupport ? '✅' : '❌'}`, notificationSupport ? 'success' : 'error');
+            log(`Service Worker Support: ${serviceWorkerSupport ? '✅' : '❌'}`, serviceWorkerSupport ? 'success' : 'error');
+            log(`Push Manager Support: ${pushManagerSupport ? '✅' : '❌'}`, pushManagerSupport ? 'success' : 'error');
+            
+            // Check notification permission
+            const permission = Notification.permission;
+            log(`Notification Permission: ${permission}`, permission === 'granted' ? 'success' : 'warning');
+            
+            // Check Firebase status
+            try {
+                const response = await fetch('/api/notifications/status', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': ''
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Firebase Status: ${data.success ? '✅ Connected' : '❌ Failed'}`, data.success ? 'success' : 'error');
+                    log(`FCM Token: ${data.fcm_token ? '✅ Present' : '❌ Missing'}`, data.fcm_token ? 'success' : 'error');
+                    log(`Subscription: ${data.isSubscribed ? '✅ Active' : '❌ Inactive'}`, data.isSubscribed ? 'success' : 'error');
+                } else {
+                    log(`Firebase API Error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`Firebase API Error: ${error.message}`, 'error');
+            }
+            
+            // Update system status display
+            const statusHTML = `
+                <div class="success">✅ Browser Support: ${notificationSupport && serviceWorkerSupport ? 'OK' : 'Limited'}</div>
+                <div class="${permission === 'granted' ? 'success' : 'warning'}">${permission === 'granted' ? '✅' : '⚠️'} Permission: ${permission}</div>
+                <div class="info">ℹ️ Check debug log for detailed status</div>
+            `;
+            systemStatus.innerHTML = statusHTML;
+        }
+        
+        function testBasicNotification() {
+            log('🧪 Testing basic browser notification...');
+            
+            if (!('Notification' in window)) {
+                log('❌ Browser does not support notifications', 'error');
+                return;
+            }
+            
+            if (Notification.permission !== 'granted') {
+                log('⚠️ Requesting notification permission...', 'warning');
+                Notification.requestPermission().then(permission => {
+                    log(`Permission result: ${permission}`, permission === 'granted' ? 'success' : 'error');
+                    if (permission === 'granted') {
+                        showBasicNotification();
+                    }
+                });
+            } else {
+                showBasicNotification();
+            }
+        }
+        
+        function showBasicNotification() {
+            const notification = new Notification('Test Notification', {
+                body: 'This is a test notification from the debug system',
+                icon: '/favicon.ico',
+                tag: 'debug-test'
+            });
+            
+            log('✅ Basic notification sent', 'success');
+            
+            notification.onclick = function() {
+                log('🔔 Basic notification clicked', 'info');
+                notification.close();
+            };
+        }
+        
+        async function testFirebaseNotification() {
+            log('🔥 Testing Firebase notification...');
+            
+            try {
+                const response = await fetch('/api/notifications/send-push', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        title: 'Debug Firebase Test',
+                        body: 'This is a test Firebase notification',
+                        data: {
+                            test: true,
+                            timestamp: Date.now()
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log('✅ Firebase notification sent successfully', 'success');
+                } else {
+                    log(`❌ Firebase notification failed: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Firebase notification error: ${error.message}`, 'error');
+            }
+        }
+        
+        function testVoiceAlert() {
+            log('🔊 Testing voice alert...');
+            
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Test voice alert from notification system');
+                utterance.rate = 0.8;
+                utterance.pitch = 1;
+                
+                utterance.onstart = () => log('✅ Voice alert started', 'success');
+                utterance.onend = () => log('✅ Voice alert completed', 'success');
+                utterance.onerror = (e) => log(`❌ Voice alert error: ${e.error}`, 'error');
+                
+                speechSynthesis.speak(utterance);
+            } else {
+                log('❌ Speech synthesis not supported', 'error');
+            }
+        }
+        
+        async function testFileNotification() {
+            log('📁 Testing file notification...');
+            
+            try {
+                const response = await fetch('/api/notifications/status', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': ''
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    log(`✅ File notification API working: ${result.notifications ? result.notifications.length : 0} notifications found`, 'success');
+                } else {
+                    log(`❌ File notification API failed: ${result.message}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ File notification error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            log('🚀 Debug test page loaded');
+            checkSystemStatus();
+        });
+    </script>
+    
+    <meta name="csrf-token" content="">
+</body>
+</html>

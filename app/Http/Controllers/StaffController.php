@@ -799,28 +799,10 @@ class StaffController extends Controller
             $this->handleVisitorFileUploads($request->visitor_files, $interaction->interaction_id, $user->user_id);
         }
 
-        // Send notification to assigned staff member
+        // Send notification to assigned staff member - UNIFIED FIREBASE SYSTEM
         $assignedUser = VmsUser::find($request->meeting_with);
         if ($assignedUser) {
-            // HYBRID APPROACH: Send both file-based and push notifications
-            
-            // 1. Send file-based notification (working)
-            $fileSuccess = false;
-            try {
-                $notificationController = new \App\Http\Controllers\NotificationController();
-                $fileSuccess = $notificationController->sendVisitAssignmentNotification(
-                    $interaction->interaction_id,
-                    $assignedUser->user_id,
-                    $request->name,
-                    $purpose
-                );
-                \Log::info("File notification sent for interaction {$interaction->interaction_id} to user {$assignedUser->user_id}: " . ($fileSuccess ? 'SUCCESS' : 'FAILED'));
-            } catch (\Exception $e) {
-                \Log::error("File notification failed for interaction {$interaction->interaction_id}: " . $e->getMessage());
-            }
-            
-            // 2. Send push notification (SAFE APPROACH - no user switching)
-            \Log::info("🔔 SENDING PUSH NOTIFICATION FOR NEW VISITOR ASSIGNMENT - Interaction {$interaction->interaction_id} to user {$assignedUser->user_id}");
+            \Log::info("🔔 SENDING UNIFIED FIREBASE NOTIFICATION - Interaction {$interaction->interaction_id} to user {$assignedUser->user_id}");
             
             try {
                 $pushController = new \App\Http\Controllers\PushNotificationController();
@@ -834,15 +816,15 @@ class StaffController extends Controller
                         'visitor_name' => $request->name,
                         'purpose' => $purpose,
                         'assigned_by' => auth()->user()->name,
-                        'url' => '/staff/assigned-to-me'
+                        'url' => '/staff/assigned-to-me',
+                        'source' => 'unified_notification'
                     ]
                 );
                 
-                \Log::info("Push notification result for new assignment {$interaction->interaction_id}: " . json_encode($result));
+                \Log::info("Unified Firebase notification result for new assignment {$interaction->interaction_id}: " . json_encode($result));
                 
             } catch (\Exception $e) {
-                \Log::error("Push notification error for new assignment {$interaction->interaction_id}: " . $e->getMessage());
-                \Log::error("Push notification stack trace: " . $e->getTraceAsString());
+                \Log::error("Unified Firebase notification error for new assignment {$interaction->interaction_id}: " . $e->getMessage());
             }
         }
 
@@ -1417,23 +1399,13 @@ class StaffController extends Controller
                 'updated_at' => now(),
             ]);
             
-            // Send notification to assigned staff member
+            // Send notification to assigned staff member - UNIFIED APPROACH
             $visitor = \App\Models\Visitor::find($interaction->visitor_id);
             if ($visitor) {
-                // 1. Send file-based notification (existing)
-                $notificationController = new \App\Http\Controllers\NotificationController();
-                $notificationController->sendVisitAssignmentNotification(
-                    $newInteraction->interaction_id,
-                    $targetMember->user_id,
-                    $visitor->name,
-                    $interaction->purpose
-                );
-                
-                // 2. Send push notification (NEW)
-                \Log::info("🔔 SENDING PUSH NOTIFICATION FOR TRANSFER - Interaction {$newInteraction->interaction_id} to user {$targetMember->user_id}");
+                // SINGLE NOTIFICATION SYSTEM: Use Firebase for all notifications
+                \Log::info("🔔 SENDING UNIFIED FIREBASE NOTIFICATION FOR TRANSFER - Interaction {$newInteraction->interaction_id} to user {$targetMember->user_id}");
                 
                 try {
-                    // SAFE APPROACH: Send push notification without user switching
                     $pushController = new \App\Http\Controllers\PushNotificationController();
                     
                     $result = $pushController->sendPushNotificationToUser(
@@ -1445,15 +1417,15 @@ class StaffController extends Controller
                             'visitor_name' => $visitor->name,
                             'purpose' => $interaction->purpose,
                             'transferred_by' => auth()->user()->name,
-                            'url' => '/staff/assigned-to-me'
+                            'url' => '/staff/assigned-to-me',
+                            'source' => 'unified_notification'
                         ]
                     );
                     
-                    \Log::info("Push notification result for transfer {$newInteraction->interaction_id}: " . json_encode($result));
+                    \Log::info("Unified Firebase notification result for transfer {$newInteraction->interaction_id}: " . json_encode($result));
                     
                 } catch (\Exception $e) {
-                    \Log::error("Push notification error for transfer {$newInteraction->interaction_id}: " . $e->getMessage());
-                    \Log::error("Push notification stack trace: " . $e->getTraceAsString());
+                    \Log::error("Unified Firebase notification error for transfer {$newInteraction->interaction_id}: " . $e->getMessage());
                 }
             }
 

@@ -126,12 +126,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/change-password', [StaffController::class, 'showChangePasswordForm'])->name('change-password');
         Route::post('/change-password', [StaffController::class, 'changePassword'])->name('change-password.store');
         
-        // Notification Routes (Available to staff)
-        Route::prefix('notifications')->name('notifications.')->group(function () {
-            // Route::get('/stream', [NotificationController::class, 'stream'])->name('stream'); // Disabled for now
-            Route::post('/send', [NotificationController::class, 'sendNotification'])->name('send');
-            Route::get('/get', [NotificationController::class, 'getNotifications'])->name('get');
-        });
+        // Notification Routes (Available to staff) - DISABLED FOR DEBUGGING
+        // Route::prefix('notifications')->name('notifications.')->group(function () {
+        //     // Route::get('/stream', [NotificationController::class, 'stream'])->name('stream'); // Disabled for now
+        //     Route::post('/send', [NotificationController::class, 'sendNotification'])->name('send');
+        //     Route::get('/get', [NotificationController::class, 'getNotifications'])->name('get');
+        // });
     });
 
     // Simple test route to check if routes work
@@ -150,21 +150,21 @@ Route::get('/test-notifications', function () {
     return view('test-notifications');
 })->name('test-notifications');
 
-// Test Laravel notifications
-Route::get('/test-laravel-notifications', function () {
-    $user = auth()->user();
-    if ($user) {
-        $user->notify(new \App\Notifications\VisitAssignmentNotification(
-            new \App\Models\InteractionHistory(['interaction_id' => 999, 'purpose' => 'Test Purpose']),
-            new \App\Models\Visitor(['visitor_id' => 999, 'name' => 'Test Visitor']),
-            'System Test'
-        ));
-        
-        return response()->json(['success' => true, 'message' => 'Laravel notification sent!']);
-    }
-    
-    return response()->json(['success' => false, 'message' => 'User not authenticated']);
-})->middleware('auth');
+// Test Laravel notifications - DISABLED FOR DEBUGGING
+// Route::get('/test-laravel-notifications', function () {
+//     $user = auth()->user();
+//     if ($user) {
+//         $user->notify(new \App\Notifications\VisitAssignmentNotification(
+//             new \App\Models\InteractionHistory(['interaction_id' => 999, 'purpose' => 'Test Purpose']),
+//             new \App\Models\Visitor(['visitor_id' => 999, 'name' => 'Test Visitor']),
+//             'System Test'
+//         ));
+//         
+//         return response()->json(['success' => true, 'message' => 'Laravel notification sent!']);
+//     }
+//     
+//     return response()->json(['success' => false, 'message' => 'User not authenticated']);
+// })->middleware('auth');
 
 // Test routes removed - notifications are working perfectly!
 
