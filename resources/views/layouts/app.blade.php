@@ -44,7 +44,8 @@ console.log('🌍 Hostname:', window.location.hostname);
         const messaging = getMessaging(app);
         
         // Make messaging and functions available globally
-        window.firebaseMessaging = messaging;
+        window.messaging = messaging;
+        window.firebaseMessaging = messaging; // Keep both for compatibility
         window.getToken = getToken;
         window.firebaseInitialized = true;
         
@@ -112,10 +113,42 @@ console.log('🌍 Hostname:', window.location.hostname);
             }
         }
         
-        // Listen for foreground messages (let Service Worker handle all notifications)
+        // Listen for foreground messages and display them
         onMessage(messaging, (payload) => {
             console.log('📨 Firebase foreground message received:', payload);
-            // Service Worker will handle showing the notification
+            
+            // Show notification for foreground messages (when browser tab is active)
+            if (payload.data && payload.data.source === 'unified_notification') {
+                const notificationTitle = payload.notification?.title || payload.data?.title || 'VMS CRM';
+                const notificationOptions = {
+                    body: payload.notification?.body || payload.data?.body || 'You have a new notification',
+                    icon: '/favicon.svg',
+                    badge: '/favicon.svg',
+                    tag: 'vms-notification',
+                    requireInteraction: false,
+                    silent: false,
+                    data: payload.data || {},
+                    timestamp: Date.now()
+                };
+                
+                console.log('🔔 Showing foreground notification:', notificationTitle);
+                
+                // Show the notification
+                if (Notification.permission === 'granted') {
+                    const notification = new Notification(notificationTitle, notificationOptions);
+                    
+                    notification.onclick = function() {
+                        console.log('🔔 Foreground notification clicked');
+                        window.focus();
+                        notification.close();
+                    };
+                    
+                    // Auto-close after 5 seconds
+                    setTimeout(() => {
+                        notification.close();
+                    }, 5000);
+                }
+            }
         });
         
         // Initialize Firebase notifications when DOM is ready
@@ -1019,13 +1052,14 @@ console.log('🌍 Hostname:', window.location.hostname);
         console.log('🔍 Auth check:', {{ auth()->check() ? 'true' : 'false' }});
         
         setTimeout(() => {
-            console.log('🔍 Notification system after 2s:', window.notificationSystem);
-            if (window.notificationSystem) {
-                console.log('✅ Notification system is loaded');
+            console.log('🔍 Checking Firebase notification system...');
+            if (window.firebase && window.messaging) {
+                console.log('✅ Firebase notification system is loaded');
                 console.log('🔍 Permission:', Notification.permission);
                 console.log('🔍 Browser support:', 'Notification' in window);
+                console.log('🔍 Firebase messaging available:', !!window.messaging);
             } else {
-                console.log('❌ Notification system NOT loaded');
+                console.log('❌ Firebase notification system NOT loaded');
             }
             
             // Check Service Worker status

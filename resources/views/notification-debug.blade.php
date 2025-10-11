@@ -324,7 +324,7 @@
         log('=== TESTING SERVER NOTIFICATION ===');
         
         try {
-            const response = await fetch('/test-notification', {
+            const response = await fetch('/staff/test-notification', {
                 method: 'GET',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -337,6 +337,22 @@
             
             if (result.result && result.result.success) {
                 document.getElementById('notification-tests').innerHTML = '<span class="pass">✓ Server notification sent successfully</span>';
+                
+                // Add debugging information
+                log('🔍 DEBUGGING NOTIFICATION DELIVERY:');
+                log(`- Notification sent to user: ${result.user_name} (ID: ${result.user_id})`);
+                log('- Check your browser console for Service Worker messages');
+                log('- Check if notification appears in 5 seconds...');
+                
+                // Check if Service Worker is receiving the message
+                setTimeout(() => {
+                    log('⏰ 5 seconds passed - did you see a notification?');
+                    log('If not, check:');
+                    log('1. Browser notification settings');
+                    log('2. Service Worker console (F12 > Application > Service Workers)');
+                    log('3. System notification settings');
+                }, 5000);
+                
             } else {
                 document.getElementById('notification-tests').innerHTML = `<span class="fail">✗ Server notification failed: ${result.result?.message || result.error}</span>`;
             }
