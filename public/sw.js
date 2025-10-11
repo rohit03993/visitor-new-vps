@@ -24,6 +24,7 @@ const messaging = firebase.messaging();
 // Handle background messages from Firebase
 messaging.onBackgroundMessage(function(payload) {
     console.log('📨 Received background message:', payload);
+    console.log('📱 Mobile background message received');
     
     // Only show notifications from our unified system
     if (payload.data && payload.data.source === 'unified_notification') {
@@ -35,9 +36,25 @@ messaging.onBackgroundMessage(function(payload) {
             tag: 'vms-notification',
             requireInteraction: false,
             silent: false, // Allow sound
-            data: payload.data || {}
+            data: payload.data || {},
+            // Mobile-specific options
+            actions: [
+                {
+                    action: 'open',
+                    title: 'Open App',
+                    icon: '/favicon.svg'
+                },
+                {
+                    action: 'close',
+                    title: 'Close',
+                    icon: '/favicon.svg'
+                }
+            ],
+            vibrate: [200, 100, 200], // Mobile vibration pattern
+            timestamp: Date.now()
         };
         
+        console.log('📱 Mobile notification options:', notificationOptions);
         return self.registration.showNotification(notificationTitle, notificationOptions);
     }
     

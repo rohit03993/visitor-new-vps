@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Notification Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-warning { background-color: #ffc107; color: black; }
+        #logs { background-color: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <h1>📱 Mobile Notification Test</h1>
+    
+    <div class="test-section info">
+        <h3>Device Information</h3>
+        <div id="device-info"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Permission Test</h3>
+        <button class="btn-primary" onclick="checkPermission()">Check Permission</button>
+        <button class="btn-success" onclick="requestPermission()">Request Permission</button>
+        <div id="permission-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Service Worker Test</h3>
+        <button class="btn-primary" onclick="testServiceWorker()">Test Service Worker</button>
+        <div id="sw-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Firebase Test</h3>
+        <button class="btn-primary" onclick="testFirebase()">Test Firebase</button>
+        <button class="btn-warning" onclick="testNotification()">Test Notification</button>
+        <div id="firebase-status"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Debug Logs</h3>
+        <button class="btn-warning" onclick="clearLogs()">Clear Logs</button>
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            logs.push(logEntry);
+            document.getElementById('logs').textContent = logs.join('\n');
+            console.log(logEntry);
+        }
+        
+        function clearLogs() {
+            logs = [];
+            document.getElementById('logs').textContent = '';
+        }
+        
+        // Device Information
+        function showDeviceInfo() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const deviceInfo = `
+                <strong>Mobile Device:</strong> ${isMobile ? 'Yes' : 'No'}<br>
+                <strong>User Agent:</strong> ${navigator.userAgent}<br>
+                <strong>Screen Size:</strong> ${screen.width}x${screen.height}<br>
+                <strong>Viewport:</strong> ${window.innerWidth}x${window.innerHeight}<br>
+                <strong>Service Worker Support:</strong> ${'serviceWorker' in navigator ? 'Yes' : 'No'}<br>
+                <strong>Notification Support:</strong> ${'Notification' in window ? 'Yes' : 'No'}
+            `;
+            document.getElementById('device-info').innerHTML = deviceInfo;
+        }
+        
+        // Permission Test
+        async function checkPermission() {
+            try {
+                const permission = Notification.permission;
+                log(`Permission status: ${permission}`);
+                document.getElementById('permission-status').innerHTML = `
+                    <div class="test-section ${permission === 'granted' ? 'success' : 'error'}">
+                        <strong>Permission:</strong> ${permission}
+                    </div>
+                `;
+            } catch (error) {
+                log(`Permission check error: ${error.message}`, 'error');
+            }
+        }
+        
+        async function requestPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Permission requested: ${permission}`);
+                checkPermission();
+            } catch (error) {
+                log(`Permission request error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Service Worker Test
+        async function testServiceWorker() {
+            try {
+                if (!('serviceWorker' in navigator)) {
+                    throw new Error('Service Worker not supported');
+                }
+                
+                log('Registering Service Worker...');
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                await navigator.serviceWorker.ready;
+                
+                log('Service Worker registered successfully');
+                document.getElementById('sw-status').innerHTML = `
+                    <div class="test-section success">
+                        <strong>Service Worker:</strong> Active<br>
+                        <strong>Scope:</strong> ${registration.scope}
+                    </div>
+                `;
+            } catch (error) {
+                log(`Service Worker error: ${error.message}`, 'error');
+                document.getElementById('sw-status').innerHTML = `
+                    <div class="test-section error">
+                        <strong>Service Worker Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Firebase Test
+        async function testFirebase() {
+            try {
+                log('Testing Firebase SDK...');
+                
+                // Check if Firebase is loaded
+                if (typeof firebase === 'undefined') {
+                    throw new Error('Firebase SDK not loaded');
+                }
+                
+                log('Firebase SDK loaded successfully');
+                document.getElementById('firebase-status').innerHTML = `
+                    <div class="test-section success">
+                        <strong>Firebase SDK:</strong> Loaded
+                    </div>
+                `;
+            } catch (error) {
+                log(`Firebase error: ${error.message}`, 'error');
+                document.getElementById('firebase-status').innerHTML = `
+                    <div class="test-section error">
+                        <strong>Firebase Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Test Notification
+        async function testNotification() {
+            try {
+                if (Notification.permission !== 'granted') {
+                    throw new Error('Notification permission not granted');
+                }
+                
+                const notification = new Notification('Mobile Test Notification', {
+                    body: 'This is a test notification for mobile devices',
+                    icon: '/favicon.svg',
+                    badge: '/favicon.svg',
+                    tag: 'mobile-test',
+                    vibrate: [200, 100, 200]
+                });
+                
+                log('Test notification sent');
+                document.getElementById('firebase-status').innerHTML = `
+                    <div class="test-section success">
+                        <strong>Test Notification:</strong> Sent
+                    </div>
+                `;
+            } catch (error) {
+                log(`Notification error: ${error.message}`, 'error');
+                document.getElementById('firebase-status').innerHTML = `
+                    <div class="test-section error">
+                        <strong>Notification Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize
+        window.addEventListener('load', function() {
+            showDeviceInfo();
+            log('Mobile notification test page loaded');
+        });
+    </script>
+</body>
+</html>

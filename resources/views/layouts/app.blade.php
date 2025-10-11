@@ -53,14 +53,21 @@ console.log('🌍 Hostname:', window.location.hostname);
         // Request permission and get FCM token
         async function initializeFirebaseNotifications() {
             try {
+                // Mobile-specific debugging
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                console.log('📱 Mobile device detected:', isMobile);
+                console.log('📱 User Agent:', navigator.userAgent);
+                
                 // Request permission
                 const permission = await Notification.requestPermission();
                 console.log('🔔 Firebase notification permission:', permission);
                 
                 if (permission === 'granted') {
                     // Register Firebase service worker and wait for it to be active
+                    console.log('🔧 Registering Service Worker for mobile...');
                     const registration = await navigator.serviceWorker.register('/sw.js');
                     await navigator.serviceWorker.ready;
+                    console.log('✅ Service Worker registered and ready');
                     
                     // Get FCM token with our custom service worker
                     const token = await getToken(messaging, {
@@ -70,20 +77,32 @@ console.log('🌍 Hostname:', window.location.hostname);
                     
                     if (token) {
                         console.log('✅ Firebase FCM token obtained:', token.substring(0, 20) + '...');
+                        console.log('📱 Mobile FCM token length:', token.length);
                         
                         // Store FCM token in session
-                        await fetch('/api/notifications/store-fcm-token', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: JSON.stringify({ fcm_token: token })
-                        });
-                        
-                        console.log('✅ FCM token stored successfully');
+                        try {
+                            const response = await fetch('/api/notifications/store-fcm-token', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify({ fcm_token: token })
+                            });
+                            
+                            const result = await response.json();
+                            console.log('📱 Mobile FCM token storage result:', result);
+                            
+                            if (result.success) {
+                                console.log('✅ Mobile FCM token stored successfully');
+                            } else {
+                                console.error('❌ Mobile FCM token storage failed:', result.message);
+                            }
+                        } catch (error) {
+                            console.error('❌ Mobile FCM token storage error:', error);
+                        }
                     } else {
-                        console.log('❌ No FCM token available');
+                        console.log('❌ No FCM token received on mobile');
                     }
                 } else {
                     console.log('❌ Notification permission denied');
