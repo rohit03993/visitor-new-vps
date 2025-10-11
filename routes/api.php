@@ -28,7 +28,7 @@ Route::post('/addresses/store', [AddressController::class, 'store'])->name('api.
 Route::middleware(['web'])->group(function () {
     // Route::post('/notifications/subscribe', [App\Http\Controllers\PushNotificationController::class, 'subscribe'])->name('api.notifications.subscribe');
     // Route::post('/notifications/unsubscribe', [NotificationController::class, 'unsubscribe'])->name('api.notifications.unsubscribe');
-    // Route::get('/notifications/status', [App\Http\Controllers\PushNotificationController::class, 'getStatus'])->name('api.notifications.status');
+    Route::get('/notifications/status', [App\Http\Controllers\PushNotificationController::class, 'getStatus'])->name('api.notifications.status'); // ENABLED FOR UNIFIED SYSTEM
     // Route::post('/notifications/send-push', [App\Http\Controllers\PushNotificationController::class, 'sendPushNotification'])->name('api.notifications.send-push');
     Route::post('/notifications/store-fcm-token', [App\Http\Controllers\PushNotificationController::class, 'storeFCMToken'])->name('api.notifications.store-fcm-token'); // ENABLED FOR UNIFIED SYSTEM
 });

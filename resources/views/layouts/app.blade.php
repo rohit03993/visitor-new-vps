@@ -124,6 +124,9 @@ console.log('🌍 Hostname:', window.location.hostname);
         } else {
             initializeFirebaseNotifications();
         }
+        
+        // Make initializeFirebaseNotifications globally available
+        window.initializeFirebaseNotifications = initializeFirebaseNotifications;
     </script> <!-- FIREBASE SDK ENABLED FOR UNIFIED NOTIFICATIONS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -907,14 +910,15 @@ console.log('🌍 Hostname:', window.location.hostname);
                 const permission = await Notification.requestPermission();
                 
                 if (permission === 'granted') {
-                    // Initialize Firebase notifications
-                    if (window.firebaseInitialized && window.firebaseMessaging && window.getToken) {
+                    // Initialize Firebase notifications using the global function
+                    if (window.initializeFirebaseNotifications) {
                         try {
-                            // Ensure Service Worker is registered and active
+                            await window.initializeFirebaseNotifications();
+                            
+                            // Get FCM token with our custom Service Worker
                             const registration = await navigator.serviceWorker.register('/sw.js');
                             await navigator.serviceWorker.ready;
                             
-                            // Get FCM token with our custom Service Worker
                             const token = await window.getToken(window.firebaseMessaging, {
                                 vapidKey: 'BNUSY-e9yHJJq1URqcCsR5dWgv4RecL74SabGdR0T1JLtJnD4GRtDScNcit5A9RDeD0XOpGpkf_V3VXiPkV9XS8',
                                 serviceWorkerRegistration: registration
