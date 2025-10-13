@@ -464,65 +464,24 @@
   box-shadow: 0 8px 32px var(--paytm-shadow-dark);
 }
 
-/* Ensure modals are centered - Higher specificity */
-.modal .modal-dialog {
-  margin: 0 auto !important;
-  max-width: 500px !important;
-  position: relative !important;
-  left: auto !important;
-  right: auto !important;
-  transform: none !important;
-  top: 50% !important;
-  margin-top: -200px !important;
-}
-
-.modal .modal-dialog-centered {
+/* Bootstrap modal centering - Let Bootstrap handle it naturally */
+.modal-dialog-centered {
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
-  min-height: 100vh !important;
-  padding: 0 !important;
+  min-height: calc(100vh - 1rem) !important;
 }
 
-.modal .modal-dialog-centered .modal-content {
-  width: 100% !important;
-  pointer-events: auto !important;
-  position: relative !important;
-  left: auto !important;
-  right: auto !important;
-  transform: none !important;
-  margin: 0 !important;
-}
-
-/* Force center positioning for all modals */
-.modal.show .modal-dialog {
-  transform: translateY(-50%) !important;
-  left: 50% !important;
-  margin-left: -250px !important;
-  margin-top: 0 !important;
-  top: 50% !important;
-}
-
-/* Additional centering for smaller screens */
-@media (max-width: 576px) {
-  .modal.show .modal-dialog {
-    margin-left: -200px !important;
+/* Mobile modal adjustments */
+@media (max-width: 768px) {
+  .modal-dialog {
+    max-width: 95vw !important;
+    width: 95vw !important;
+    margin: 1rem auto !important;
   }
-}
-
-/* Override Bootstrap's modal positioning */
-.modal {
-  padding: 0 !important;
-}
-
-.modal-dialog {
-  margin: 0 auto !important;
-  position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  max-width: 500px !important;
-  width: 90% !important;
+  
+  .modal-dialog-centered {
+    min-height: calc(100vh - 2rem) !important;
+  }
 }
 
 .modal-paytm .modal-header {
@@ -1491,6 +1450,23 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+  
+  /* Duration badge alignment on mobile */
+  .badge.bg-secondary.mt-1 {
+    font-size: 0.7rem !important;
+    padding: 0.25rem 0.5rem !important;
+    margin-top: 0.25rem !important;
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+  }
+  
+  /* Force duration badge to align right in all containers */
+  .d-flex.flex-column.gap-1.flex-shrink-0.align-items-end .badge.bg-secondary.mt-1 {
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
   }
 
   /* Mobile Layout: Stack everything vertically */
@@ -2703,81 +2679,148 @@ a[href*="assigned-to-me"].btn-paytm-secondary:hover {
     }
 }
 
-/* ========== MOBILE MODAL CENTERING FIXES ========== */
+/* ========== ACCORDION CLICKABILITY FIX ========== */
 
-/* Force modal centering on mobile devices */
+/* Ensure accordion buttons are clickable and badges don't interfere */
+.accordion-button {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.accordion-button .badge {
+    pointer-events: none !important;
+    position: relative !important;
+    z-index: 0 !important;
+}
+
+/* Make sure the entire accordion button area is clickable */
+.accordion-button::after {
+    z-index: 2 !important;
+    pointer-events: auto !important;
+}
+
+/* ========== MOBILE MODAL COMPACTNESS FIXES ========== */
+
+/* Force modals to be more compact on mobile */
 @media (max-width: 768px) {
-    .modal-dialog {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        margin: 0 !important;
-        max-width: 90vw !important;
-        width: 90vw !important;
-        max-height: 90vh !important;
-        z-index: 1055 !important;
+    #assignModal .modal-dialog,
+    #focusedAssignModal .modal-dialog,
+    #rescheduleModal .modal-dialog,
+    #simpleRemarkModal .modal-dialog,
+    #fileUploadModal .modal-dialog {
+        max-width: 95vw !important;
+        width: 95vw !important;
+        margin: 10px auto !important;
     }
     
-    .modal-dialog-centered {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        margin: 0 !important;
-        max-width: 90vw !important;
-        width: 90vw !important;
-        max-height: 90vh !important;
-        z-index: 1055 !important;
+    #assignModal .modal-body,
+    #focusedAssignModal .modal-body,
+    #rescheduleModal .modal-body,
+    #simpleRemarkModal .modal-body,
+    #fileUploadModal .modal-body {
+        padding: 0.75rem !important;
+    }
+    
+    #assignModal .row .col-md-6,
+    #focusedAssignModal .row .col-md-6,
+    #rescheduleModal .row .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    #assignModal .form-label,
+    #focusedAssignModal .form-label,
+    #rescheduleModal .form-label,
+    #simpleRemarkModal .form-label,
+    #fileUploadModal .form-label {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+    
+    #assignModal .form-select,
+    #focusedAssignModal .form-select,
+    #rescheduleModal .form-select,
+    #simpleRemarkModal .form-select {
+        font-size: 0.85rem !important;
+        padding: 0.375rem 0.5rem !important;
+    }
+    
+    #assignModal .form-control,
+    #focusedAssignModal .form-control,
+    #rescheduleModal .form-control,
+    #simpleRemarkModal .form-control {
+        font-size: 0.85rem !important;
+        padding: 0.375rem 0.5rem !important;
+    }
+    
+    #assignModal .form-text,
+    #focusedAssignModal .form-text,
+    #rescheduleModal .form-text,
+    #simpleRemarkModal .form-text {
+        font-size: 0.7rem !important;
+        margin-top: 0.25rem !important;
+    }
+    
+    #assignModal .alert,
+    #focusedAssignModal .alert,
+    #rescheduleModal .alert,
+    #simpleRemarkModal .alert {
+        padding: 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+/* ========== DURATION BADGE ALIGNMENT FIXES ========== */
+
+/* Force duration badge to align right in interaction cards */
+.d-flex.flex-column.gap-1.flex-shrink-0.align-items-end .badge.bg-secondary.mt-1,
+.d-flex.flex-column.gap-1.flex-shrink-0 .badge.bg-secondary.mt-1 {
+    align-self: flex-end !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    width: fit-content !important;
+}
+
+/* Override any parent flex-start alignment for duration badges */
+@media (max-width: 768px) {
+    .d-flex.flex-column.gap-1 .badge.bg-secondary.mt-1 {
+        align-self: flex-end !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+    }
+}
+
+/* ========== MOBILE MODAL CENTERING FIXES ========== */
+
+/* Clean mobile modal centering - Let Bootstrap handle positioning */
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 95vw !important;
+        width: 95vw !important;
+        margin: 1rem auto !important;
     }
     
     .modal-content {
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
         border-radius: 0.5rem !important;
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-        max-height: 90vh !important;
-        overflow-y: auto !important;
     }
     
-    /* Ensure modals don't overflow on small screens */
     .modal-body {
         max-height: calc(90vh - 120px) !important;
         overflow-y: auto !important;
     }
 }
 
-/* Extra small devices (phones, 375px and down) */
 @media (max-width: 375px) {
     .modal-dialog {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        margin: 0 !important;
-        max-width: 95vw !important;
-        width: 95vw !important;
-        max-height: 95vh !important;
-        z-index: 1055 !important;
-    }
-    
-    .modal-dialog-centered {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        margin: 0 !important;
-        max-width: 95vw !important;
-        width: 95vw !important;
-        max-height: 95vh !important;
-        z-index: 1055 !important;
+        max-width: 98vw !important;
+        width: 98vw !important;
+        margin: 0.5rem auto !important;
     }
     
     .modal-content {
         font-size: 0.9rem !important;
-        max-height: 95vh !important;
-        overflow-y: auto !important;
     }
     
     .modal-header {
@@ -2786,47 +2829,9 @@ a[href*="assigned-to-me"].btn-paytm-secondary:hover {
     
     .modal-body {
         padding: 1rem !important;
-        max-height: calc(95vh - 120px) !important;
-        overflow-y: auto !important;
     }
     
     .modal-footer {
         padding: 0.75rem 1rem !important;
-    }
-}
-
-/* Force override Bootstrap modal positioning on mobile */
-@media (max-width: 768px) {
-    .modal {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-    }
-    
-    .modal.show {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    
-    .modal-dialog,
-    .modal-dialog-centered {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        margin: 0 !important;
-        max-width: 90vw !important;
-        width: 90vw !important;
-        max-height: 90vh !important;
-        z-index: 1055 !important;
-    }
-    
-    @media (max-width: 375px) {
-        .modal-dialog,
-        .modal-dialog-centered {
-            max-width: 95vw !important;
-            width: 95vw !important;
-            max-height: 95vh !important;
-        }
     }
 }

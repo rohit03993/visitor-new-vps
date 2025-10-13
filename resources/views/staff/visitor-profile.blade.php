@@ -576,14 +576,6 @@
                                                                                     @if($interaction->meetingWith && $interaction->meetingWith->branch)
                                                                                         <span class="text-muted">({{ $interaction->meetingWith->branch->branch_name }})</span>
                                                                                     @endif
-                                                                                    @if($interaction->remarks->count() > 0)
-                                                                                        @php
-                                                                                            $latestRemark = $interaction->remarks->sortByDesc('created_at')->first();
-                                                                                        @endphp
-                                                                                        @if($latestRemark && $latestRemark->meeting_duration)
-                                                                                            <span class="badge bg-info ms-2">Duration: {{ $latestRemark->meeting_duration }} mins</span>
-                                                                                        @endif
-                                                                                    @endif
                                                                                 </small>
                                                                             </div>
                                                                         </div>
@@ -644,6 +636,12 @@
                                                                                             <span class="badge bg-info px-2 py-1">
                                                                                                 <i class="fas fa-comment me-1"></i>Remark Updated
                                                                                             </span>
+                                                                                            @php
+                                                                                                $latestRemark = $interaction->remarks->sortByDesc('created_at')->first();
+                                                                                            @endphp
+                                                                                            @if($latestRemark && $latestRemark->meeting_duration)
+                                                                                                <div class="badge bg-secondary px-2 py-1 mt-1" style="align-self: flex-end !important; margin-left: auto !important; margin-right: 0 !important; width: fit-content !important;">Duration: {{ $latestRemark->meeting_duration }} mins</div>
+                                                                                            @endif
                                                                                         @endif
                                                                                     @endif
                                                                                 @else
@@ -662,6 +660,12 @@
                                                                                         <span class="badge bg-info px-2 py-1">
                                                                                             <i class="fas fa-comment me-1"></i>Remark Updated
                                                                                         </span>
+                                                                                        @php
+                                                                                            $latestRemark = $interaction->remarks->sortByDesc('created_at')->first();
+                                                                                        @endphp
+                                                                                        @if($latestRemark && $latestRemark->meeting_duration)
+                                                                                            <div class="badge bg-secondary px-2 py-1 mt-1" style="align-self: flex-end !important; margin-left: auto !important; margin-right: 0 !important; width: fit-content !important;">Duration: {{ $latestRemark->meeting_duration }} mins</div>
+                                                                                        @endif
                                                                                     @endif
                                                                                 @endif
                                                                             @else
@@ -680,6 +684,12 @@
                                                                                     <span class="badge bg-info px-2 py-1">
                                                                                         <i class="fas fa-comment me-1"></i>Remark Updated
                                                                                     </span>
+                                                                                    @php
+                                                                                        $latestRemark = $interaction->remarks->sortByDesc('created_at')->first();
+                                                                                    @endphp
+                                                                                    @if($latestRemark && $latestRemark->meeting_duration)
+                                                                                        <div class="badge bg-secondary px-2 py-1 mt-1" style="align-self: flex-end !important; margin-left: auto !important; margin-right: 0 !important; width: fit-content !important;">Duration: {{ $latestRemark->meeting_duration }} mins</div>
+                                                                                    @endif
                                                                                 @endif
                                                                             @endif
                                                                         </div>
@@ -1073,7 +1083,7 @@
 
 <!-- Simple Add Remark Modal -->
 <div class="modal fade" id="simpleRemarkModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -1083,48 +1093,52 @@
             </div>
             <form id="simpleRemarkForm">
                 <input type="hidden" id="simple_interaction_id" name="interaction_id">
-                <div class="modal-body">
-                    <div class="alert alert-info">
+                <div class="modal-body" style="padding: 1rem;">
+                    <div class="alert alert-info py-2 mb-3">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Interaction Details:</strong>
-                        <div id="simpleInteractionDetails" class="mt-2"></div>
+                        <div id="simpleInteractionDetails" class="mt-1"></div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="simpleMeetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
-                        <select class="form-select" id="simpleMeetingDuration" name="meeting_duration" required>
-                            <option value="">Select Duration</option>
-                            @for($i = 5; $i <= 180; $i += 5)
-                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
-                            @endfor
-                        </select>
-                        <div class="form-text">Select the duration of your meeting (5-180 minutes)</div>
+                    <!-- Mobile-Friendly: Group Duration and Mode side-by-side -->
+                    <div class="row mb-2">
+                        <div class="col-md-6 mb-2 mb-md-0">
+                            <label for="simpleMeetingDuration" class="form-label small">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="simpleMeetingDuration" name="meeting_duration" required>
+                                <option value="">Select Duration</option>
+                                @for($i = 5; $i <= 180; $i += 5)
+                                    <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
+                                @endfor
+                            </select>
+                            <div class="form-text small">Select the duration of your meeting (5-180 minutes)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="simpleInteractionMode" class="form-label small">Interaction Mode <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="simpleInteractionMode" name="interaction_mode" required>
+                                <option value="">Select Mode</option>
+                                <option value="In-Campus">In-Campus</option>
+                                <option value="Out-Campus">Out-Campus</option>
+                                <option value="Telephonic">Telephonic</option>
+                            </select>
+                            <div class="form-text small">Select the mode of interaction</div>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="simpleInteractionMode" class="form-label">Interaction Mode <span class="text-danger">*</span></label>
-                        <select class="form-select" id="simpleInteractionMode" name="interaction_mode" required>
-                            <option value="">Select Mode</option>
-                            <option value="In-Campus">In-Campus</option>
-                            <option value="Out-Campus">Out-Campus</option>
-                            <option value="Telephonic">Telephonic</option>
-                        </select>
-                        <div class="form-text">Select the mode of interaction</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="simpleRemarkText" class="form-label">Remark/Note <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="simpleRemarkText" name="remark_text" rows="4" 
+                    <div class="mb-2">
+                        <label for="simpleRemarkText" class="form-label small">Remark/Note <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" id="simpleRemarkText" name="remark_text" rows="3" 
                                   placeholder="Enter your remark/note about this interaction..." required></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-1"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-plus me-1"></i>Add Remark
-                    </button>
+                <div class="modal-footer py-2">
+                    <div class="d-flex flex-column flex-md-row gap-2 w-100">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i>Add Remark
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -1133,7 +1147,7 @@
 
 <!-- Focused Assign to Team Member Modal -->
 <div class="modal fade" id="focusedAssignModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -1143,58 +1157,55 @@
             </div>
             <form id="focusedAssignForm">
                 <input type="hidden" id="focused_assign_interaction_id" name="interaction_id">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Interaction Details:</strong>
-                        <div id="focusedAssignInteractionDetails" class="mt-2"></div>
+                <div class="modal-body py-2">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <label for="focusedTeamMember" class="form-label small">Select Team Member <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="focusedTeamMember" name="team_member_id" required>
+                                <option value="">Choose a team member...</option>
+                                @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
+                                    <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text small">Select a team member to transfer this interaction to</div>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="focusedTeamMember" class="form-label">Select Team Member <span class="text-danger">*</span></label>
-                        <select class="form-select" id="focusedTeamMember" name="team_member_id" required>
-                            <option value="">Choose a team member...</option>
-                            @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
-                                <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
-                            @endforeach
-                        </select>
-                        <div class="form-text">Select a team member to transfer this interaction to</div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label for="focusedAssignMeetingDuration" class="form-label small">Meeting Duration <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="focusedAssignMeetingDuration" name="meeting_duration" required>
+                                <option value="">Select Duration</option>
+                                @for($i = 5; $i <= 180; $i += 5)
+                                    <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} mins</option>
+                                @endfor
+                            </select>
+                            <div class="form-text small">Expected duration (5-180 mins)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="focusedAssignInteractionMode" class="form-label small">Interaction Mode <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="focusedAssignInteractionMode" name="interaction_mode" required>
+                                <option value="">Select Mode</option>
+                                <option value="In-Campus">In-Campus</option>
+                                <option value="Out-Campus">Out-Campus</option>
+                                <option value="Telephonic">Telephonic</option>
+                            </select>
+                            <div class="form-text small">Select interaction mode</div>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="focusedAssignNotes" class="form-label">Remark/Note <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="focusedAssignNotes" name="assignment_notes" rows="3" 
+                    <div class="mb-2">
+                        <label for="focusedAssignNotes" class="form-label small">Remark/Note <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" id="focusedAssignNotes" name="assignment_notes" rows="3" 
                                   placeholder="Add notes about why you're transferring this interaction..." required></textarea>
-                        <div class="form-text">Add notes that will be visible to the assigned team member</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="focusedAssignMeetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
-                        <select class="form-select" id="focusedAssignMeetingDuration" name="meeting_duration" required>
-                            <option value="">Select Duration</option>
-                            @for($i = 5; $i <= 180; $i += 5)
-                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
-                            @endfor
-                        </select>
-                        <div class="form-text">Select the expected duration of the meeting (5-180 minutes)</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="focusedAssignInteractionMode" class="form-label">Interaction Mode <span class="text-danger">*</span></label>
-                        <select class="form-select" id="focusedAssignInteractionMode" name="interaction_mode" required>
-                            <option value="">Select Mode</option>
-                            <option value="In-Campus">In-Campus</option>
-                            <option value="Out-Campus">Out-Campus</option>
-                            <option value="Telephonic">Telephonic</option>
-                        </select>
-                        <div class="form-text">Select the mode of interaction</div>
+                        <div class="form-text small">Notes visible to assigned team member</div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer d-flex flex-column flex-md-row gap-2 w-100">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="submit" class="btn btn-warning btn-sm">
                         <i class="fas fa-exchange-alt me-1"></i>Assign To Team Member
                     </button>
                 </div>
@@ -1205,7 +1216,7 @@
 
 <!-- Assign to Team Member Modal -->
 <div class="modal fade" id="assignModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -1215,63 +1226,79 @@
             </div>
             <form id="assignForm">
                 <input type="hidden" id="assign_interaction_id" name="interaction_id">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Interaction Details:</strong>
-                        <div id="assignInteractionDetails" class="mt-2"></div>
+                <div class="modal-body py-2">
+                    <div class="alert alert-info py-2 mb-2">
+                        <div class="small">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Interaction Details:</strong>
+                            <div id="assignInteractionDetails" class="mt-1"></div>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="teamMember" class="form-label">Select Team Member <span class="text-danger">*</span></label>
-                        <select class="form-select" id="teamMember" name="team_member_id" required>
-                            <option value="">Choose a team member...</option>
-                            @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
-                                <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
-                            @endforeach
-                        </select>
-                        <div class="form-text">Select a team member to transfer this interaction to</div>
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <label for="teamMember" class="form-label small">Select Team Member <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="teamMember" name="team_member_id" required>
+                                <option value="">Choose a team member...</option>
+                                @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
+                                    <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text small">Select a team member to transfer this interaction to</div>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="assignNotes" class="form-label">Remark/Note <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="assignNotes" name="assignment_notes" rows="3" 
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label for="assignMeetingDuration" class="form-label small">Meeting Duration <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="assignMeetingDuration" name="meeting_duration" required>
+                                <option value="">Select Duration</option>
+                                @for($i = 5; $i <= 180; $i += 5)
+                                    <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} mins</option>
+                                @endfor
+                            </select>
+                            <div class="form-text small">Expected duration (5-180 mins)</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="assignInteractionMode" class="form-label small">Interaction Mode <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="assignInteractionMode" name="interaction_mode" required>
+                                <option value="">Select Mode</option>
+                                <option value="In-Campus">In-Campus</option>
+                                <option value="Out-Campus">Out-Campus</option>
+                                <option value="Telephonic">Telephonic</option>
+                            </select>
+                            <div class="form-text small">Select interaction mode</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <label for="assignNotes" class="form-label small">Remark/Note <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" id="assignNotes" name="assignment_notes" rows="3" 
                                   placeholder="Add notes about why you're transferring this interaction..." required></textarea>
-                        <div class="form-text">Add notes that will be visible to the assigned team member</div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="assignMeetingDuration" class="form-label">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
-                        <select class="form-select" id="assignMeetingDuration" name="meeting_duration" required>
-                            <option value="">Select Duration</option>
-                            @for($i = 5; $i <= 180; $i += 5)
-                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
-                            @endfor
-                        </select>
-                        <div class="form-text">Select the expected duration of the meeting (5-180 minutes)</div>
+                        <div class="form-text small">Notes visible to assigned team member</div>
                     </div>
                     
                     <!-- Scheduling Section -->
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="scheduleAssignment" name="schedule_assignment">
-                            <label class="form-check-label" for="scheduleAssignment">
+                            <label class="form-check-label small" for="scheduleAssignment">
                                 <i class="fas fa-calendar-alt me-1"></i>Schedule for later date
                             </label>
                         </div>
-                        <div class="form-text">Check this to schedule the assignment for a future date</div>
+                        <div class="form-text small">Check to schedule assignment for future date</div>
                     </div>
                     
-                    <div class="mb-3" id="scheduleDateSection" style="display: none;">
+                    <div class="mb-2" id="scheduleDateSection" style="display: none;">
                         <div class="row">
-                            <div class="col-md-4">
-                                <label for="scheduledDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="scheduledDate" name="scheduled_date" 
+                            <div class="col-md-4 mb-2">
+                                <label for="scheduledDate" class="form-label small">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control form-control-sm" id="scheduledDate" name="scheduled_date" 
                                        min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-md-4">
-                                <label for="scheduledHour" class="form-label">Hour <span class="text-danger">*</span></label>
-                                <select class="form-select" id="scheduledHour" name="scheduled_hour">
+                            <div class="col-md-4 mb-2">
+                                <label for="scheduledHour" class="form-label small">Hour <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="scheduledHour" name="scheduled_hour">
                                     <option value="09">09 AM</option>
                                     <option value="10">10 AM</option>
                                     <option value="11">11 AM</option>
@@ -1286,23 +1313,23 @@
                                     <option value="20">08 PM</option>
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <label for="scheduledMinute" class="form-label">Minute <span class="text-danger">*</span></label>
-                                <select class="form-select" id="scheduledMinute" name="scheduled_minute">
+                            <div class="col-md-4 mb-2">
+                                <label for="scheduledMinute" class="form-label small">Minute <span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" id="scheduledMinute" name="scheduled_minute">
                                     @for($i = 0; $i < 60; $i++)
                                         <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
                                     @endfor
                                 </select>
                             </div>
                         </div>
-                        <div class="form-text">The interaction will appear in assignee's tab on this date and time</div>
+                        <div class="form-text small">Interaction will appear in assignee's tab on this date/time</div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer d-flex flex-column flex-md-row gap-2 w-100">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-warning">
+                    <button type="submit" class="btn btn-warning btn-sm">
                         <i class="fas fa-exchange-alt me-1"></i>Assign To Team Member
                     </button>
                 </div>
@@ -1313,7 +1340,7 @@
 
 <!-- Reschedule Modal -->
 <div class="modal fade" id="rescheduleModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
@@ -1323,88 +1350,82 @@
             </div>
             <form id="rescheduleForm">
                 <input type="hidden" id="reschedule_interaction_id" name="interaction_id">
-                <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Interaction Details:</strong>
-                        <div id="rescheduleInteractionDetails" class="mt-2"></div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="rescheduleTeamMember" class="form-label">Assign To</label>
+                <div class="modal-body py-2">
+                    <div class="mb-2">
+                        <label for="rescheduleTeamMember" class="form-label small">Assign To</label>
                         <input type="hidden" id="rescheduleTeamMember" name="team_member_id" value="{{ auth()->user()->user_id }}">
-                        <div class="form-control-plaintext bg-light border rounded p-2">
+                        <div class="form-control-plaintext bg-light border rounded p-2 small">
                             <i class="fas fa-user me-2 text-primary"></i>
                             <strong>{{ auth()->user()->name }} ({{ auth()->user()->branch->branch_name ?? 'No Branch' }})</strong>
                             <small class="text-muted ms-2">- Assign to Myself</small>
                         </div>
-                        <div class="form-text">Reschedule your own interaction for a later date</div>
+                        <div class="form-text small">Reschedule your own interaction for a later date</div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="rescheduleDate" class="form-label">Assignment Date <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" id="rescheduleDate" name="scheduled_date" 
-                               min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                        <label for="rescheduleHour" class="form-label">Hour <span class="text-danger">*</span></label>
-                        <select class="form-select" id="rescheduleHour" name="scheduled_hour">
-                            <option value="09">09 AM</option>
-                            <option value="10">10 AM</option>
-                            <option value="11">11 AM</option>
-                            <option value="12">12 PM</option>
-                            <option value="13">01 PM</option>
-                            <option value="14">02 PM</option>
-                            <option value="15" selected>03 PM</option>
-                            <option value="16">04 PM</option>
-                            <option value="17">05 PM</option>
-                            <option value="18">06 PM</option>
-                            <option value="19">07 PM</option>
-                            <option value="20">08 PM</option>
-                        </select>
-                    </div>
-                            <div class="col-md-6">
-                        <label for="rescheduleMinute" class="form-label">Minute <span class="text-danger">*</span></label>
-                        <select class="form-select" id="rescheduleMinute" name="scheduled_minute">
-                            @for($i = 0; $i < 60; $i++)
-                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
-                            @endfor
-                        </select>
-                            </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label for="rescheduleDate" class="form-label small">Assignment Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control form-control-sm" id="rescheduleDate" name="scheduled_date" 
+                                   min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rescheduleInteractionMode" class="form-label small">Interaction Mode <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="rescheduleInteractionMode" name="interaction_mode" required>
+                                <option value="">Select Mode</option>
+                                <option value="In-Campus">In-Campus</option>
+                                <option value="Out-Campus">Out-Campus</option>
+                                <option value="Telephonic">Telephonic</option>
+                            </select>
                         </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="rescheduleInteractionMode" class="form-label">Interaction Mode <span class="text-danger">*</span></label>
-                        <select class="form-select" id="rescheduleInteractionMode" name="interaction_mode" required>
-                            <option value="">Select Interaction Mode</option>
-                            <option value="In-Campus">In-Campus</option>
-                            <option value="Out-Campus">Out-Campus</option>
-                            <option value="Telephonic">Telephonic</option>
-                        </select>
-                        <div class="form-text">Select the mode for this rescheduled interaction</div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <label for="rescheduleHour" class="form-label small">Hour <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="rescheduleHour" name="scheduled_hour">
+                                <option value="09">09 AM</option>
+                                <option value="10">10 AM</option>
+                                <option value="11">11 AM</option>
+                                <option value="12">12 PM</option>
+                                <option value="13">01 PM</option>
+                                <option value="14">02 PM</option>
+                                <option value="15" selected>03 PM</option>
+                                <option value="16">04 PM</option>
+                                <option value="17">05 PM</option>
+                                <option value="18">06 PM</option>
+                                <option value="19">07 PM</option>
+                                <option value="20">08 PM</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rescheduleMinute" class="form-label small">Minute <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="rescheduleMinute" name="scheduled_minute">
+                                @for($i = 0; $i < 60; $i++)
+                                    <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                                @endfor
+                            </select>
+                        </div>
                     </div>
                     
-                    <div class="mb-3">
-                        <label for="rescheduleNotes" class="form-label">Remark/Note <span class="text-danger">*</span></label>
-                        <textarea class="form-control" id="rescheduleNotes" name="assignment_notes" rows="3" 
+                    <div class="mb-2">
+                        <label for="rescheduleNotes" class="form-label small">Remark/Note <span class="text-danger">*</span></label>
+                        <textarea class="form-control form-control-sm" id="rescheduleNotes" name="assignment_notes" rows="3" 
                                   placeholder="Required: Explain why you're rescheduling this interaction..." required></textarea>
-                        <div class="form-text">Required: Add notes explaining why you're rescheduling this interaction</div>
+                        <div class="form-text small">Required: Explain why you're rescheduling this interaction</div>
                     </div>
                     
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Note:</strong> This interaction will appear in your "Assigned to Me" tab on the scheduled date and time.
+                    <div class="alert alert-warning py-2 mb-2">
+                        <div class="small">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Note:</strong> This interaction will appear in your "Assigned to Me" tab on the scheduled date and time.
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer d-flex flex-column flex-md-row gap-2 w-100">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i>Cancel
                     </button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="submit" class="btn btn-success btn-sm">
                         <i class="fas fa-calendar-check me-1"></i>Reschedule
                     </button>
                 </div>
@@ -1643,44 +1664,54 @@ function showRemarkModal(interactionId, visitorName, purpose, studentName) {
 
 // Show Simple Remark Modal (New)
 function showSimpleRemarkModal(interactionId, visitorName, purpose, studentName) {
-    document.getElementById('simple_interaction_id').value = interactionId;
-    
-    // Show student name if available, otherwise show contact person
-    const displayName = studentName && studentName.trim() !== '' ? 
-        `<strong>Student Name:</strong> ${studentName}` : 
-        `<strong>Contact Person:</strong> ${visitorName}`;
-    
-    document.getElementById('simpleInteractionDetails').innerHTML = `
-        ${displayName}<br>
-        <strong>Purpose:</strong> ${purpose}
-    `;
-    
-    const modal = new bootstrap.Modal(document.getElementById('simpleRemarkModal'));
-    modal.show();
+    try {
+        document.getElementById('simple_interaction_id').value = interactionId;
+        
+        // Show student name if available, otherwise show contact person
+        const displayName = studentName && studentName.trim() !== '' ? 
+            `<strong>Student Name:</strong> ${studentName}` : 
+            `<strong>Contact Person:</strong> ${visitorName}`;
+        
+        document.getElementById('simpleInteractionDetails').innerHTML = `
+            ${displayName}<br>
+            <strong>Purpose:</strong> ${purpose}
+        `;
+        
+        const modal = new bootstrap.Modal(document.getElementById('simpleRemarkModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error opening Simple Remark Modal:', error);
+        alert('Error opening modal. Please try again.');
+    }
 }
 
 // Show Focused Assign Modal (New)
 function showFocusedAssignModal(interactionId, visitorName, purpose, studentName) {
-    document.getElementById('focused_assign_interaction_id').value = interactionId;
+    console.log('showFocusedAssignModal called with:', {interactionId, visitorName, purpose, studentName});
     
-    // Show student name if available, otherwise show contact person
-    const displayName = studentName && studentName.trim() !== '' ? 
-        `<strong>Student Name:</strong> ${studentName}` : 
-        `<strong>Contact Person:</strong> ${visitorName}`;
-    
-    document.getElementById('focusedAssignInteractionDetails').innerHTML = `
-        ${displayName}<br>
-        <strong>Purpose:</strong> ${purpose}
-    `;
-    
-    const modal = new bootstrap.Modal(document.getElementById('focusedAssignModal'));
-    modal.show();
+    try {
+        document.getElementById('focused_assign_interaction_id').value = interactionId;
+        console.log('Set interaction ID:', interactionId);
+        
+        const modal = new bootstrap.Modal(document.getElementById('focusedAssignModal'));
+        console.log('Created modal instance:', modal);
+        modal.show();
+        console.log('Modal show() called');
+    } catch (error) {
+        console.error('Error opening Focused Assign Modal:', error);
+        alert('Error opening modal. Please try again. Error: ' + error.message);
+    }
 }
 
 // Fetch default interaction mode for modal dropdowns
 function fetchDefaultInteractionMode(interactionId, selectElementId) {
     fetch(`/staff/interaction/${interactionId}/default-mode`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success && data.default_mode) {
                 const selectElement = document.getElementById(selectElementId);
@@ -1691,28 +1722,24 @@ function fetchDefaultInteractionMode(interactionId, selectElementId) {
         })
         .catch(error => {
             console.error('Error fetching default interaction mode:', error);
+            // Don't prevent modal from opening if this fails
         });
 }
 
 // Show Reschedule Modal (Self-Reschedule Only)
 function showRescheduleModal(interactionId, visitorName, purpose, studentName) {
-    document.getElementById('reschedule_interaction_id').value = interactionId;
-    
-    // Show student name if available, otherwise show contact person
-    const displayName = studentName && studentName.trim() !== '' ? 
-        `<strong>Student Name:</strong> ${studentName}` : 
-        `<strong>Contact Person:</strong> ${visitorName}`;
-    
-    document.getElementById('rescheduleInteractionDetails').innerHTML = `
-        ${displayName}<br>
-        <strong>Purpose:</strong> ${purpose}
-    `;
-    
-    // Fetch default interaction mode
-    fetchDefaultInteractionMode(interactionId, 'rescheduleInteractionMode');
-    
-    const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
-    modal.show();
+    try {
+        document.getElementById('reschedule_interaction_id').value = interactionId;
+        
+        // Fetch default interaction mode (non-blocking)
+        fetchDefaultInteractionMode(interactionId, 'rescheduleInteractionMode');
+        
+        const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error opening Reschedule Modal:', error);
+        alert('Error opening modal. Please try again.');
+    }
 }
 
 // Show Assign Modal
@@ -1873,6 +1900,9 @@ document.getElementById('focusedAssignForm').addEventListener('submit', function
     const formData = new FormData(this);
     const interactionId = formData.get('interaction_id');
     
+    console.log('Submitting assign form with interaction ID:', interactionId);
+    console.log('Form data:', Object.fromEntries(formData));
+    
     fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
         method: 'POST',
         headers: {
@@ -1881,8 +1911,12 @@ document.getElementById('focusedAssignForm').addEventListener('submit', function
         },
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
             alert('Interaction transferred successfully! Your interaction has been completed and a new interaction has been created for the assigned team member.');
             bootstrap.Modal.getInstance(document.getElementById('focusedAssignModal')).hide();
@@ -1893,7 +1927,7 @@ document.getElementById('focusedAssignForm').addEventListener('submit', function
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error: Failed to assign interaction');
+        alert('Error: Failed to assign interaction - ' + error.message);
     });
 });
 
@@ -2102,12 +2136,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // File Upload Modal Functions
 function showFileUploadModal(interactionId) {
-    document.getElementById('upload_interaction_id').value = interactionId;
-    // Only clear file info display, not the input itself
-    document.getElementById('fileInfo').style.display = 'none';
-    document.getElementById('uploadBtn').disabled = true;
-    const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
-    modal.show();
+    try {
+        document.getElementById('upload_interaction_id').value = interactionId;
+        // Only clear file info display, not the input itself
+        document.getElementById('fileInfo').style.display = 'none';
+        document.getElementById('uploadBtn').disabled = true;
+        const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
+        modal.show();
+    } catch (error) {
+        console.error('Error opening File Upload Modal:', error);
+        alert('Error opening modal. Please try again.');
+    }
+}
+
+function handleFileSelect(input) {
+    const file = input.files[0];
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const uploadBtn = document.getElementById('uploadBtn');
+    
+    if (file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = `(${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        fileInfo.style.display = 'block';
+        uploadBtn.disabled = false;
+    } else {
+        fileInfo.style.display = 'none';
+        uploadBtn.disabled = true;
+    }
 }
 
 function submitFileUpload() {
@@ -2155,6 +2212,64 @@ function submitFileUpload() {
     });
 }
 </script>
+
+<!-- File Upload Modal -->
+<div class="modal fade" id="fileUploadModal" tabindex="-1" aria-labelledby="fileUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="fileUploadModalLabel">
+                    <i class="fas fa-paperclip me-2"></i>Upload File
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="fileUploadForm" enctype="multipart/form-data">
+                <input type="hidden" id="upload_interaction_id" name="interaction_id">
+                <div class="modal-body py-2">
+                    <div class="mb-3">
+                        <div class="upload-area border border-dashed rounded p-4 text-center" id="uploadArea" style="min-height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <h6>Drag & Drop Files Here</h6>
+                            <p class="text-muted mb-3">or click to browse</p>
+                            <button type="button" class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                <i class="fas fa-folder-open me-1"></i>Browse Files
+                            </button>
+                        </div>
+                        <input type="file" id="fileInput" name="file" style="display: none;" accept=".pdf,.jpg,.jpeg,.png,.webp,.mp3,.wav" onchange="handleFileSelect(this)">
+                        <div id="fileInfo" class="mt-3" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-file me-2"></i>
+                                <strong id="fileName"></strong>
+                                <small class="text-muted ms-2" id="fileSize"></small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <div class="small">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>File Limits:</strong>
+                            <ul class="mb-1 mt-1">
+                                <li><strong>PDF:</strong> 5MB max</li>
+                                <li><strong>Images:</strong> 2MB max</li>
+                                <li><strong>Audio:</strong> 10MB max</li>
+                            </ul>
+                            <strong>Supported:</strong> PDF, JPG, PNG, WebP, MP3, WAV
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex flex-column flex-md-row gap-2 w-100">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success btn-sm" id="uploadBtn" disabled>
+                        <i class="fas fa-upload me-1"></i>Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Add Phone Number Modal (NEW FEATURE) -->
 <div class="modal fade" id="addPhoneModal" tabindex="-1" aria-labelledby="addPhoneModalLabel" aria-hidden="true">
