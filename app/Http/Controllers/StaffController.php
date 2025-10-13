@@ -1848,15 +1848,16 @@ class StaffController extends Controller
      */
     private function convertInteractionModeToMode($interactionMode)
     {
+        // Return the same format as expected by interaction_history.mode column
         switch ($interactionMode) {
             case 'In-Campus':
-                return 'in_campus';
+                return 'In-Campus';
             case 'Out-Campus':
-                return 'out_campus';
+                return 'Out-Campus';
             case 'Telephonic':
-                return 'telephonic';
+                return 'Telephonic';
             default:
-                return 'in_campus'; // Default fallback
+                return 'In-Campus'; // Default fallback
         }
     }
 
