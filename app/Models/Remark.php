@@ -12,6 +12,7 @@ class Remark extends Model
     protected $fillable = [
         'interaction_id',
         'remark_text',
+        'interaction_mode',
         'meeting_duration',
         'outcome',
         'added_by',

@@ -331,6 +331,13 @@
                                                                         by {{ $remark->addedBy?->name ?? 'Unknown' }}
                                                                     </small><br>
                                                                     {{ $remark->remark_text }}
+                                                                    <!-- DEBUG: interaction_mode = {{ $remark->interaction_mode ?? 'NULL' }} -->
+                                                                    @if($remark->interaction_mode)
+                                                                        <br><small class="text-success fw-bold"><i class="fas fa-map-marker-alt me-1"></i>{{ $remark->interaction_mode }}</small>
+                                                                    @else
+                                                                        <!-- DEBUG: No interaction_mode found for remark {{ $remark->remark_id }} -->
+                                                                        <br><small class="text-warning fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>NO MODE (ID: {{ $remark->remark_id }})</small>
+                                                                    @endif
                                                                 </div>
                                                             @endforeach
                                                             
@@ -581,10 +588,6 @@
                                                                             </div>
                                                                         </div>
                                                                         <div class="d-flex flex-column gap-1 flex-shrink-0 align-items-end">
-                                                            <span class="badge bg-{{ $interaction->getModeBadgeColor() }} badge-paytm-enhanced px-2 py-1 mode-badge">
-                                                                <i class="fas fa-{{ $interaction->mode === 'In-Campus' ? 'building' : 'phone' }} me-1"></i>
-                                                                <span>{{ $interaction->mode }}</span>
-                                                            </span>
                                                                             
                                                                             @php
                                                                                 // Check if this is the ORIGINAL transfer interaction (where transfer was initiated)
@@ -696,6 +699,13 @@
                                                                                     // For new interactions, show initial notes as LAST MESSAGE
                                                                                     $leftPanelMessage = $interaction->initial_notes ?: 'New interaction created';
                                                                                     $leftPanelTimestamp = $interaction->created_at;
+                                                                                    // Convert interaction mode to display format
+                                                                                    $leftPanelInteractionMode = match($interaction->mode) {
+                                                                                        'in_campus' => 'In-Campus',
+                                                                                        'out_campus' => 'Out-Campus',
+                                                                                        'telephonic' => 'Telephonic',
+                                                                                        default => 'In-Campus'
+                                                                                    };
                                                                                 } else {
                                                                                     // For assigned interactions, find the assignment/schedule message
                                                                                     $assignmentRemark = $interaction->remarks->first(function($remark) {
@@ -711,6 +721,7 @@
                                                                                             if (strpos($part, 'Notes:') !== false) {
                                                                                                 $leftPanelMessage = trim(str_replace('Notes:', '', $part));
                                                                                                 $leftPanelTimestamp = $assignmentRemark->created_at;
+                                                                                                $leftPanelInteractionMode = $assignmentRemark->interaction_mode;
                                                                                                 break;
                                                                                             }
                                                                                         }
@@ -719,10 +730,27 @@
                                                                                         if (!isset($leftPanelMessage)) {
                                                                                             $leftPanelMessage = 'Assignment details';
                                                                                             $leftPanelTimestamp = $assignmentRemark->created_at;
+                                                                                            $leftPanelInteractionMode = $assignmentRemark->interaction_mode;
                                                                                         }
                                                                                     } else {
-                                                                                        $leftPanelMessage = 'Assignment details';
-                                                                                        $leftPanelTimestamp = $interaction->created_at;
+                                                                                        // If no assignment remark found, try to find the latest work remark from previous interaction
+                                                                                        $latestWorkRemark = $interaction->remarks->first(function($remark) {
+                                                                                            // Exclude system-generated remarks
+                                                                                            return strpos($remark->remark_text, 'Transferred from') === false && 
+                                                                                                   strpos($remark->remark_text, '📅 Scheduled Assignment from') === false &&
+                                                                                                   strpos($remark->remark_text, 'Completed & Transferred to') === false;
+                                                                                        });
+                                                                                        
+                                                                                        if ($latestWorkRemark) {
+                                                                                            $leftPanelMessage = $latestWorkRemark->remark_text;
+                                                                                            $leftPanelTimestamp = $latestWorkRemark->created_at;
+                                                                                            $leftPanelInteractionMode = $latestWorkRemark->interaction_mode;
+                                                                                            // DEBUG: Show what we found
+                                                                                            echo "<!-- DEBUG: Found work remark: " . $latestWorkRemark->remark_id . " with mode: " . ($latestWorkRemark->interaction_mode ?? 'NULL') . " -->";
+                                                                                        } else {
+                                                                                            $leftPanelMessage = 'Assignment details';
+                                                                                            $leftPanelTimestamp = $interaction->created_at;
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                                 
@@ -747,6 +775,7 @@
                                                                                     // This is a work remark - show it
                                                                                     $rightPanelMessage = $remark->remark_text;
                                                                                     $rightPanelTimestamp = $remark->created_at;
+                                                                                    $rightPanelInteractionMode = $remark->interaction_mode;
                                                                                     break; // Show the latest work remark
                                                                                 }
                                                                                 
@@ -765,6 +794,7 @@
                                                                                                 if (strpos($part, 'Notes:') !== false) {
                                                                                                     $rightPanelMessage = trim(str_replace('Notes:', '', $part));
                                                                                                     $rightPanelTimestamp = $assignmentRemark->created_at;
+                                                                                                    $rightPanelInteractionMode = $assignmentRemark->interaction_mode;
                                                                                                     break;
                                                                                                 }
                                                                                             }
@@ -793,6 +823,12 @@
                                                                                         <div class="card-body-modern">
                                                                                             <div class="highlighted-box notes-highlight">
                                                                                                 {{ $leftPanelMessage }}
+                                                                                                <!-- DEBUG LEFT: interaction_mode = {{ isset($leftPanelInteractionMode) ? $leftPanelInteractionMode : 'NOT SET' }} -->
+                                                                                                @if(isset($leftPanelInteractionMode) && $leftPanelInteractionMode)
+                                                                                                    <br><small class="text-success fw-bold"><i class="fas fa-map-marker-alt me-1"></i>{{ $leftPanelInteractionMode }}</small>
+                                                                                                @else
+                                                                                                    <br><small class="text-warning fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>NO MODE LEFT</small>
+                                                                                                @endif
                                                                                             </div>
                                                                                             <div class="remark-meta">
                                                                                                 <div class="remark-time">
@@ -837,6 +873,12 @@
                                                                                                     </div>
                                                                                                 @else
                                                                                                     {{ $rightPanelMessage }}
+                                                                                                    <!-- DEBUG RIGHT: interaction_mode = {{ isset($rightPanelInteractionMode) ? $rightPanelInteractionMode : 'NOT SET' }} -->
+                                                                                                    @if(isset($rightPanelInteractionMode) && $rightPanelInteractionMode)
+                                                                                                        <br><small class="text-success fw-bold"><i class="fas fa-map-marker-alt me-1"></i>{{ $rightPanelInteractionMode }}</small>
+                                                                                                    @else
+                                                                                                        <br><small class="text-warning fw-bold"><i class="fas fa-exclamation-triangle me-1"></i>NO MODE RIGHT</small>
+                                                                                                    @endif
                                                                                                 @endif
                                                                                             </div>
                                                                                             <div class="remark-meta">
@@ -1060,6 +1102,17 @@
                     </div>
                     
                     <div class="mb-3">
+                        <label for="simpleInteractionMode" class="form-label">Interaction Mode <span class="text-danger">*</span></label>
+                        <select class="form-select" id="simpleInteractionMode" name="interaction_mode" required>
+                            <option value="">Select Mode</option>
+                            <option value="In-Campus">In-Campus</option>
+                            <option value="Out-Campus">Out-Campus</option>
+                            <option value="Telephonic">Telephonic</option>
+                        </select>
+                        <div class="form-text">Select the mode of interaction</div>
+                    </div>
+                    
+                    <div class="mb-3">
                         <label for="simpleRemarkText" class="form-label">Remark/Note <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="simpleRemarkText" name="remark_text" rows="4" 
                                   placeholder="Enter your remark/note about this interaction..." required></textarea>
@@ -1124,6 +1177,17 @@
                             @endfor
                         </select>
                         <div class="form-text">Select the expected duration of the meeting (5-180 minutes)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="focusedAssignInteractionMode" class="form-label">Interaction Mode <span class="text-danger">*</span></label>
+                        <select class="form-select" id="focusedAssignInteractionMode" name="interaction_mode" required>
+                            <option value="">Select Mode</option>
+                            <option value="In-Campus">In-Campus</option>
+                            <option value="Out-Campus">Out-Campus</option>
+                            <option value="Telephonic">Telephonic</option>
+                        </select>
+                        <div class="form-text">Select the mode of interaction</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1311,6 +1375,17 @@
                         </select>
                             </div>
                         </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rescheduleInteractionMode" class="form-label">Interaction Mode <span class="text-danger">*</span></label>
+                        <select class="form-select" id="rescheduleInteractionMode" name="interaction_mode" required>
+                            <option value="">Select Interaction Mode</option>
+                            <option value="In-Campus">In-Campus</option>
+                            <option value="Out-Campus">Out-Campus</option>
+                            <option value="Telephonic">Telephonic</option>
+                        </select>
+                        <div class="form-text">Select the mode for this rescheduled interaction</div>
                     </div>
                     
                     <div class="mb-3">
@@ -1602,6 +1677,23 @@ function showFocusedAssignModal(interactionId, visitorName, purpose, studentName
     modal.show();
 }
 
+// Fetch default interaction mode for modal dropdowns
+function fetchDefaultInteractionMode(interactionId, selectElementId) {
+    fetch(`/staff/interaction/${interactionId}/default-mode`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.default_mode) {
+                const selectElement = document.getElementById(selectElementId);
+                if (selectElement) {
+                    selectElement.value = data.default_mode;
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching default interaction mode:', error);
+        });
+}
+
 // Show Reschedule Modal (Self-Reschedule Only)
 function showRescheduleModal(interactionId, visitorName, purpose, studentName) {
     document.getElementById('reschedule_interaction_id').value = interactionId;
@@ -1615,6 +1707,9 @@ function showRescheduleModal(interactionId, visitorName, purpose, studentName) {
         ${displayName}<br>
         <strong>Purpose:</strong> ${purpose}
     `;
+    
+    // Fetch default interaction mode
+    fetchDefaultInteractionMode(interactionId, 'rescheduleInteractionMode');
     
     const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
     modal.show();

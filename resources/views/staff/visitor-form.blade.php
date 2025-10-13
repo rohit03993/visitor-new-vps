@@ -155,11 +155,11 @@
                                 </div>
                             </div>
 
-                            <!-- Visit Mode -->
+                            <!-- Interaction Mode -->
                             <div class="form-field mb-4">
                                 <div class="field-header">
                                     <div class="field-title">
-                                        <h6 class="mb-1">Visit Mode</h6>
+                                        <h6 class="mb-1">Interaction Mode</h6>
                                     </div>
                                 </div>
                                 <div class="field-content">

@@ -852,6 +852,7 @@ class StaffController extends Controller
         $request->validate([
             'remark_text' => 'required|string|max:1000',
             'meeting_duration' => 'required|integer|min:5|max:180',
+            'interaction_mode' => 'required|in:In-Campus,Out-Campus,Telephonic',
         ]);
 
         $user = auth()->user();
@@ -866,6 +867,7 @@ class StaffController extends Controller
         $remarkData = [
             'interaction_id' => $interactionId,
             'remark_text' => $request->remark_text,
+            'interaction_mode' => $request->interaction_mode,
             'meeting_duration' => $request->meeting_duration,
             'outcome' => 'in_process', // Always in_process for simple remarks
             'added_by' => $user->user_id,
@@ -1209,7 +1211,7 @@ class StaffController extends Controller
             // Get all interactions for this visitor
             $interactions = InteractionHistory::where('visitor_id', $visitorId)
                 ->with(['meetingWith.branch', 'address', 'remarks' => function($query) {
-                    $query->select('remark_id', 'interaction_id', 'remark_text', 'meeting_duration', 'outcome', 'added_by', 'added_by_name', 'created_at');
+                    $query->select('remark_id', 'interaction_id', 'remark_text', 'interaction_mode', 'meeting_duration', 'outcome', 'added_by', 'added_by_name', 'created_at');
                 }, 'remarks.addedBy.branch', 'studentSession.completer.branch', 'attachments.uploadedBy'])
                 ->orderBy('created_at', 'desc')
                 ->get();
@@ -1281,6 +1283,7 @@ class StaffController extends Controller
             $request->validate([
                 'team_member_id' => 'required|exists:vms_users,user_id',
                 'assignment_notes' => 'nullable|string|max:500',
+                'interaction_mode' => 'required|in:In-Campus,Out-Campus,Telephonic',
                 // Meeting duration is optional for reschedule, required for transfer
                 'meeting_duration' => $isRescheduling ? 'nullable|integer|min:5|max:180' : 'required|integer|min:5|max:180',
                 'scheduled_date' => 'nullable|date|after_or_equal:today',
@@ -1326,6 +1329,7 @@ class StaffController extends Controller
             $remark = \App\Models\Remark::create([
                 'interaction_id' => $interactionId,
                 'remark_text' => $remarkText,
+                'interaction_mode' => $request->interaction_mode,
                 'meeting_duration' => $request->meeting_duration ?? null, // Optional for reschedule
                 'added_by' => $user->user_id,
                 'added_by_name' => $user->name,
@@ -1354,12 +1358,15 @@ class StaffController extends Controller
             }
             
             // Step 3: Create new interaction for X with transfer context
+            // Convert interaction_mode to mode for the new interaction
+            $newMode = $this->convertInteractionModeToMode($request->interaction_mode);
+            
             $newInteraction = InteractionHistory::create([
                 'visitor_id' => $interaction->visitor_id,
                 'session_id' => $interaction->session_id, // Keep same session_id to stay in same purpose group
                 'purpose' => $interaction->purpose,
                 'meeting_with' => $request->team_member_id, // Assign to X
-                'mode' => $interaction->mode,
+                'mode' => $newMode, // Use the interaction_mode from assignment
                 'address_id' => $interaction->address_id,
                 'initial_notes' => $interaction->initial_notes,
                 'name_entered' => $interaction->name_entered,
@@ -1390,9 +1397,13 @@ class StaffController extends Controller
                 $contextForX .= "\nNotes: " . $assignmentNotes;
             }
             
+            // MY OWN SEPARATE LOGIC: Carry forward interaction mode from original interaction
+            $carriedForwardMode = $this->getLatestInteractionModeFromRemarks($interactionId);
+            
             \App\Models\Remark::create([
                 'interaction_id' => $newInteraction->interaction_id,
                 'remark_text' => $contextForX,
+                'interaction_mode' => $carriedForwardMode, // Carry forward the mode
                 'added_by' => $user->user_id,
                 'added_by_name' => $user->name,
                 'created_at' => now(),
@@ -1790,6 +1801,105 @@ class StaffController extends Controller
         } catch (\Exception $e) {
             \Log::error('Visitor file upload error: ' . $e->getMessage());
             // Don't throw error - just log it and continue
+        }
+    }
+
+    /**
+     * Get default interaction mode for a given interaction
+     * Returns the last selected mode in the interaction, or the original interaction mode
+     */
+    private function getDefaultInteractionMode($interactionId)
+    {
+        // First, try to get the last remark with an interaction_mode
+        $lastRemarkWithMode = Remark::where('interaction_id', $interactionId)
+            ->whereNotNull('interaction_mode')
+            ->orderBy('created_at', 'desc')
+            ->first();
+            
+        if ($lastRemarkWithMode) {
+            return $lastRemarkWithMode->interaction_mode;
+        }
+        
+        // If no remarks with mode, get the original interaction mode
+        $interaction = InteractionHistory::find($interactionId);
+        if ($interaction && $interaction->interaction_mode) {
+            return $interaction->interaction_mode;
+        }
+        
+        // Default fallback
+        return 'In-Campus';
+    }
+
+    /**
+     * Get default interaction mode for a given interaction (AJAX endpoint)
+     */
+    public function getDefaultMode(Request $request, $interactionId)
+    {
+        $defaultMode = $this->getDefaultInteractionMode($interactionId);
+        
+        return response()->json([
+            'success' => true,
+            'default_mode' => $defaultMode
+        ]);
+    }
+
+    /**
+     * Convert interaction_mode (from remarks) to mode (for interactions)
+     */
+    private function convertInteractionModeToMode($interactionMode)
+    {
+        switch ($interactionMode) {
+            case 'In-Campus':
+                return 'in_campus';
+            case 'Out-Campus':
+                return 'out_campus';
+            case 'Telephonic':
+                return 'telephonic';
+            default:
+                return 'in_campus'; // Default fallback
+        }
+    }
+
+    /**
+     * Get the latest interaction mode from an interaction's remarks
+     * This is MY OWN SEPARATE LOGIC for carrying forward interaction modes
+     */
+    private function getLatestInteractionModeFromRemarks($interactionId)
+    {
+        // Get the latest remark with interaction_mode for this interaction
+        $latestRemarkWithMode = \App\Models\Remark::where('interaction_id', $interactionId)
+            ->whereNotNull('interaction_mode')
+            ->orderBy('created_at', 'desc')
+            ->first();
+            
+        if ($latestRemarkWithMode) {
+            return $latestRemarkWithMode->interaction_mode;
+        }
+        
+        // If no remarks with mode, get the original interaction mode
+        $interaction = \App\Models\InteractionHistory::find($interactionId);
+        if ($interaction && $interaction->mode) {
+            return $this->convertModeToInteractionMode($interaction->mode);
+        }
+        
+        // Default fallback
+        return 'In-Campus';
+    }
+
+    /**
+     * Convert mode (from interactions) to interaction_mode (for remarks)
+     */
+    private function convertModeToInteractionMode($mode)
+    {
+        switch ($mode) {
+            case 'in_campus':
+                return 'In-Campus';
+            case 'out_campus':
+                return 'Out-Campus';
+            case 'telephonic':
+                return 'Telephonic';
+            default:
+                return 'In-Campus'; // Default fallback
         }
     }
 

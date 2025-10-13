@@ -108,6 +108,7 @@ Route::middleware('auth')->group(function () {
         
         // Assignment Routes
         Route::post('/assign-interaction/{interactionId}', [StaffController::class, 'assignInteraction'])->name('assign-interaction');
+Route::get('/interaction/{interactionId}/default-mode', [StaffController::class, 'getDefaultMode'])->name('get-default-interaction-mode');
         
         // Phone Number Management Routes (NEW FEATURE)
         Route::post('/visitor/{visitorId}/add-phone', [StaffController::class, 'addPhoneNumber'])->name('add-phone-number');
