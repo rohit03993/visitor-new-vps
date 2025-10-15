@@ -1937,6 +1937,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Handle complete session form submission
+    const completeSessionForm = document.getElementById('completeSessionForm');
+    if (completeSessionForm) {
+        completeSessionForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const sessionId = formData.get('session_id');
+            
+            fetch(`{{ url('staff/complete-session') }}/${sessionId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('completeSessionModal')).hide();
+                    showSuccessMessage('Session completed successfully!');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: Failed to complete session');
+            });
+        });
+    }
+
     // Handle file upload form submission
     const fileUploadForm = document.getElementById('fileUploadForm');
     if (fileUploadForm) {
