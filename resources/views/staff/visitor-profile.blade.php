@@ -763,9 +763,9 @@
                                                                                             $leftPanelInteractionMode = $latestWorkRemark->interaction_mode;
                                                                                             // DEBUG: Show what we found
                                                                                             echo "<!-- DEBUG: Found work remark: " . $latestWorkRemark->remark_id . " with mode: " . ($latestWorkRemark->interaction_mode ?? 'NULL') . " -->";
-                                                                                        } else {
-                                                                                            $leftPanelMessage = 'Assignment details';
-                                                                                            $leftPanelTimestamp = $interaction->created_at;
+                                                                                    } else {
+                                                                                        $leftPanelMessage = 'Assignment details';
+                                                                                        $leftPanelTimestamp = $interaction->created_at;
                                                                                         }
                                                                                     }
                                                                                 }
@@ -1114,11 +1114,11 @@
                         <div class="col-md-6 mb-2 mb-md-0">
                             <label for="simpleMeetingDuration" class="form-label small">Meeting Duration (Minutes) <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="simpleMeetingDuration" name="meeting_duration" required>
-                                <option value="">Select Duration</option>
-                                @for($i = 5; $i <= 180; $i += 5)
-                                    <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
-                                @endfor
-                            </select>
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
+                                <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} minutes</option>
+                            @endfor
+                        </select>
                             <div class="form-text small">Select the duration of your meeting (5-180 minutes)</div>
                         </div>
                         <div class="col-md-6">
@@ -1142,11 +1142,11 @@
                 <div class="modal-footer py-2">
                     <div class="d-flex flex-column flex-md-row gap-2 w-100">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i>Cancel
-                        </button>
+                        <i class="fas fa-times me-1"></i>Cancel
+                    </button>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>Add Remark
-                        </button>
+                        <i class="fas fa-plus me-1"></i>Add Remark
+                    </button>
                     </div>
                 </div>
             </form>
@@ -1171,26 +1171,26 @@
                         <div class="col-12">
                             <label for="focusedTeamMember" class="form-label small">Select Team Member <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="focusedTeamMember" name="team_member_id" required>
-                                <option value="">Choose a team member...</option>
-                                @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
-                                    <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
-                                @endforeach
-                            </select>
+                            <option value="">Choose a team member...</option>
+                            @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
+                                <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
+                            @endforeach
+                        </select>
                             <div class="form-text small">Select a team member to transfer this interaction to</div>
-                        </div>
+                    </div>
                     </div>
                     
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <label for="focusedAssignMeetingDuration" class="form-label small">Meeting Duration <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="focusedAssignMeetingDuration" name="meeting_duration" required>
-                                <option value="">Select Duration</option>
-                                @for($i = 5; $i <= 180; $i += 5)
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
                                     <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} mins</option>
-                                @endfor
-                            </select>
+                            @endfor
+                        </select>
                             <div class="form-text small">Expected duration (5-180 mins)</div>
-                        </div>
+                    </div>
                         <div class="col-md-6">
                             <label for="focusedAssignInteractionMode" class="form-label small">Interaction Mode <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="focusedAssignInteractionMode" name="interaction_mode" required>
@@ -1200,7 +1200,7 @@
                                 <option value="Telephonic">Telephonic</option>
                             </select>
                             <div class="form-text small">Select interaction mode</div>
-                        </div>
+                </div>
                     </div>
                     
                     <div class="mb-2">
@@ -1238,8 +1238,8 @@
                 <div class="modal-body py-2">
                     <div class="alert alert-info py-2 mb-2">
                         <div class="small">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Interaction Details:</strong>
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Interaction Details:</strong>
                             <div id="assignInteractionDetails" class="mt-1"></div>
                         </div>
                     </div>
@@ -1248,24 +1248,24 @@
                         <div class="col-12">
                             <label for="teamMember" class="form-label small">Select Team Member <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="teamMember" name="team_member_id" required>
-                                <option value="">Choose a team member...</option>
-                                @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
-                                    <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
-                                @endforeach
-                            </select>
+                            <option value="">Choose a team member...</option>
+                            @foreach(\App\Models\VmsUser::where('role', 'staff')->where('is_active', true)->where('user_id', '!=', auth()->id())->get() as $member)
+                                <option value="{{ $member->user_id }}">{{ $member->name }} ({{ $member->branch->branch_name ?? 'No Branch' }})</option>
+                            @endforeach
+                        </select>
                             <div class="form-text small">Select a team member to transfer this interaction to</div>
-                        </div>
+                    </div>
                     </div>
                     
                     <div class="row mb-2">
                         <div class="col-md-6">
                             <label for="assignMeetingDuration" class="form-label small">Meeting Duration <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="assignMeetingDuration" name="meeting_duration" required>
-                                <option value="">Select Duration</option>
-                                @for($i = 5; $i <= 180; $i += 5)
+                            <option value="">Select Duration</option>
+                            @for($i = 5; $i <= 180; $i += 5)
                                     <option value="{{ $i }}" {{ $i == 5 ? 'selected' : '' }}>{{ $i }} mins</option>
-                                @endfor
-                            </select>
+                            @endfor
+                        </select>
                             <div class="form-text small">Expected duration (5-180 mins)</div>
                         </div>
                         <div class="col-md-6">
@@ -1375,7 +1375,7 @@
                         <div class="col-md-6">
                             <label for="rescheduleDate" class="form-label small">Assignment Date <span class="text-danger">*</span></label>
                             <input type="date" class="form-control form-control-sm" id="rescheduleDate" name="scheduled_date" 
-                                   min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                               min="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="col-md-6">
                             <label for="rescheduleInteractionMode" class="form-label small">Interaction Mode <span class="text-danger">*</span></label>
@@ -1389,30 +1389,30 @@
                     </div>
                     
                     <div class="row mb-2">
-                        <div class="col-md-6">
+                            <div class="col-md-6">
                             <label for="rescheduleHour" class="form-label small">Hour <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="rescheduleHour" name="scheduled_hour">
-                                <option value="09">09 AM</option>
-                                <option value="10">10 AM</option>
-                                <option value="11">11 AM</option>
-                                <option value="12">12 PM</option>
-                                <option value="13">01 PM</option>
-                                <option value="14">02 PM</option>
-                                <option value="15" selected>03 PM</option>
-                                <option value="16">04 PM</option>
-                                <option value="17">05 PM</option>
-                                <option value="18">06 PM</option>
-                                <option value="19">07 PM</option>
-                                <option value="20">08 PM</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
+                            <option value="09">09 AM</option>
+                            <option value="10">10 AM</option>
+                            <option value="11">11 AM</option>
+                            <option value="12">12 PM</option>
+                            <option value="13">01 PM</option>
+                            <option value="14">02 PM</option>
+                            <option value="15" selected>03 PM</option>
+                            <option value="16">04 PM</option>
+                            <option value="17">05 PM</option>
+                            <option value="18">06 PM</option>
+                            <option value="19">07 PM</option>
+                            <option value="20">08 PM</option>
+                        </select>
+                    </div>
+                            <div class="col-md-6">
                             <label for="rescheduleMinute" class="form-label small">Minute <span class="text-danger">*</span></label>
                             <select class="form-select form-select-sm" id="rescheduleMinute" name="scheduled_minute">
-                                @for($i = 0; $i < 60; $i++)
-                                    <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
-                                @endfor
-                            </select>
+                            @for($i = 0; $i < 60; $i++)
+                                <option value="{{ sprintf('%02d', $i) }}">{{ sprintf('%02d', $i) }}</option>
+                            @endfor
+                        </select>
                         </div>
                     </div>
                     
@@ -1425,10 +1425,10 @@
                     
                     <div class="alert alert-warning py-2 mb-2">
                         <div class="small">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Note:</strong> This interaction will appear in your "Assigned to Me" tab on the scheduled date and time.
-                        </div>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> This interaction will appear in your "Assigned to Me" tab on the scheduled date and time.
                     </div>
+                </div>
                 </div>
                 <div class="modal-footer d-flex flex-column flex-md-row gap-2 w-100">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">
@@ -1675,20 +1675,20 @@ function showRemarkModal(interactionId, visitorName, purpose, studentName) {
 // Show Simple Remark Modal (New)
 function showSimpleRemarkModal(interactionId, visitorName, purpose, studentName) {
     try {
-        document.getElementById('simple_interaction_id').value = interactionId;
-        
-        // Show student name if available, otherwise show contact person
-        const displayName = studentName && studentName.trim() !== '' ? 
-            `<strong>Student Name:</strong> ${studentName}` : 
-            `<strong>Contact Person:</strong> ${visitorName}`;
-        
-        document.getElementById('simpleInteractionDetails').innerHTML = `
-            ${displayName}<br>
-            <strong>Purpose:</strong> ${purpose}
-        `;
-        
-        const modal = new bootstrap.Modal(document.getElementById('simpleRemarkModal'));
-        modal.show();
+    document.getElementById('simple_interaction_id').value = interactionId;
+    
+    // Show student name if available, otherwise show contact person
+    const displayName = studentName && studentName.trim() !== '' ? 
+        `<strong>Student Name:</strong> ${studentName}` : 
+        `<strong>Contact Person:</strong> ${visitorName}`;
+    
+    document.getElementById('simpleInteractionDetails').innerHTML = `
+        ${displayName}<br>
+        <strong>Purpose:</strong> ${purpose}
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('simpleRemarkModal'));
+    modal.show();
     } catch (error) {
         console.error('Error opening Simple Remark Modal:', error);
         alert('Error opening modal. Please try again.');
@@ -1700,12 +1700,12 @@ function showFocusedAssignModal(interactionId, visitorName, purpose, studentName
     console.log('showFocusedAssignModal called with:', {interactionId, visitorName, purpose, studentName});
     
     try {
-        document.getElementById('focused_assign_interaction_id').value = interactionId;
+    document.getElementById('focused_assign_interaction_id').value = interactionId;
         console.log('Set interaction ID:', interactionId);
-        
-        const modal = new bootstrap.Modal(document.getElementById('focusedAssignModal'));
+    
+    const modal = new bootstrap.Modal(document.getElementById('focusedAssignModal'));
         console.log('Created modal instance:', modal);
-        modal.show();
+    modal.show();
         console.log('Modal show() called');
     } catch (error) {
         console.error('Error opening Focused Assign Modal:', error);
@@ -1739,13 +1739,13 @@ function fetchDefaultInteractionMode(interactionId, selectElementId) {
 // Show Reschedule Modal (Self-Reschedule Only)
 function showRescheduleModal(interactionId, visitorName, purpose, studentName) {
     try {
-        document.getElementById('reschedule_interaction_id').value = interactionId;
-        
+    document.getElementById('reschedule_interaction_id').value = interactionId;
+    
         // Fetch default interaction mode (non-blocking)
         fetchDefaultInteractionMode(interactionId, 'rescheduleInteractionMode');
-        
-        const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
-        modal.show();
+    
+    const modal = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+    modal.show();
     } catch (error) {
         console.error('Error opening Reschedule Modal:', error);
         alert('Error opening modal. Please try again.');
@@ -1838,136 +1838,136 @@ document.addEventListener('DOMContentLoaded', function() {
     const simpleRemarkForm = document.getElementById('simpleRemarkForm');
     if (simpleRemarkForm) {
         simpleRemarkForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const interactionId = document.getElementById('simple_interaction_id').value;
-            const formData = new FormData(this);
-            
-            fetch(`{{ url('staff/update-remark') }}/${interactionId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
+    e.preventDefault();
+    const interactionId = document.getElementById('simple_interaction_id').value;
+    const formData = new FormData(this);
+    
+    fetch(`{{ url('staff/update-remark') }}/${interactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
             .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('simpleRemarkModal')).hide();
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('simpleRemarkModal')).hide();
                     // Show success message and reload
                     showSuccessMessage('Remark added successfully!');
                     setTimeout(() => window.location.reload(), 1000);
-                } else {
+        } else {
                     alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
                 alert('Error: Failed to add remark');
-            });
-        });
+    });
+});
     }
 
     // Handle focused assignment form submission
     const focusedAssignForm = document.getElementById('focusedAssignForm');
     if (focusedAssignForm) {
         focusedAssignForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const interactionId = formData.get('interaction_id');
-            
-            fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('focusedAssignModal')).hide();
+    e.preventDefault();
+    const formData = new FormData(this);
+    const interactionId = formData.get('interaction_id');
+    
+    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('focusedAssignModal')).hide();
                     // Show success message and reload
                     showSuccessMessage('Interaction assigned successfully!');
                     setTimeout(() => window.location.reload(), 1000);
-                } else {
+        } else {
                     alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error: Failed to assign interaction');
-            });
-        });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: Failed to assign interaction');
+    });
+});
     }
 
     // Handle reschedule form submission
     const rescheduleForm = document.getElementById('rescheduleForm');
     if (rescheduleForm) {
         rescheduleForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            const interactionId = formData.get('interaction_id');
-            formData.append('schedule_assignment', '1');
-            
-            fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('rescheduleModal')).hide();
+    e.preventDefault();
+    const formData = new FormData(this);
+    const interactionId = formData.get('interaction_id');
+    formData.append('schedule_assignment', '1');
+    
+    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('rescheduleModal')).hide();
                     // Show success message and reload
                     showSuccessMessage('Interaction rescheduled successfully!');
                     setTimeout(() => window.location.reload(), 1000);
-                } else {
+        } else {
                     alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error: Failed to reschedule interaction');
-            });
-        });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: Failed to reschedule interaction');
+    });
+});
     }
 
     // Handle complete session form submission
     const completeSessionForm = document.getElementById('completeSessionForm');
     if (completeSessionForm) {
         completeSessionForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
+    e.preventDefault();
+    const formData = new FormData(this);
             const sessionId = formData.get('session_id');
-            
-            fetch(`{{ url('staff/complete-session') }}/${sessionId}`, {
-                method: 'POST',
-                headers: {
+    
+    fetch(`{{ url('staff/complete-session') }}/${sessionId}`, {
+        method: 'POST',
+        headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('completeSessionModal')).hide();
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('completeSessionModal')).hide();
                     showSuccessMessage('Session completed successfully!');
                     setTimeout(() => window.location.reload(), 1000);
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error: Failed to complete session');
-            });
-        });
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: Failed to complete session');
+    });
+});
     }
 
     // Handle file upload form submission
@@ -1986,37 +1986,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (addPhoneForm) {
         addPhoneForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const phoneNumber = document.getElementById('newPhoneNumber').value;
-            const visitorId = {{ $visitor->visitor_id }};
-            const url = `/staff/visitor/${visitorId}/add-phone`;
-            
-            const formData = new FormData();
-            formData.append('phone_number', phoneNumber);
-            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-            
-            fetch(url, {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                return response.json();
-            })
-            .then(data => {
-                if (data.success) {
-                    alert('Phone number added successfully!');
-                    bootstrap.Modal.getInstance(document.getElementById('addPhoneModal')).hide();
-                    location.reload();
-                } else {
-                    // Show the actual error message from server
-                    alert('Error: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error details:', error);
-                alert('Error: Failed to add phone number - Please try again');
-            });
+    e.preventDefault();
+    
+    const phoneNumber = document.getElementById('newPhoneNumber').value;
+    const visitorId = {{ $visitor->visitor_id }};
+    const url = `/staff/visitor/${visitorId}/add-phone`;
+    
+    const formData = new FormData();
+    formData.append('phone_number', phoneNumber);
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            alert('Phone number added successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addPhoneModal')).hide();
+            location.reload();
+        } else {
+            // Show the actual error message from server
+            alert('Error: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error details:', error);
+        alert('Error: Failed to add phone number - Please try again');
+    });
         });
     }
 
@@ -2078,13 +2078,13 @@ document.addEventListener('DOMContentLoaded', function() {
 // File Upload Modal Functions
 function openFileUploadModal(interactionId) {
     try {
-        document.getElementById('upload_interaction_id').value = interactionId;
+    document.getElementById('upload_interaction_id').value = interactionId;
         // Clear file input and file info display
         document.getElementById('fileInput').value = '';
-        document.getElementById('fileInfo').style.display = 'none';
-        document.getElementById('uploadBtn').disabled = true;
-        const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
-        modal.show();
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('uploadBtn').disabled = true;
+    const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
+    modal.show();
     } catch (error) {
         console.error('Error opening File Upload Modal:', error);
         alert('Error opening modal. Please try again.');
@@ -2290,7 +2290,7 @@ function submitFileUpload() {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="privacy_level" id="privacy_public" value="public" onchange="updateNotificationPrivacy()">
+                                <input class="form-check-input" type="radio" name="privacy_level" id="privacy_public" value="public">
                                 <label class="form-check-label" for="privacy_public">
                                     <strong>Public</strong><br>
                                     <small class="text-muted">All subscribed staff receive notifications</small>
@@ -2299,7 +2299,7 @@ function submitFileUpload() {
                         </div>
                         <div class="col-md-6">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="privacy_level" id="privacy_private" value="private" onchange="updateNotificationPrivacy()">
+                                <input class="form-check-input" type="radio" name="privacy_level" id="privacy_private" value="private">
                                 <label class="form-check-label" for="privacy_private">
                                     <strong>Private</strong><br>
                                     <small class="text-muted">Only current assignee and directors get notifications</small>
@@ -2343,7 +2343,10 @@ function submitFileUpload() {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times me-1"></i>Close
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveNotificationChanges()">
+                    <i class="fas fa-save me-1"></i>Save and Close
                 </button>
             </div>
         </div>
@@ -2517,6 +2520,7 @@ function populateNotificationModal(data, interactionId) {
     data.subscribed_users.forEach(user => {
         const userItem = document.createElement('div');
         userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        userItem.setAttribute('data-user-id', user.user_id);
         userItem.innerHTML = `
             <div>
                 <strong>${user.name}</strong>
@@ -2539,6 +2543,7 @@ function populateNotificationModal(data, interactionId) {
     data.available_staff.forEach(staff => {
         const staffItem = document.createElement('div');
         staffItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        staffItem.setAttribute('data-user-id', staff.user_id);
         staffItem.innerHTML = `
             <div>
                 <strong>${staff.name}</strong>
@@ -2557,95 +2562,151 @@ function populateNotificationModal(data, interactionId) {
 }
 
 function addUserToNotifications(userId) {
-    const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
+    // Move user from available list to subscribed list (UI only)
+    const availableList = document.getElementById('availableStaffList');
+    const subscribedList = document.getElementById('subscribedUsersList');
     
-    fetch('/staff/notifications/subscribe', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            interaction_id: interactionId,
-            user_id: userId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Reload the modal data
-            showNotificationModal(interactionId);
-        } else {
-            alert('Failed to add user: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error adding user:', error);
-        alert('Error adding user to notifications');
-    });
+    // Find the user item in available list
+    const userItem = availableList.querySelector(`[data-user-id="${userId}"]`);
+    if (userItem) {
+        // Clone the item and modify it for subscribed list
+        const clonedItem = userItem.cloneNode(true);
+        
+        // Change the button from + to ×
+        const button = clonedItem.querySelector('button');
+        button.innerHTML = '<i class="fas fa-times"></i>';
+        button.className = 'btn btn-sm btn-outline-danger';
+        button.onclick = () => removeUserFromNotifications(userId);
+        
+        // Add to subscribed list
+        subscribedList.appendChild(clonedItem);
+        
+        // Remove from available list
+        userItem.remove();
+    }
 }
 
 function removeUserFromNotifications(userId) {
-    const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
+    // Move user from subscribed list to available list (UI only)
+    const availableList = document.getElementById('availableStaffList');
+    const subscribedList = document.getElementById('subscribedUsersList');
     
-    if (!confirm('Are you sure you want to remove this user from notifications?')) {
-        return;
+    // Find the user item in subscribed list
+    const userItem = subscribedList.querySelector(`[data-user-id="${userId}"]`);
+    if (userItem) {
+        // Clone the item and modify it for available list
+        const clonedItem = userItem.cloneNode(true);
+        
+        // Change the button from × to +
+        const button = clonedItem.querySelector('button');
+        button.innerHTML = '<i class="fas fa-plus"></i>';
+        button.className = 'btn btn-sm btn-outline-success';
+        button.onclick = () => addUserToNotifications(userId);
+        
+        // Add to available list
+        availableList.appendChild(clonedItem);
+        
+        // Remove from subscribed list
+        userItem.remove();
     }
-    
-    fetch('/staff/notifications/unsubscribe', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            interaction_id: interactionId,
-            user_id: userId
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Reload the modal data
-            showNotificationModal(interactionId);
-        } else {
-            alert('Failed to remove user: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error removing user:', error);
-        alert('Error removing user from notifications');
-    });
 }
 
-function updateNotificationPrivacy() {
+function saveNotificationChanges() {
     const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
     const privacyLevel = document.querySelector('input[name="privacy_level"]:checked').value;
     
-    fetch('/staff/notifications/set-privacy', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            interaction_id: interactionId,
-            privacy_level: privacyLevel
+    // Get all currently subscribed users (from UI)
+    const subscribedUsers = Array.from(document.querySelectorAll('#subscribedUsersList [data-user-id]'))
+        .map(item => parseInt(item.getAttribute('data-user-id')));
+    
+    // Get all available users (from UI)
+    const availableUsers = Array.from(document.querySelectorAll('#availableStaffList [data-user-id]'))
+        .map(item => parseInt(item.getAttribute('data-user-id')));
+    
+    // Show loading state
+    const saveButton = document.querySelector('button[onclick="saveNotificationChanges()"]');
+    const originalText = saveButton.innerHTML;
+    saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+    saveButton.disabled = true;
+    
+    // Create promises for all API calls
+    const promises = [];
+    
+    // 1. Update privacy level
+    promises.push(
+        fetch('/staff/notifications/set-privacy', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                interaction_id: interactionId,
+                privacy_level: privacyLevel
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Reload the modal data to reflect privacy changes
-            showNotificationModal(interactionId);
-        } else {
-            alert('Failed to update privacy: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error updating privacy:', error);
-        alert('Error updating privacy settings');
+    );
+    
+    // 2. Subscribe new users
+    subscribedUsers.forEach(userId => {
+        promises.push(
+            fetch('/staff/notifications/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    interaction_id: interactionId,
+                    user_id: userId
+                })
+            })
+        );
     });
+    
+    // 3. Unsubscribe removed users
+    availableUsers.forEach(userId => {
+        promises.push(
+            fetch('/staff/notifications/unsubscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    interaction_id: interactionId,
+                    user_id: userId
+                })
+            })
+        );
+    });
+    
+    // Execute all API calls
+    Promise.all(promises)
+        .then(responses => Promise.all(responses.map(r => r.json())))
+        .then(results => {
+            // Check if all requests were successful
+            const allSuccess = results.every(result => result.success);
+            
+            if (allSuccess) {
+                // Close modal and reload page
+                bootstrap.Modal.getInstance(document.getElementById('notificationModal')).hide();
+                showSuccessMessage('Notification settings saved successfully!');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                // Show error message
+                const errors = results.filter(r => !r.success).map(r => r.message).join(', ');
+                alert('Some changes failed to save: ' + errors);
+                saveButton.innerHTML = originalText;
+                saveButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error saving notification changes:', error);
+            alert('Error saving notification changes');
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+        });
 }
 
 </script>
