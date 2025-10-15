@@ -234,6 +234,35 @@ console.log('🌍 Hostname:', window.location.hostname);
             font-size: 14px;
         }
         
+        /* Settings dropdown styling */
+        .sidebar .dropdown-menu {
+            background-color: #1a1d29;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+        }
+        
+        .sidebar .dropdown-item {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .dropdown-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+        
+        .sidebar .dropdown-item.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+        
+        .sidebar .dropdown-divider {
+            border-color: rgba(255, 255, 255, 0.1);
+            margin: 0.5rem 0;
+        }
+        
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
@@ -796,13 +825,30 @@ console.log('🌍 Hostname:', window.location.hostname);
                             <a class="nav-link {{ request()->routeIs('staff.assigned-to-me') ? 'active' : '' }}" href="{{ route('staff.assigned-to-me') }}" onclick="closeSidebar()">
                                 <i class="fas fa-user-check me-2"></i> Assigned Logs
                             </a>
-                            <!-- Push Notification Subscription Button -->
-                            <button class="nav-link btn btn-link text-start w-100 p-0" id="pushNotificationBtn" onclick="togglePushNotifications()">
-                                <i class="fas fa-bell me-2"></i> <span id="pushNotificationText">Enable Notifications</span>
-                            </button>
-                            <a class="nav-link {{ request()->routeIs('staff.change-password') ? 'active' : '' }}" href="{{ route('staff.change-password') }}" onclick="closeSidebar()">
-                                <i class="fas fa-key me-2"></i> Change Password
+                            <a class="nav-link {{ request()->routeIs('staff.notifications-dashboard') ? 'active' : '' }}" href="{{ route('staff.notifications-dashboard') }}" onclick="closeSidebar()">
+                                <i class="fas fa-bell me-2"></i> Notifications
+                                <span class="badge bg-danger ms-2" id="sidebarNotificationCount" style="display: none;">0</span>
                             </a>
+                            
+                            <!-- Settings Dropdown -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-cog me-2"></i> Settings
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li>
+                                        <button class="dropdown-item" id="pushNotificationBtn" onclick="togglePushNotifications()">
+                                            <i class="fas fa-wifi me-2"></i> <span id="pushNotificationText">Enable Push</span>
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item {{ request()->routeIs('staff.change-password') ? 'active' : '' }}" href="{{ route('staff.change-password') }}" onclick="closeSidebar()">
+                                            <i class="fas fa-key me-2"></i> Change Password
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         @endif
                         
                         <hr class="my-3">
@@ -1081,6 +1127,28 @@ console.log('🌍 Hostname:', window.location.hostname);
                 });
             }
         }, 2000);
+
+        // Update notification count in sidebar
+        function updateNotificationCount() {
+            fetch('/staff/notifications/count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.unread_count > 0) {
+                        const badge = document.getElementById('sidebarNotificationCount');
+                        if (badge) {
+                            badge.textContent = data.unread_count;
+                            badge.style.display = 'inline-block';
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching notification count:', error));
+        }
+
+        // Update notification count on page load and every 30 seconds
+        if (document.getElementById('sidebarNotificationCount')) {
+            updateNotificationCount();
+            setInterval(updateNotificationCount, 30000);
+        }
     </script>
     
     @yield('scripts')

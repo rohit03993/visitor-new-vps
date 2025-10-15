@@ -1,5 +1,5 @@
 // Service Worker - UNIFIED NOTIFICATION SYSTEM
-// Version: 4.0.0 - Firebase + PWA notifications enabled
+// Version: 5.0.0 - Firebase + PWA notifications enabled - CACHE BUSTED
 
 console.log('🔧 Service Worker loaded - UNIFIED NOTIFICATION SYSTEM');
 

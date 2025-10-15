@@ -101,6 +101,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/interactions/{interactionId}/remarks', [StaffController::class, 'getInteractionRemarks'])->name('get-interaction-remarks');
         Route::get('/interaction-details/{interactionId}', [StaffController::class, 'getInteractionDetails'])->name('interaction-details');
         Route::get('/visitor-profile/{visitorId}', [StaffController::class, 'showVisitorProfile'])->name('visitor-profile');
+        Route::get('/interaction/{interactionId}/visitor-profile', [StaffController::class, 'showVisitorProfileByInteraction'])->name('visitor-profile-by-interaction');
         
         // Session Management Routes
         Route::post('/complete-session/{sessionId}', [StaffController::class, 'completeSession'])->name('complete-session');
@@ -126,6 +127,18 @@ Route::get('/interaction/{interactionId}/default-mode', [StaffController::class,
         // Password Change Routes (NEW FEATURE)
         Route::get('/change-password', [StaffController::class, 'showChangePasswordForm'])->name('change-password');
         Route::post('/change-password', [StaffController::class, 'changePassword'])->name('change-password.store');
+        
+        // Notification Management Routes (NEW FEATURE)
+        Route::get('/notifications-dashboard', [StaffController::class, 'notificationsDashboard'])->name('notifications-dashboard');
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [App\Http\Controllers\InteractionNotificationController::class, 'getUserNotifications'])->name('list');
+            Route::get('/count', [App\Http\Controllers\InteractionNotificationController::class, 'getUnreadCount'])->name('count');
+            Route::post('/mark-read', [App\Http\Controllers\InteractionNotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::get('/subscribers/{interactionId}', [App\Http\Controllers\InteractionNotificationController::class, 'getSubscribers'])->name('subscribers');
+            Route::post('/subscribe', [App\Http\Controllers\InteractionNotificationController::class, 'subscribe'])->name('subscribe');
+            Route::post('/unsubscribe', [App\Http\Controllers\InteractionNotificationController::class, 'unsubscribe'])->name('unsubscribe');
+            Route::post('/set-privacy', [App\Http\Controllers\InteractionNotificationController::class, 'setPrivacy'])->name('set-privacy');
+        });
         
         // Test Notification Route (DEBUGGING)
         Route::get('/test-notification', function() {

@@ -362,8 +362,11 @@
                                                                         <button class="btn btn-sm btn-success" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                             <i class="fas fa-calendar-alt me-1"></i>Reschedule
                                                                         </button>
-                                                                        <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                        <button class="btn btn-sm btn-outline-success" onclick="openFileUploadModal({{ $interaction->interaction_id }})">
                                                                             <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                        </button>
+                                                                        <button class="btn btn-sm btn-outline-info" onclick="showNotificationModal({{ $interaction->interaction_id }})" title="Manage Notifications">
+                                                                            <i class="fas fa-bell me-1"></i>Notifications
                                                                         </button>
                                                                     </div>
                                                                 @else
@@ -375,7 +378,7 @@
                                                                                 Scheduled for {{ $interaction->scheduled_date ? \Carbon\Carbon::parse($interaction->scheduled_date)->format('M d, Y h:i A') : 'Invalid Date' }}
                                                                             </small>
                                                                             <div class="mt-1">
-                                                                                <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                <button class="btn btn-sm btn-outline-success" onclick="openFileUploadModal({{ $interaction->interaction_id }})">
                                                                                     <i class="fas fa-paperclip me-1"></i>Upload File
                                                                                 </button>
                                                                             </div>
@@ -383,7 +386,7 @@
                                                                     @else
                                                                         <!-- If remarks exist, just show the upload file button -->
                                                                         <div class="mt-2">
-                                                                            <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                            <button class="btn btn-sm btn-outline-success" onclick="openFileUploadModal({{ $interaction->interaction_id }})">
                                                                                 <i class="fas fa-paperclip me-1"></i>Upload File
                                                                             </button>
                                                                         </div>
@@ -392,7 +395,7 @@
                                                             @elseif($interaction->meeting_with == auth()->user()->user_id)
                                                                 <!-- Show Upload File button even after completion if assigned to current user -->
                                                                 <div class="mt-2">
-                                                                    <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                    <button class="btn btn-sm btn-outline-success" onclick="openFileUploadModal({{ $interaction->interaction_id }})">
                                                                         <i class="fas fa-paperclip me-1"></i>Upload File
                                                                     </button>
                                                                 </div>
@@ -425,8 +428,11 @@
                                                                     <button class="btn btn-sm btn-success" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                         <i class="fas fa-calendar-alt me-1"></i>Reschedule
                                                                     </button>
-                                                                    <button class="btn btn-sm btn-outline-success" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                    <button class="btn btn-sm btn-outline-success" onclick="openFileUploadModal({{ $interaction->interaction_id }})">
                                                                         <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                    </button>
+                                                                    <button class="btn btn-sm btn-outline-info" onclick="showNotificationModal({{ $interaction->interaction_id }})" title="Manage Notifications">
+                                                                        <i class="fas fa-bell me-1"></i>Notifications
                                                                     </button>
                                                                 </div>
                                                             @else
@@ -924,8 +930,11 @@
                                                                                             <button class="btn btn-success btn-sm" onclick="showRescheduleModal({{ $interaction->interaction_id }}, '{{ addslashes($interaction->name_entered) }}', '{{ addslashes($interaction->purpose) }}', '{{ addslashes($visitor->student_name) }}')">
                                                                                                 <i class="fas fa-calendar-alt me-1"></i>Reschedule
                                                                                             </button>
-                                                                                            <button class="btn btn-outline-success btn-sm" onclick="showFileUploadModal({{ $interaction->interaction_id }})">
+                                                                                            <button class="btn btn-outline-success btn-sm" onclick="openFileUploadModal({{ $interaction->interaction_id }})">
                                                                                                 <i class="fas fa-paperclip me-1"></i>Upload File
+                                                                                            </button>
+                                                                                            <button class="btn btn-outline-info btn-sm" onclick="showNotificationModal({{ $interaction->interaction_id }})" title="Manage Notifications">
+                                                                                                <i class="fas fa-bell me-1"></i>Notifications
                                                                                             </button>
                                                                                         </div>
                                                                                     </div>
@@ -1644,6 +1653,7 @@
 
 @section('scripts')
 <script>
+// VISITOR PROFILE SCRIPT - VERSION 2.0.0 - FIXED FILE UPLOAD AND NOTIFICATIONS
 // Show Remark Modal
 function showRemarkModal(interactionId, visitorName, purpose, studentName) {
     document.getElementById('interaction_id').value = interactionId;
@@ -1768,202 +1778,14 @@ function showAssignModal() {
     }, 300);
 }
 
-// Handle remark form submission
-document.getElementById('remarkForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const interactionId = document.getElementById('interaction_id').value;
-    const formData = new FormData(this);
-    
-    fetch(`{{ url('staff/update-remark') }}/${interactionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => {
-        // Check if response is ok (status 200-299)
-        if (response.ok) {
-            // Try to parse as JSON first
-            return response.json().catch(() => {
-                // If JSON parsing fails, assume success
-                return { success: true };
-            });
-        } else {
-            // If response is not ok, try to get error message
-            return response.json().catch(() => {
-                return { success: false, message: 'Server error' };
-            });
-        }
-    })
-    .then(data => {
-        if (data.success) {
-            alert('Remark added successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('remarkModal')).hide();
-            this.reset();
-            
-            // Reload page to show updated data
-            window.location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to add remark'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Even if there's an error, check if the remark was actually saved
-        // by reloading the page
-        alert('Remark may have been saved. Refreshing page...');
-        window.location.reload();
-    });
-});
+// All form event listeners moved to DOMContentLoaded section below
 
-// Handle assignment form submission
-document.getElementById('assignForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const interactionId = formData.get('interaction_id');
-    
-    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Interaction transferred successfully! Your interaction has been completed and a new interaction has been created for the assigned team member.');
-            bootstrap.Modal.getInstance(document.getElementById('assignModal')).hide();
-            window.location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to transfer interaction'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error: Failed to assign interaction');
-    });
-});
+// Handle assignment form submission - MOVED TO DOMContentLoaded
 
-// Handle Simple Remark Form Submission (New)
-document.getElementById('simpleRemarkForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const interactionId = document.getElementById('simple_interaction_id').value;
-    const formData = new FormData(this);
-    
-    fetch(`{{ url('staff/update-remark') }}/${interactionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => {
-        if (response.ok) {
-            return response.json().catch(() => {
-                return { success: true };
-            });
-        } else {
-            return response.json().catch(() => {
-                return { success: false, message: 'Server error' };
-            });
-        }
-    })
-    .then(data => {
-        if (data.success) {
-            alert('Remark added successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('simpleRemarkModal')).hide();
-            this.reset();
-            window.location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to add remark'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Remark may have been saved. Refreshing page...');
-        window.location.reload();
-    });
-});
+// Handle Simple Remark Form Submission - MOVED TO DOMContentLoaded
 
-// Handle Focused Assign Form Submission (New)
-document.getElementById('focusedAssignForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const interactionId = formData.get('interaction_id');
-    
-    console.log('Submitting assign form with interaction ID:', interactionId);
-    console.log('Form data:', Object.fromEntries(formData));
-    
-    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => {
-        console.log('Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success) {
-            alert('Interaction transferred successfully! Your interaction has been completed and a new interaction has been created for the assigned team member.');
-            bootstrap.Modal.getInstance(document.getElementById('focusedAssignModal')).hide();
-            window.location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to transfer interaction'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error: Failed to assign interaction - ' + error.message);
-    });
-});
-
-// Handle Reschedule Form Submission (New)
-document.getElementById('rescheduleForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(this);
-    const interactionId = formData.get('interaction_id');
-    
-    // Add scheduling flag for reschedule
-    formData.append('schedule_assignment', '1');
-    
-    fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Interaction rescheduled successfully! The interaction will appear in assignee\'s tab on the scheduled date and time.');
-            bootstrap.Modal.getInstance(document.getElementById('rescheduleModal')).hide();
-            window.location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to reschedule interaction'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error: Failed to reschedule interaction');
-    });
-});
+// Handle Focused Assign Form Submission - MOVED TO DOMContentLoaded
+// Handle Reschedule Form Submission - MOVED TO DOMContentLoaded
 
 // Session Completion Functions
 function completeSession(sessionId) {
@@ -2004,78 +1826,164 @@ function completeSession(sessionId) {
     });
 }
 
-// Handle session completion form submission
-document.getElementById('completeSessionForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const sessionId = document.getElementById('session_id').value;
-    const formData = new FormData(this);
-    
-    fetch(`{{ url('staff/complete-session') }}/${sessionId}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Session completed successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('completeSessionModal')).hide();
-            location.reload();
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error: Failed to complete session');
-    });
-});
+// Handle session completion form submission - MOVED TO DOMContentLoaded
+// Handle file upload form submission - MOVED TO DOMContentLoaded
 
 // ========== PHONE NUMBER MANAGEMENT (NEW FEATURE) ==========
 
 // Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Handle simple remark form submission
+    const simpleRemarkForm = document.getElementById('simpleRemarkForm');
+    if (simpleRemarkForm) {
+        simpleRemarkForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const interactionId = document.getElementById('simple_interaction_id').value;
+            const formData = new FormData(this);
+            
+            fetch(`{{ url('staff/update-remark') }}/${interactionId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('simpleRemarkModal')).hide();
+                    // Show success message and reload
+                    showSuccessMessage('Remark added successfully!');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: Failed to add remark');
+            });
+        });
+    }
+
+    // Handle focused assignment form submission
+    const focusedAssignForm = document.getElementById('focusedAssignForm');
+    if (focusedAssignForm) {
+        focusedAssignForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const interactionId = formData.get('interaction_id');
+            
+            fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('focusedAssignModal')).hide();
+                    // Show success message and reload
+                    showSuccessMessage('Interaction assigned successfully!');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: Failed to assign interaction');
+            });
+        });
+    }
+
+    // Handle reschedule form submission
+    const rescheduleForm = document.getElementById('rescheduleForm');
+    if (rescheduleForm) {
+        rescheduleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const interactionId = formData.get('interaction_id');
+            formData.append('schedule_assignment', '1');
+            
+            fetch(`{{ url('staff/assign-interaction') }}/${interactionId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('rescheduleModal')).hide();
+                    // Show success message and reload
+                    showSuccessMessage('Interaction rescheduled successfully!');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error: Failed to reschedule interaction');
+            });
+        });
+    }
+
+    // Handle file upload form submission
+    const fileUploadForm = document.getElementById('fileUploadForm');
+    if (fileUploadForm) {
+        fileUploadForm.addEventListener('submit', function(e) {
+            console.log('Form submit event triggered');
+            e.preventDefault();
+            console.log('About to call submitFileUpload');
+            submitFileUpload();
+        });
+    }
+
     // Add Phone Number Modal Handler
     const addPhoneForm = document.getElementById('addPhoneForm');
     
     if (addPhoneForm) {
         addPhoneForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const phoneNumber = document.getElementById('newPhoneNumber').value;
-    const visitorId = {{ $visitor->visitor_id }};
-    const url = `/staff/visitor/${visitorId}/add-phone`;
-    
-    
-    const formData = new FormData();
-    formData.append('phone_number', phoneNumber);
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-    
-    
-    fetch(url, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            alert('Phone number added successfully!');
-            bootstrap.Modal.getInstance(document.getElementById('addPhoneModal')).hide();
-            location.reload();
-        } else {
-            // Show the actual error message from server
-            alert('Error: ' + (data.message || 'Unknown error'));
-        }
-    })
-    .catch(error => {
-        console.error('Error details:', error);
-        alert('Error: Failed to add phone number - Please try again');
-    });
+            e.preventDefault();
+            
+            const phoneNumber = document.getElementById('newPhoneNumber').value;
+            const visitorId = {{ $visitor->visitor_id }};
+            const url = `/staff/visitor/${visitorId}/add-phone`;
+            
+            const formData = new FormData();
+            formData.append('phone_number', phoneNumber);
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    alert('Phone number added successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('addPhoneModal')).hide();
+                    location.reload();
+                } else {
+                    // Show the actual error message from server
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error details:', error);
+                alert('Error: Failed to add phone number - Please try again');
+            });
         });
     }
 
@@ -2135,10 +2043,11 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // File Upload Modal Functions
-function showFileUploadModal(interactionId) {
+function openFileUploadModal(interactionId) {
     try {
         document.getElementById('upload_interaction_id').value = interactionId;
-        // Only clear file info display, not the input itself
+        // Clear file input and file info display
+        document.getElementById('fileInput').value = '';
         document.getElementById('fileInfo').style.display = 'none';
         document.getElementById('uploadBtn').disabled = true;
         const modal = new bootstrap.Modal(document.getElementById('fileUploadModal'));
@@ -2168,10 +2077,16 @@ function handleFileSelect(input) {
 }
 
 function submitFileUpload() {
+    console.log('submitFileUpload function called');
     const fileInput = document.getElementById('fileInput');
     const interactionId = document.getElementById('upload_interaction_id').value;
     
-    if (!fileInput.files[0]) {
+    console.log('File input found:', fileInput);
+    console.log('Interaction ID:', interactionId);
+    console.log('Selected file:', fileInput ? fileInput.files[0] : 'NO FILE INPUT');
+    
+    if (!fileInput || !fileInput.files[0]) {
+        console.log('No file selected, showing alert');
         alert('Please select a file to upload.');
         return;
     }
@@ -2187,26 +2102,35 @@ function submitFileUpload() {
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
     
+    console.log('Starting fetch request to /staff/upload-attachment');
+    
     // Upload file
     fetch('/staff/upload-attachment', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response received:', response.status, response.statusText);
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
+            console.log('Upload successful, hiding modal');
             bootstrap.Modal.getInstance(document.getElementById('fileUploadModal')).hide();
             alert('File uploaded successfully!');
             window.location.reload(true);
         } else {
+            console.log('Upload failed:', data.message);
             alert('Upload failed: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Upload error:', error);
-        alert('Upload failed: Network error');
+        alert('Upload failed: Network error - ' + error.message);
     })
     .finally(() => {
+        console.log('Upload process finished, resetting button');
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = originalText;
     });
@@ -2316,7 +2240,90 @@ function submitFileUpload() {
 
 @include('staff.modals.file-upload')
 
+<!-- Notification Management Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationModalLabel">Manage Notifications</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Privacy Level Section -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-shield-alt me-2"></i>Privacy Level
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="privacy_level" id="privacy_public" value="public" onchange="updateNotificationPrivacy()">
+                                <label class="form-check-label" for="privacy_public">
+                                    <strong>Public</strong><br>
+                                    <small class="text-muted">All subscribed staff receive notifications</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="privacy_level" id="privacy_private" value="private" onchange="updateNotificationPrivacy()">
+                                <label class="form-check-label" for="privacy_private">
+                                    <strong>Private</strong><br>
+                                    <small class="text-muted">Only current assignee and directors get notifications</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subscribed Users Section -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-users me-2"></i>Currently Subscribed
+                    </h6>
+                    <div class="list-group" id="subscribedUsersList">
+                        <!-- Dynamic content will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Available Staff Section -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-user-plus me-2"></i>Add More Staff
+                    </h6>
+                    <div class="list-group" id="availableStaffList">
+                        <!-- Dynamic content will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Info Section -->
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>How it works:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Subscribed users receive notifications for all updates to this interaction</li>
+                        <li>Only the <strong>current assignee</strong> or <strong>admin</strong> can modify notification settings</li>
+                        <li><strong>Private mode</strong> restricts notifications to assignee and directors only</li>
+                        <li>Users are automatically subscribed when they create or get assigned interactions</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Global error handler for debugging
+window.addEventListener('error', function(e) {
+    console.error('Global JavaScript Error:', e.error);
+    console.error('Error details:', e.message, e.filename, e.lineno);
+});
+
 // Force modal centering on show
 document.addEventListener('DOMContentLoaded', function() {
     // Get all modals
@@ -2405,6 +2412,209 @@ window.addEventListener('resize', function() {
         }
     });
 });
+
+// ========== SUCCESS MESSAGE DISPLAY ==========
+
+function showSuccessMessage(message) {
+    // Create a temporary success message element
+    const successDiv = document.createElement('div');
+    successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    successDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Success!</strong> ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    // Add to page
+    document.body.appendChild(successDiv);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (successDiv.parentNode) {
+            successDiv.parentNode.removeChild(successDiv);
+        }
+    }, 3000);
+}
+
+// Notification Management Modal
+function showNotificationModal(interactionId) {
+    // Load notification settings for this interaction
+    fetch(`/staff/notifications/subscribers/${interactionId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Populate the modal with current settings
+                populateNotificationModal(data.data, interactionId);
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('notificationModal'));
+                modal.show();
+            } else {
+                alert('Failed to load notification settings: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading notification settings:', error);
+            alert('Error loading notification settings: ' + error.message);
+        });
+}
+
+function populateNotificationModal(data, interactionId) {
+    // Update modal title
+    document.getElementById('notificationModalLabel').textContent = `Manage Notifications - Interaction #${interactionId}`;
+    
+    // Set privacy level
+    const privacyRadios = document.querySelectorAll('input[name="privacy_level"]');
+    privacyRadios.forEach(radio => {
+        if (radio.value === data.privacy_level) {
+            radio.checked = true;
+        }
+    });
+    
+    // Clear and populate subscribed users list
+    const subscribedList = document.getElementById('subscribedUsersList');
+    subscribedList.innerHTML = '';
+    
+    data.subscribed_users.forEach(user => {
+        const userItem = document.createElement('div');
+        userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        userItem.innerHTML = `
+            <div>
+                <strong>${user.name}</strong>
+                <span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'} ms-2">${user.role}</span>
+                ${user.is_current_assignee ? '<span class="badge bg-success ms-1">Current Assignee</span>' : ''}
+                ${user.is_admin ? '<span class="badge bg-warning ms-1">Admin</span>' : ''}
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeUserFromNotifications(${user.user_id})" 
+                    ${!data.can_modify ? 'disabled' : ''}>
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        subscribedList.appendChild(userItem);
+    });
+    
+    // Clear and populate available staff list
+    const availableList = document.getElementById('availableStaffList');
+    availableList.innerHTML = '';
+    
+    data.available_staff.forEach(staff => {
+        const staffItem = document.createElement('div');
+        staffItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        staffItem.innerHTML = `
+            <div>
+                <strong>${staff.name}</strong>
+                <span class="badge bg-${staff.role === 'admin' ? 'danger' : 'primary'} ms-2">${staff.role}</span>
+            </div>
+            <button class="btn btn-sm btn-outline-success" onclick="addUserToNotifications(${staff.user_id})"
+                    ${!data.can_modify ? 'disabled' : ''}>
+                <i class="fas fa-plus"></i>
+            </button>
+        `;
+        availableList.appendChild(staffItem);
+    });
+    
+    // Store current interaction ID for form submission
+    document.getElementById('notificationModal').setAttribute('data-interaction-id', interactionId);
+}
+
+function addUserToNotifications(userId) {
+    const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
+    
+    fetch('/staff/notifications/subscribe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            interaction_id: interactionId,
+            user_id: userId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the modal data
+            showNotificationModal(interactionId);
+        } else {
+            alert('Failed to add user: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding user:', error);
+        alert('Error adding user to notifications');
+    });
+}
+
+function removeUserFromNotifications(userId) {
+    const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
+    
+    if (!confirm('Are you sure you want to remove this user from notifications?')) {
+        return;
+    }
+    
+    fetch('/staff/notifications/unsubscribe', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            interaction_id: interactionId,
+            user_id: userId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the modal data
+            showNotificationModal(interactionId);
+        } else {
+            alert('Failed to remove user: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error removing user:', error);
+        alert('Error removing user from notifications');
+    });
+}
+
+function updateNotificationPrivacy() {
+    const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
+    const privacyLevel = document.querySelector('input[name="privacy_level"]:checked').value;
+    
+    fetch('/staff/notifications/set-privacy', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            interaction_id: interactionId,
+            privacy_level: privacyLevel
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the modal data to reflect privacy changes
+            showNotificationModal(interactionId);
+        } else {
+            alert('Failed to update privacy: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating privacy:', error);
+        alert('Error updating privacy settings');
+    });
+}
+
 </script>
 
 @endsection

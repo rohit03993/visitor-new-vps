@@ -14,9 +14,25 @@ use App\Models\Remark;
 use App\Models\Branch;
 use App\Models\Course;
 use App\Models\StudentSession;
+use App\Services\NotificationService;
 
 class StaffController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
+    /**
+     * Show notifications dashboard
+     */
+    public function notificationsDashboard()
+    {
+        return view('staff.notifications');
+    }
+
     /**
      * Mask mobile number for staff privacy
      * Shows first 4 digits and last 2 digits, masks the middle
@@ -799,6 +815,13 @@ class StaffController extends Controller
             $this->handleVisitorFileUploads($request->visitor_files, $interaction->interaction_id, $user->user_id);
         }
 
+        // Auto-subscribe users to notifications for the new interaction
+        $this->notificationService->autoSubscribe(
+            $interaction->interaction_id,
+            $user->user_id, // Creator (current user)
+            $request->meeting_with // Assignee
+        );
+
         // Send notification to assigned staff member - UNIFIED FIREBASE SYSTEM
         $assignedUser = VmsUser::find($request->meeting_with);
         if ($assignedUser) {
@@ -886,6 +909,15 @@ class StaffController extends Controller
         if ($visitor) {
             $visitor->update(['last_updated_by' => $user->user_id]);
         }
+
+        // Send notification to all subscribed users about the remark
+        $visitorName = $visitor ? $visitor->name : 'Unknown Visitor';
+        $this->notificationService->sendNotification(
+            $interactionId,
+            $user->user_id,
+            'remark',
+            "{$user->name} added a remark to interaction '{$visitorName} - {$interaction->purpose}'"
+        );
 
         // Check if this is an AJAX request (from search results)
         if ($request->ajax() || $request->wantsJson()) {
@@ -1077,6 +1109,14 @@ class StaffController extends Controller
                 'completed_by' => auth()->user()->user_id,
             ]);
 
+            // Clear notifications for all completed interactions in this session
+            foreach ($session->interactions as $interaction) {
+                $this->notificationService->clearSubscriptionsForCompletedCase(
+                    $interaction->visitor_id,
+                    $interaction->purpose
+                );
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Session completed successfully!'
@@ -1192,6 +1232,25 @@ class StaffController extends Controller
                 'success' => false,
                 'message' => 'Error loading interaction details: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Show visitor profile by interaction ID (for notifications)
+     */
+    public function showVisitorProfileByInteraction($interactionId)
+    {
+        try {
+            // Get the interaction to find the visitor ID
+            $interaction = InteractionHistory::findOrFail($interactionId);
+            
+            // Redirect to the visitor profile page with the visitor ID
+            return redirect()->route('staff.visitor-profile', ['visitorId' => $interaction->visitor_id]);
+            
+        } catch (\Exception $e) {
+            \Log::error('showVisitorProfileByInteraction Error: ' . $e->getMessage());
+            return redirect()->route('staff.assigned-to-me')
+                ->with('error', 'Interaction not found.');
         }
     }
 
@@ -1439,6 +1498,24 @@ class StaffController extends Controller
                     \Log::error("Unified Firebase notification error for transfer {$newInteraction->interaction_id}: " . $e->getMessage());
                 }
             }
+
+            // Auto-subscribe users to notifications for the new interaction
+            $this->notificationService->autoSubscribe(
+                $newInteraction->interaction_id,
+                $user->user_id, // Creator (current user)
+                $request->team_member_id // Assignee
+            );
+
+            // Send notification to all subscribed users about the assignment
+            $visitor = \App\Models\Visitor::find($interaction->visitor_id);
+            $visitorName = $visitor ? $visitor->name : 'Unknown Visitor';
+            
+            $this->notificationService->sendNotification(
+                $newInteraction->interaction_id,
+                $user->user_id,
+                'assignment',
+                "{$user->name} assigned interaction '{$visitorName} - {$interaction->purpose}' to {$targetMember->name}"
+            );
 
             // Log the assignment
             \Log::info("Interaction {$interactionId} transferred from user {$user->user_id} to user {$request->team_member_id}. New interaction ID: {$newInteraction->interaction_id}");
