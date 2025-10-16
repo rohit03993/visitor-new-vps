@@ -347,7 +347,8 @@ function markAllAsRead() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            loadNotifications(); // Reload to show updated state
+            // Reload the entire page to show updated state
+            window.location.reload();
         }
     })
     .catch(error => {

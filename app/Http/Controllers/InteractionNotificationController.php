@@ -29,6 +29,7 @@ class InteractionNotificationController extends Controller
         $canModify = ($interaction->meeting_with === $user->user_id) || ($user->role === 'admin');
 
         $subscriptions = \App\Models\InteractionNotification::where('interaction_id', $interactionId)
+            ->where('is_active', true) // ✅ Only get active subscriptions
             ->with('user:user_id,name,role')
             ->get();
 

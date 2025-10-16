@@ -16,17 +16,57 @@ class NotificationService
     public function subscribeUser(int $interactionId, int $userId, string $subscribedBy = 'manual'): bool
     {
         try {
-            InteractionNotification::updateOrCreate(
-                [
+            // ✅ DUPLICATE PREVENTION: Check if user is already actively subscribed
+            $existingActiveSubscription = InteractionNotification::where('interaction_id', $interactionId)
+                ->where('user_id', $userId)
+                ->where('is_active', true)
+                ->first();
+            
+            if ($existingActiveSubscription) {
+                \Log::info("User {$userId} already actively subscribed to interaction {$interactionId}, skipping duplicate subscription");
+                return true; // Return true since they're already subscribed
+            }
+            
+            // ✅ SMART LOGIC: Handle inactive subscriptions based on subscription type
+            $existingSubscription = InteractionNotification::where('interaction_id', $interactionId)
+                ->where('user_id', $userId)
+                ->first();
+            
+            if ($existingSubscription) {
+                // If subscription exists but is inactive
+                if (!$existingSubscription->is_active) {
+                    // ✅ MANUAL SUBSCRIPTIONS: Allow manual subscriptions to re-activate inactive subscriptions
+                    if ($subscribedBy === 'manual' || $subscribedBy === 'admin') {
+                        $existingSubscription->update([
+                            'subscribed_by' => $subscribedBy,
+                            'is_active' => true,
+                            'subscribed_at' => now()
+                        ]);
+                        \Log::info("Re-activated inactive subscription for user {$userId} to interaction {$interactionId} via manual subscription");
+                        return true;
+                    } else {
+                        // ✅ AUTO SUBSCRIPTIONS: Don't re-activate inactive subscriptions (respect unsubscribe decisions)
+                        \Log::info("User {$userId} has inactive subscription for interaction {$interactionId} - respecting unsubscribe decision, not re-activating via auto-subscription");
+                        return false;
+                    }
+                }
+                // If subscription exists and is active, update it
+                $existingSubscription->update([
+                    'subscribed_by' => $subscribedBy,
+                    'subscribed_at' => now()
+                ]);
+            } else {
+                // Create new subscription
+                InteractionNotification::create([
                     'interaction_id' => $interactionId,
-                    'user_id' => $userId
-                ],
-                [
+                    'user_id' => $userId,
                     'subscribed_by' => $subscribedBy,
                     'is_active' => true,
                     'subscribed_at' => now()
-                ]
-            );
+                ]);
+            }
+            
+            \Log::info("Successfully subscribed user {$userId} to interaction {$interactionId} with subscribed_by: {$subscribedBy}");
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to subscribe user to notifications: ' . $e->getMessage());
@@ -42,7 +82,7 @@ class NotificationService
         try {
             InteractionNotification::where('interaction_id', $interactionId)
                 ->where('user_id', $userId)
-                ->delete();
+                ->update(['is_active' => false]); // ✅ Mark as inactive instead of delete to preserve unsubscribe history
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to unsubscribe user from notifications: ' . $e->getMessage());
@@ -182,22 +222,44 @@ class NotificationService
                     return !in_array($userId, $excludeUserIds);
                 });
 
-            // Subscribe each previous worker
+            // Subscribe each previous worker ONLY if they were never manually unsubscribed
             foreach ($previousWorkers as $userId) {
-                // Check if user is already manually subscribed to preserve their original subscription
-                $existingManualSubscription = InteractionNotification::where('interaction_id', $interactionId)
+                // Check if user is already subscribed to current interaction
+                $existingSubscription = InteractionNotification::where('interaction_id', $interactionId)
                     ->where('user_id', $userId)
-                    ->where('subscribed_by', 'manual')
                     ->first();
                 
-                if (!$existingManualSubscription) {
+                if ($existingSubscription) {
+                    \Log::info("User {$userId} already subscribed to interaction {$interactionId}, skipping");
+                    continue;
+                }
+
+                // ✅ ENHANCED LOGIC: Check if user was ever manually unsubscribed from this visitor/purpose
+                $wasEverUnsubscribed = InteractionNotification::whereHas('interaction', function($q) use ($visitorId, $purpose) {
+                    $q->where('visitor_id', $visitorId)->where('purpose', $purpose);
+                })->where('user_id', $userId)
+                  ->where('is_active', false)
+                  ->where('subscribed_by', 'manual')
+                  ->exists();
+                
+                // ✅ ADDITIONAL CHECK: If user was recently unsubscribed (within last 24 hours), don't auto-subscribe
+                $recentlyUnsubscribed = InteractionNotification::whereHas('interaction', function($q) use ($visitorId, $purpose) {
+                    $q->where('visitor_id', $visitorId)->where('purpose', $purpose);
+                })->where('user_id', $userId)
+                  ->where('is_active', false)
+                  ->where('updated_at', '>=', now()->subHours(24)) // Check if unsubscribed within last 24 hours
+                  ->exists();
+                
+                // Only auto-subscribe if they were never manually unsubscribed AND not recently unsubscribed
+                if (!$wasEverUnsubscribed && !$recentlyUnsubscribed) {
                     $this->subscribeUser($interactionId, $userId, 'manual');
+                    \Log::info("Auto-subscribed user {$userId} to interaction {$interactionId} - no previous unsubscribe history");
                 } else {
-                    \Log::info("Preserved existing manual subscription for user {$userId} in interaction {$interactionId}");
+                    \Log::info("Skipped auto-subscription for user {$userId} - was previously or recently manually unsubscribed from visitor {$visitorId} purpose {$purpose}");
                 }
             }
 
-            \Log::info("Auto-subscribed {$previousWorkers->count()} previous workers for interaction {$interactionId}");
+            \Log::info("Auto-subscription completed for interaction {$interactionId}, respecting unsubscribe history");
 
         } catch (\Exception $e) {
             \Log::error('Failed to subscribe previous workers: ' . $e->getMessage());
@@ -210,7 +272,7 @@ class NotificationService
     public function getSubscribers(int $interactionId): array
     {
         return InteractionNotification::where('interaction_id', $interactionId)
-            ->where('is_active', true)
+            ->where('is_active', true) // ✅ Only return active subscriptions
             ->with('user')
             ->get()
             ->toArray();
@@ -287,6 +349,50 @@ class NotificationService
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to clear subscriptions for completed case: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Copy manual subscriptions from one interaction to another
+     */
+    public function copyManualSubscriptions(int $fromInteractionId, int $toInteractionId): bool
+    {
+        try {
+            // Get all active manual subscriptions from the source interaction
+            $manualSubscriptions = InteractionNotification::where('interaction_id', $fromInteractionId)
+                ->where('subscribed_by', 'manual')
+                ->where('is_active', true)
+                ->get();
+
+            \Log::info("Copying {$manualSubscriptions->count()} manual subscriptions from interaction {$fromInteractionId} to {$toInteractionId}");
+
+            foreach ($manualSubscriptions as $subscription) {
+                // Check if user is already subscribed to the new interaction (avoid duplicates)
+                $alreadySubscribed = InteractionNotification::where('interaction_id', $toInteractionId)
+                    ->where('user_id', $subscription->user_id)
+                    ->where('is_active', true)
+                    ->exists();
+                
+                if (!$alreadySubscribed) {
+                    // Copy the subscription to the new interaction
+                    $this->subscribeUser($toInteractionId, $subscription->user_id, 'manual');
+                    
+                    // Send immediate notification to the copied subscriber
+                    $this->sendImmediateSubscriptionNotification(
+                        $toInteractionId,
+                        $subscription->user_id,
+                        auth()->user()->user_id
+                    );
+                } else {
+                    \Log::info("User {$subscription->user_id} already subscribed to interaction {$toInteractionId}, skipping duplicate subscription");
+                }
+            }
+
+            \Log::info("Successfully copied manual subscriptions from interaction {$fromInteractionId} to {$toInteractionId}");
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Failed to copy manual subscriptions: ' . $e->getMessage());
             return false;
         }
     }

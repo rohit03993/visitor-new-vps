@@ -2559,6 +2559,10 @@ function populateNotificationModal(data, interactionId) {
     
     // Store current interaction ID for form submission
     document.getElementById('notificationModal').setAttribute('data-interaction-id', interactionId);
+    
+    // ✅ STORE ORIGINAL STATE: Save the original subscribed users for comparison
+    const originalSubscribedUsers = data.subscribed_users.map(user => user.user_id);
+    document.getElementById('notificationModal').setAttribute('data-original-subscribed', JSON.stringify(originalSubscribedUsers));
 }
 
 function addUserToNotifications(userId) {
@@ -2615,13 +2619,35 @@ function saveNotificationChanges() {
     const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
     const privacyLevel = document.querySelector('input[name="privacy_level"]:checked').value;
     
-    // Get all currently subscribed users (from UI)
-    const subscribedUsers = Array.from(document.querySelectorAll('#subscribedUsersList [data-user-id]'))
+    // Get original state (stored when modal was opened)
+    const originalSubscribedUsers = JSON.parse(document.getElementById('notificationModal').getAttribute('data-original-subscribed') || '[]');
+    
+    // Get current state (from UI)
+    const currentSubscribedUsers = Array.from(document.querySelectorAll('#subscribedUsersList [data-user-id]'))
         .map(item => parseInt(item.getAttribute('data-user-id')));
     
-    // Get all available users (from UI)
-    const availableUsers = Array.from(document.querySelectorAll('#availableStaffList [data-user-id]'))
+    const currentAvailableUsers = Array.from(document.querySelectorAll('#availableStaffList [data-user-id]'))
         .map(item => parseInt(item.getAttribute('data-user-id')));
+    
+    // ✅ FIX: Calculate what actually changed
+    const newlySubscribedUsers = currentSubscribedUsers.filter(userId => !originalSubscribedUsers.includes(userId));
+    const newlyUnsubscribedUsers = originalSubscribedUsers.filter(userId => !currentSubscribedUsers.includes(userId));
+    
+    console.log('=== NOTIFICATION SAVE DEBUG ===');
+    console.log('Original subscribed:', originalSubscribedUsers);
+    console.log('Current subscribed:', currentSubscribedUsers);
+    console.log('Newly subscribed:', newlySubscribedUsers);
+    console.log('Newly unsubscribed:', newlyUnsubscribedUsers);
+    console.log('=== END DEBUG ===');
+    
+    // ✅ ADDITIONAL DEBUG: Show alert if no changes detected
+    if (newlySubscribedUsers.length === 0 && newlyUnsubscribedUsers.length === 0) {
+        console.log('No changes detected - skipping API calls');
+        alert('No changes detected. No notifications will be sent.');
+        saveButton.innerHTML = originalText;
+        saveButton.disabled = false;
+        return;
+    }
     
     // Show loading state
     const saveButton = document.querySelector('button[onclick="saveNotificationChanges()"]');
@@ -2647,8 +2673,8 @@ function saveNotificationChanges() {
         })
     );
     
-    // 2. Subscribe new users
-    subscribedUsers.forEach(userId => {
+    // ✅ FIX: 2. Subscribe ONLY newly added users (not all subscribed users)
+    newlySubscribedUsers.forEach(userId => {
         promises.push(
             fetch('/staff/notifications/subscribe', {
                 method: 'POST',
@@ -2664,8 +2690,8 @@ function saveNotificationChanges() {
         );
     });
     
-    // 3. Unsubscribe removed users
-    availableUsers.forEach(userId => {
+    // ✅ FIX: 3. Unsubscribe ONLY newly removed users (not all available users)
+    newlyUnsubscribedUsers.forEach(userId => {
         promises.push(
             fetch('/staff/notifications/unsubscribe', {
                 method: 'POST',

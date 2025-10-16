@@ -874,6 +874,7 @@ class StaffController extends Controller
 
     public function updateRemark(Request $request, $interactionId)
     {
+        \Log::info("🔔 UPDATE REMARK CALLED - Interaction: {$interactionId}, User: " . auth()->user()->user_id);
         
         $request->validate([
             'remark_text' => 'required|string|max:1000',
@@ -915,6 +916,7 @@ class StaffController extends Controller
 
         // Send notification to all subscribed users about the remark
         $visitorName = $visitor ? $visitor->name : 'Unknown Visitor';
+        \Log::info("🔔 SENDING NOTIFICATION FOR REMARK - Interaction: {$interactionId}, Message: {$user->name} added a remark to interaction '{$visitorName} - {$interaction->purpose}'");
         $this->notificationService->sendNotification(
             $interactionId,
             $user->user_id,
@@ -1509,15 +1511,28 @@ class StaffController extends Controller
                 $request->team_member_id // Assignee
             );
 
+            // 🔔 COPY MANUAL SUBSCRIPTIONS: Copy manual subscriptions from original to new interaction
+            $this->notificationService->copyManualSubscriptions(
+                $interactionId, // Original interaction
+                $newInteraction->interaction_id // New interaction
+            );
+
             // Send notification to all subscribed users about the assignment
             $visitor = \App\Models\Visitor::find($interaction->visitor_id);
             $visitorName = $visitor ? $visitor->name : 'Unknown Visitor';
             
+            // Determine notification type based on reschedule vs assignment
+            $notificationType = $isRescheduling ? 'reschedule' : 'assignment';
+            $notificationMessage = $isRescheduling ? 
+                "{$user->name} rescheduled interaction '{$visitorName} - {$interaction->purpose}'" :
+                "{$user->name} assigned interaction '{$visitorName} - {$interaction->purpose}' to {$targetMember->name}";
+            
+            // 🔔 SEND NOTIFICATION TO NEW INTERACTION ONLY: All subscribers are now on the new interaction
             $this->notificationService->sendNotification(
                 $newInteraction->interaction_id,
                 $user->user_id,
-                'assignment',
-                "{$user->name} assigned interaction '{$visitorName} - {$interaction->purpose}' to {$targetMember->name}"
+                $notificationType,
+                $notificationMessage
             );
 
             // Log the assignment
@@ -2009,16 +2024,25 @@ class StaffController extends Controller
                 );
             }
 
-            // Add additional subscribers if provided
-            if ($request->has('additional_subscribers') && is_array($request->additional_subscribers)) {
-                foreach ($request->additional_subscribers as $userId) {
-                    $this->notificationService->subscribeUser(
+        // Add additional subscribers if provided
+        if ($request->has('additional_subscribers') && is_array($request->additional_subscribers)) {
+            foreach ($request->additional_subscribers as $userId) {
+                $success = $this->notificationService->subscribeUser(
+                    $interactionId,
+                    $userId,
+                    'manual'
+                );
+                
+                // 🔔 IMMEDIATE NOTIFICATION: Send notification to newly subscribed user
+                if ($success) {
+                    $this->notificationService->sendImmediateSubscriptionNotification(
                         $interactionId,
                         $userId,
-                        'manual'
+                        auth()->user()->user_id // The user who is submitting the form
                     );
                 }
             }
+        }
 
             \Log::info("Notification settings applied for interaction {$interactionId}: Privacy={$request->privacy_level}, Additional subscribers=" . count($request->additional_subscribers ?? []));
 

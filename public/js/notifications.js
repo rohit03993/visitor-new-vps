@@ -670,25 +670,25 @@ class NotificationSystem {
         try {
             // Enhanced notification options with mobile support
             const notificationOptions = {
-                body: notification.message,
-                icon: '/favicon.ico',
-                badge: '/favicon.ico',
+            body: notification.message,
+            icon: '/favicon.ico',
+            badge: '/favicon.ico',
                 tag: notification.type + '_' + Date.now(),
                 requireInteraction: this.isMobileDevice() ? true : false, // Keep open longer on mobile
                 silent: false,
                 vibrate: this.isMobileDevice() ? [200, 100, 200, 100, 200] : [200, 100, 200],
                 data: notification.data || {},
                 actions: this.isMobileDevice() ? [] : [
-                    {
-                        action: 'view',
-                        title: 'View Details'
-                    },
-                    {
-                        action: 'dismiss',
-                        title: 'Dismiss'
-                    }
-                ]
-            };
+                {
+                    action: 'view',
+                    title: 'View Details'
+                },
+                {
+                    action: 'dismiss',
+                    title: 'Dismiss'
+                }
+            ]
+        };
 
             // Use direct Notification API
             const desktopNotification = new Notification(notification.title, notificationOptions);
@@ -699,7 +699,7 @@ class NotificationSystem {
                 
                 // Focus window and close notification
                 if (window.focus) {
-                    window.focus();
+                window.focus();
                 }
                 desktopNotification.close();
                 
@@ -710,7 +710,7 @@ class NotificationSystem {
                     // For mobile, try to open in app if installed
                     if (this.isMobileDevice()) {
                         this.handleMobileNotificationClick(notification);
-                    }
+                }
                 }
             }.bind(this);
 
