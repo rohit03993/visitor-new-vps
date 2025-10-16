@@ -2324,22 +2324,17 @@ function submitFileUpload() {
                     <h6 class="fw-bold mb-3">
                         <i class="fas fa-user-plus me-2"></i>Add More Staff
                     </h6>
-                    <div class="list-group" id="availableStaffList">
-                        <!-- Dynamic content will be loaded here -->
+                    <div class="form-group">
+                        <select id="availableStaffDropdown" class="form-select" multiple style="width: 100%; height: 120px;">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                        <small class="form-text text-muted mt-2">Select staff members to add to notifications (Hold Ctrl to select multiple)</small>
+                        <button type="button" id="addSelectedStaff" class="btn btn-primary btn-sm mt-2" onclick="addSelectedStaffToNotifications()">
+                            <i class="fas fa-plus me-1"></i>Add Selected
+                        </button>
                     </div>
                 </div>
 
-                <!-- Info Section -->
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>How it works:</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>Subscribed users receive notifications for all updates to this interaction</li>
-                        <li>Only the <strong>current assignee</strong> or <strong>admin</strong> can modify notification settings</li>
-                        <li><strong>Private mode</strong> restricts notifications to assignee and directors only</li>
-                        <li>Users are automatically subscribed when they create or get assigned interactions</li>
-                    </ul>
-                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -2536,26 +2531,33 @@ function populateNotificationModal(data, interactionId) {
         subscribedList.appendChild(userItem);
     });
     
-    // Clear and populate available staff list
-    const availableList = document.getElementById('availableStaffList');
-    availableList.innerHTML = '';
-    
-    data.available_staff.forEach(staff => {
-        const staffItem = document.createElement('div');
-        staffItem.className = 'list-group-item d-flex justify-content-between align-items-center';
-        staffItem.setAttribute('data-user-id', staff.user_id);
-        staffItem.innerHTML = `
-            <div>
-                <strong>${staff.name}</strong>
-                <span class="badge bg-${staff.role === 'admin' ? 'danger' : 'primary'} ms-2">${staff.role}</span>
-            </div>
-            <button class="btn btn-sm btn-outline-success" onclick="addUserToNotifications(${staff.user_id})"
-                    ${!data.can_modify ? 'disabled' : ''}>
-                <i class="fas fa-plus"></i>
-            </button>
-        `;
-        availableList.appendChild(staffItem);
-    });
+    // ✅ NEW: Initialize Select2 dropdown for available staff
+    const availableStaffDropdown = document.getElementById('availableStaffDropdown');
+    if (availableStaffDropdown) {
+        // Clear existing options
+        availableStaffDropdown.innerHTML = '';
+        
+        // Populate dropdown with available staff
+        console.log('📋 Available staff data:', data.available_staff);
+        data.available_staff.forEach(staff => {
+            const option = document.createElement('option');
+            option.value = staff.user_id;
+            option.textContent = `${staff.name} (${staff.role})`;
+            availableStaffDropdown.appendChild(option);
+        });
+        console.log(`✅ Added ${data.available_staff.length} staff options to dropdown`);
+        
+        // ✅ SIMPLIFIED: Basic multi-select dropdown (no Select2 dependency)
+        console.log('✅ Basic dropdown initialized');
+        
+        // Clear any previous selections
+        availableStaffDropdown.value = null;
+        
+        // Add disabled attribute if user cannot modify
+        if (!data.can_modify) {
+            availableStaffDropdown.disabled = true;
+        }
+    }
     
     // Store current interaction ID for form submission
     document.getElementById('notificationModal').setAttribute('data-interaction-id', interactionId);
@@ -2566,53 +2568,109 @@ function populateNotificationModal(data, interactionId) {
 }
 
 function addUserToNotifications(userId) {
-    // Move user from available list to subscribed list (UI only)
-    const availableList = document.getElementById('availableStaffList');
-    const subscribedList = document.getElementById('subscribedUsersList');
+    console.log(`🔄 addUserToNotifications called for user ${userId}`);
     
-    // Find the user item in available list
-    const userItem = availableList.querySelector(`[data-user-id="${userId}"]`);
-    if (userItem) {
-        // Clone the item and modify it for subscribed list
-        const clonedItem = userItem.cloneNode(true);
-        
-        // Change the button from + to ×
-        const button = clonedItem.querySelector('button');
-        button.innerHTML = '<i class="fas fa-times"></i>';
-        button.className = 'btn btn-sm btn-outline-danger';
-        button.onclick = () => removeUserFromNotifications(userId);
-        
-        // Add to subscribed list
-        subscribedList.appendChild(clonedItem);
-        
-        // Remove from available list
-        userItem.remove();
+    // ✅ FIXED: Work with dropdown system instead of list
+    const subscribedList = document.getElementById('subscribedUsersList');
+    const availableStaffDropdown = document.getElementById('availableStaffDropdown');
+    
+    // Get staff data from the dropdown options
+    const staffOption = availableStaffDropdown.querySelector(`option[value="${userId}"]`);
+    if (!staffOption) {
+        console.error('❌ Staff option not found in dropdown for user', userId);
+        return;
     }
+    
+    // Get staff name and role from option text
+    const staffText = staffOption.textContent;
+    console.log('📝 Staff text:', staffText);
+    const [name, role] = staffText.split(' (');
+    const cleanRole = role ? role.replace(')', '') : 'staff';
+    console.log('👤 Parsed name:', name, 'role:', cleanRole);
+    
+    // Create new subscribed user item
+    const userItem = document.createElement('div');
+    userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+    userItem.setAttribute('data-user-id', userId);
+    userItem.innerHTML = `
+        <div>
+            <strong>${name}</strong>
+            <span class="badge bg-${cleanRole === 'admin' ? 'danger' : 'primary'} ms-2">${cleanRole}</span>
+        </div>
+        <button class="btn btn-sm btn-outline-danger" onclick="removeUserFromNotifications(${userId})">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Add to subscribed list
+    subscribedList.appendChild(userItem);
+    console.log('✅ Added to subscribed list');
+    
+    // Remove from dropdown
+    staffOption.remove();
+    console.log('✅ Removed from dropdown');
+    
+    console.log(`✅ Successfully added ${name} to subscribed list`);
 }
 
 function removeUserFromNotifications(userId) {
-    // Move user from subscribed list to available list (UI only)
-    const availableList = document.getElementById('availableStaffList');
+    // ✅ FIXED: Work with dropdown system instead of list
     const subscribedList = document.getElementById('subscribedUsersList');
+    const availableStaffDropdown = document.getElementById('availableStaffDropdown');
     
     // Find the user item in subscribed list
     const userItem = subscribedList.querySelector(`[data-user-id="${userId}"]`);
     if (userItem) {
-        // Clone the item and modify it for available list
-        const clonedItem = userItem.cloneNode(true);
+        // Get staff name and role from the subscribed item
+        const nameElement = userItem.querySelector('strong');
+        const roleBadge = userItem.querySelector('.badge');
+        const name = nameElement ? nameElement.textContent : 'Unknown';
+        const role = roleBadge ? roleBadge.textContent : 'staff';
         
-        // Change the button from × to +
-        const button = clonedItem.querySelector('button');
-        button.innerHTML = '<i class="fas fa-plus"></i>';
-        button.className = 'btn btn-sm btn-outline-success';
-        button.onclick = () => addUserToNotifications(userId);
+        // Create new option for dropdown
+        const option = document.createElement('option');
+        option.value = userId;
+        option.textContent = `${name} (${role})`;
         
-        // Add to available list
-        availableList.appendChild(clonedItem);
+        // Add back to dropdown
+        availableStaffDropdown.appendChild(option);
         
         // Remove from subscribed list
         userItem.remove();
+        
+        console.log(`Removed ${name} from subscribed list and added back to dropdown`);
     }
+}
+
+// ✅ NEW: Handle adding multiple selected staff from dropdown
+function addSelectedStaffToNotifications() {
+    console.log('🔄 addSelectedStaffToNotifications called');
+    
+    const availableStaffDropdown = document.getElementById('availableStaffDropdown');
+    if (!availableStaffDropdown) {
+        console.error('Available staff dropdown not found');
+        return;
+    }
+    
+    // Get selected user IDs
+    const selectedUserIds = Array.from(availableStaffDropdown.selectedOptions).map(option => parseInt(option.value));
+    console.log('📋 Selected user IDs:', selectedUserIds);
+    
+    if (selectedUserIds.length === 0) {
+        alert('Please select at least one staff member to add');
+        return;
+    }
+    
+    // Add each selected user to the subscribed list
+    selectedUserIds.forEach(userId => {
+        console.log(`➕ Adding user ${userId} to notifications`);
+        addUserToNotifications(userId);
+    });
+    
+    // Clear the dropdown selection
+    availableStaffDropdown.value = null;
+    
+    console.log(`✅ Added ${selectedUserIds.length} staff members to notifications`);
 }
 
 function saveNotificationChanges() {
@@ -2626,8 +2684,9 @@ function saveNotificationChanges() {
     const currentSubscribedUsers = Array.from(document.querySelectorAll('#subscribedUsersList [data-user-id]'))
         .map(item => parseInt(item.getAttribute('data-user-id')));
     
-    const currentAvailableUsers = Array.from(document.querySelectorAll('#availableStaffList [data-user-id]'))
-        .map(item => parseInt(item.getAttribute('data-user-id')));
+    // ✅ FIXED: Get available users from dropdown instead of list
+    const currentAvailableUsers = Array.from(document.querySelectorAll('#availableStaffDropdown option'))
+        .map(option => parseInt(option.value));
     
     // ✅ FIX: Calculate what actually changed
     const newlySubscribedUsers = currentSubscribedUsers.filter(userId => !originalSubscribedUsers.includes(userId));

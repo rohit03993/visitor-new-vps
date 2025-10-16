@@ -18,12 +18,12 @@
             <!-- Filter Tabs -->
             <ul class="nav nav-tabs mb-4" id="notificationTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
+                    <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab">
                         <i class="fas fa-list me-1"></i>All
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab">
+                    <button class="nav-link active" id="unread-tab" data-bs-toggle="tab" data-bs-target="#unread" type="button" role="tab">
                         <i class="fas fa-envelope me-1"></i>Unread
                         <span class="badge bg-danger ms-1" id="unreadCount">0</span>
                     </button>
@@ -38,20 +38,35 @@
             <!-- Notifications List -->
             <div class="tab-content" id="notificationTabContent">
                 <!-- All Notifications -->
-                <div class="tab-pane fade show active" id="all" role="tabpanel">
+                <div class="tab-pane fade" id="all" role="tabpanel">
                     <div id="allNotificationsList" class="notifications-list">
                         <div class="text-center py-5">
                             <i class="fas fa-spinner fa-spin fa-3x text-muted"></i>
                             <p class="mt-3 text-muted">Loading notifications...</p>
                         </div>
                     </div>
+                    <!-- All Notifications Pagination -->
+                    <nav aria-label="All notifications pagination" class="mt-4">
+                        <ul class="pagination justify-content-center" id="allPagination">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </nav>
                 </div>
 
                 <!-- Unread Notifications -->
-                <div class="tab-pane fade" id="unread" role="tabpanel">
+                <div class="tab-pane fade show active" id="unread" role="tabpanel">
                     <div id="unreadNotificationsList" class="notifications-list">
-                        <!-- Will be populated by JavaScript -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-spinner fa-spin fa-3x text-muted"></i>
+                            <p class="mt-3 text-muted">Loading notifications...</p>
+                        </div>
                     </div>
+                    <!-- Unread Notifications Pagination -->
+                    <nav aria-label="Unread notifications pagination" class="mt-4">
+                        <ul class="pagination justify-content-center" id="unreadPagination">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </nav>
                 </div>
 
                 <!-- Read Notifications -->
@@ -59,6 +74,12 @@
                     <div id="readNotificationsList" class="notifications-list">
                         <!-- Will be populated by JavaScript -->
                     </div>
+                    <!-- Read Notifications Pagination -->
+                    <nav aria-label="Read notifications pagination" class="mt-4">
+                        <ul class="pagination justify-content-center" id="readPagination">
+                            <!-- Will be populated by JavaScript -->
+                        </ul>
+                    </nav>
                 </div>
             </div>
 
@@ -187,6 +208,12 @@
 
 <script>
 let allNotifications = [];
+let currentPage = {
+    all: 1,
+    unread: 1,
+    read: 1
+};
+const notificationsPerPage = 10;
 
 // Load notifications on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -217,32 +244,132 @@ function updateNotificationCounts(unreadCount) {
 }
 
 function renderNotifications() {
-    if (allNotifications.length === 0) {
+    // Get filtered notifications
+    const allNotificationsList = allNotifications;
+    const unreadNotifications = allNotifications.filter(n => !n.is_read);
+    const readNotifications = allNotifications.filter(n => n.is_read);
+
+    // Render paginated notifications for each tab
+    renderPaginatedNotifications('all', allNotificationsList);
+    renderPaginatedNotifications('unread', unreadNotifications);
+    renderPaginatedNotifications('read', readNotifications);
+
+    // Show/hide empty state based on unread notifications (since unread is default)
+    if (unreadNotifications.length === 0) {
         document.getElementById('emptyState').style.display = 'block';
-        document.getElementById('allNotificationsList').style.display = 'none';
+    } else {
+        document.getElementById('emptyState').style.display = 'none';
+    }
+}
+
+function renderPaginatedNotifications(tabType, notifications) {
+    const totalPages = Math.ceil(notifications.length / notificationsPerPage);
+    const currentPageNum = currentPage[tabType];
+    
+    // Calculate start and end indices for current page
+    const startIndex = (currentPageNum - 1) * notificationsPerPage;
+    const endIndex = startIndex + notificationsPerPage;
+    const pageNotifications = notifications.slice(startIndex, endIndex);
+
+    // Render notifications for current page
+    const listElement = document.getElementById(`${tabType}NotificationsList`);
+    if (pageNotifications.length > 0) {
+        const html = pageNotifications.map(n => createNotificationCard(n)).join('');
+        listElement.innerHTML = html;
+    } else {
+        const emptyMessage = tabType === 'unread' ? 'No unread notifications' : 
+                           tabType === 'read' ? 'No read notifications' : 'No notifications';
+        listElement.innerHTML = `<div class="text-center py-5 text-muted">${emptyMessage}</div>`;
+    }
+
+    // Render pagination controls
+    renderPagination(tabType, totalPages, currentPageNum);
+}
+
+function renderPagination(tabType, totalPages, currentPageNum) {
+    const paginationElement = document.getElementById(`${tabType}Pagination`);
+    
+    if (totalPages <= 1) {
+        paginationElement.innerHTML = '';
         return;
     }
 
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('allNotificationsList').style.display = 'block';
+    let paginationHtml = '';
+    
+    // Previous button
+    if (currentPageNum > 1) {
+        paginationHtml += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage('${tabType}', ${currentPageNum - 1})">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </a>
+            </li>
+        `;
+    } else {
+        paginationHtml += `
+            <li class="page-item disabled">
+                <span class="page-link">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </span>
+            </li>
+        `;
+    }
 
-    // Render all notifications
-    const allHtml = allNotifications.map(n => createNotificationCard(n)).join('');
-    document.getElementById('allNotificationsList').innerHTML = allHtml;
+    // Page numbers
+    const startPage = Math.max(1, currentPageNum - 2);
+    const endPage = Math.min(totalPages, currentPageNum + 2);
 
-    // Render unread notifications
-    const unreadNotifications = allNotifications.filter(n => !n.is_read);
-    const unreadHtml = unreadNotifications.length > 0 
-        ? unreadNotifications.map(n => createNotificationCard(n)).join('')
-        : '<div class="text-center py-5 text-muted">No unread notifications</div>';
-    document.getElementById('unreadNotificationsList').innerHTML = unreadHtml;
+    for (let i = startPage; i <= endPage; i++) {
+        if (i === currentPageNum) {
+            paginationHtml += `
+                <li class="page-item active">
+                    <span class="page-link">${i}</span>
+                </li>
+            `;
+        } else {
+            paginationHtml += `
+                <li class="page-item">
+                    <a class="page-link" href="#" onclick="changePage('${tabType}', ${i})">${i}</a>
+                </li>
+            `;
+        }
+    }
 
-    // Render read notifications
-    const readNotifications = allNotifications.filter(n => n.is_read);
-    const readHtml = readNotifications.length > 0
-        ? readNotifications.map(n => createNotificationCard(n)).join('')
-        : '<div class="text-center py-5 text-muted">No read notifications</div>';
-    document.getElementById('readNotificationsList').innerHTML = readHtml;
+    // Next button
+    if (currentPageNum < totalPages) {
+        paginationHtml += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage('${tabType}', ${currentPageNum + 1})">
+                    Next <i class="fas fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+    } else {
+        paginationHtml += `
+            <li class="page-item disabled">
+                <span class="page-link">
+                    Next <i class="fas fa-chevron-right"></i>
+                </span>
+            </li>
+        `;
+    }
+
+    paginationElement.innerHTML = paginationHtml;
+}
+
+function changePage(tabType, pageNum) {
+    currentPage[tabType] = pageNum;
+    
+    // Re-render notifications for the selected tab
+    if (tabType === 'all') {
+        renderPaginatedNotifications('all', allNotifications);
+    } else if (tabType === 'unread') {
+        const unreadNotifications = allNotifications.filter(n => !n.is_read);
+        renderPaginatedNotifications('unread', unreadNotifications);
+    } else if (tabType === 'read') {
+        const readNotifications = allNotifications.filter(n => n.is_read);
+        renderPaginatedNotifications('read', readNotifications);
+    }
 }
 
 function createNotificationCard(notification) {
