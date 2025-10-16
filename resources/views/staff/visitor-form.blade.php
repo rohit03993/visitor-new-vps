@@ -16,6 +16,12 @@
                 <form id="visitorForm" method="POST" action="{{ route('staff.store-visitor') }}">
                     @csrf
                     
+                    <!-- Hidden fields for notification settings -->
+                    <input type="hidden" name="privacy_level" id="hidden_privacy_level" value="public">
+                    <div id="hiddenAdditionalSubscribers">
+                        <!-- Additional subscribers will be added here as hidden inputs -->
+                    </div>
+                    
                     <!-- Hidden fields to preserve parameters -->
                     @if(request('action'))
                         <input type="hidden" name="action" value="{{ request('action') }}">
@@ -247,6 +253,81 @@
                             @error('meeting_with')
                                         <div class="text-danger mt-2">{{ $message }}</div>
                             @enderror
+                        </div>
+                    </div>
+
+                    <!-- Notification Settings Section -->
+                    <div class="form-field mb-4">
+                        <div class="field-header" onclick="toggleNotificationSettings()" style="cursor: pointer;">
+                            <div class="field-title">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-bell me-2"></i>Notification Settings
+                                    <i class="fas fa-chevron-down ms-2" id="notificationToggleIcon"></i>
+                                </h6>
+                                <small class="text-muted">Manage who receives notifications for this interaction</small>
+                            </div>
+                        </div>
+                        <div class="field-content" id="notificationSettingsContent" style="display: none;">
+                            <!-- Privacy Level -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Privacy Level</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="privacy_level" id="form_privacy_public" value="public" checked>
+                                            <label class="form-check-label" for="form_privacy_public">
+                                                <strong>Public</strong><br>
+                                                <small class="text-muted">All subscribed staff receive notifications</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="privacy_level" id="form_privacy_private" value="private">
+                                            <label class="form-check-label" for="form_privacy_private">
+                                                <strong>Private</strong><br>
+                                                <small class="text-muted">Only assignee and directors get notifications</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Subscribers -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Additional Subscribers (Optional)</label>
+                                <div class="d-flex gap-2 mb-2">
+                                    <select class="form-select" id="additionalSubscriberSelect">
+                                        <option value="">Select staff member to add</option>
+                                        @foreach($employees as $employee)
+                                            @if($employee->user_id != auth()->user()->user_id)
+                                                <option value="{{ $employee->user_id }}" data-name="{{ $employee->name }}">
+                                                    {{ $employee->name }} ({{ $employee->branch->branch_name ?? 'No Branch' }})
+                                                </option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                    <button type="button" class="btn btn-outline-success" onclick="addAdditionalSubscriber()">
+                                        <i class="fas fa-plus"></i> Add
+                                    </button>
+                                </div>
+                                <div id="additionalSubscribersList" class="mt-2">
+                                    <!-- Additional subscribers will be displayed here -->
+                                </div>
+                                <small class="text-muted">Default subscribers: Creator (you) and assigned staff member</small>
+                            </div>
+
+                            <!-- Notification Preview -->
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Notification Preview:</strong>
+                                <div id="notificationPreview" class="mt-2">
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <span class="badge bg-primary">You (Creator)</span>
+                                        <span class="badge bg-success" id="assigneePreview">Assigned Staff</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -1022,8 +1103,33 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// Prepare notification settings for form submission
+function prepareNotificationSettings() {
+    // Update privacy level
+    const selectedPrivacy = document.querySelector('input[name="privacy_level"]:checked');
+    if (selectedPrivacy) {
+        document.getElementById('hidden_privacy_level').value = selectedPrivacy.value;
+    }
+    
+    // Clear existing additional subscribers
+    const hiddenContainer = document.getElementById('hiddenAdditionalSubscribers');
+    hiddenContainer.innerHTML = '';
+    
+    // Add additional subscribers as hidden inputs
+    additionalSubscribers.forEach(subscriber => {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'additional_subscribers[]';
+        hiddenInput.value = subscriber.userId;
+        hiddenContainer.appendChild(hiddenInput);
+    });
+}
+
 // Form validation
 document.getElementById('visitorForm').addEventListener('submit', function(e) {
+    // Prepare notification settings before validation
+    prepareNotificationSettings();
+    
     const mobileNumber = document.getElementById('mobile_number').value.trim();
     const name = document.getElementById('name').value.trim();
     const courseId = document.getElementById('course_id').value;
@@ -1191,6 +1297,119 @@ document.getElementById('visitorForm').addEventListener('submit', function(e) {
         });
         this.appendChild(hiddenInput);
     });
+});
+
+// Notification Settings Functions
+let additionalSubscribers = [];
+
+function toggleNotificationSettings() {
+    const content = document.getElementById('notificationSettingsContent');
+    const icon = document.getElementById('notificationToggleIcon');
+    
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+        updateNotificationPreview();
+    } else {
+        content.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    }
+}
+
+function addAdditionalSubscriber() {
+    const select = document.getElementById('additionalSubscriberSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    if (!selectedOption.value) {
+        alert('Please select a staff member to add');
+        return;
+    }
+    
+    const userId = selectedOption.value;
+    const userName = selectedOption.dataset.name;
+    
+    // Check if already added
+    if (additionalSubscribers.find(sub => sub.userId === userId)) {
+        alert('This staff member is already added');
+        return;
+    }
+    
+    // Add to array
+    additionalSubscribers.push({ userId, userName });
+    
+    // Update UI
+    updateAdditionalSubscribersList();
+    updateNotificationPreview();
+    
+    // Clear selection
+    select.value = '';
+}
+
+function removeAdditionalSubscriber(userId) {
+    additionalSubscribers = additionalSubscribers.filter(sub => sub.userId !== userId);
+    updateAdditionalSubscribersList();
+    updateNotificationPreview();
+}
+
+function updateAdditionalSubscribersList() {
+    const listContainer = document.getElementById('additionalSubscribersList');
+    
+    if (additionalSubscribers.length === 0) {
+        listContainer.innerHTML = '<small class="text-muted">No additional subscribers added</small>';
+        return;
+    }
+    
+    let html = '<div class="d-flex flex-wrap gap-2">';
+    additionalSubscribers.forEach(sub => {
+        html += `
+            <span class="badge bg-info d-flex align-items-center gap-1">
+                ${sub.userName}
+                <button type="button" class="btn-close btn-close-white" style="font-size: 0.7em;" 
+                        onclick="removeAdditionalSubscriber('${sub.userId}')" title="Remove"></button>
+            </span>
+        `;
+    });
+    html += '</div>';
+    
+    listContainer.innerHTML = html;
+}
+
+function updateNotificationPreview() {
+    const preview = document.getElementById('notificationPreview');
+    const assigneeSelect = document.getElementById('meeting_with');
+    const assigneeOption = assigneeSelect.options[assigneeSelect.selectedIndex];
+    
+    let html = '<div class="d-flex flex-wrap gap-1">';
+    
+    // Creator (always included)
+    html += '<span class="badge bg-primary">You (Creator)</span>';
+    
+    // Assigned staff member
+    if (assigneeOption.value) {
+        const assigneeName = assigneeOption.text.split(' (')[0];
+        html += `<span class="badge bg-success">${assigneeName} (Assignee)</span>`;
+    } else {
+        html += '<span class="badge bg-secondary">No assignee selected</span>';
+    }
+    
+    // Additional subscribers
+    additionalSubscribers.forEach(sub => {
+        html += `<span class="badge bg-info">${sub.userName}</span>`;
+    });
+    
+    html += '</div>';
+    
+    preview.innerHTML = html;
+}
+
+// Update preview when assignee changes
+document.getElementById('meeting_with').addEventListener('change', updateNotificationPreview);
+
+// Update preview when privacy level changes
+document.querySelectorAll('input[name="privacy_level"]').forEach(radio => {
+    radio.addEventListener('change', updateNotificationPreview);
 });
 
 </script>

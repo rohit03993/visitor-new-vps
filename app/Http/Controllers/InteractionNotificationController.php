@@ -86,9 +86,16 @@ class InteractionNotificationController extends Controller
             );
 
             if ($success) {
+                // 🔔 IMMEDIATE NOTIFICATION: Send notification to newly subscribed user
+                $this->notificationService->sendImmediateSubscriptionNotification(
+                    $request->interaction_id,
+                    $request->user_id,
+                    auth()->user()->user_id
+                );
+
                 return response()->json([
                     'success' => true,
-                    'message' => 'User subscribed successfully'
+                    'message' => 'User subscribed successfully and notified immediately'
                 ]);
             } else {
                 return response()->json([

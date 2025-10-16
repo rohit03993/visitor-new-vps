@@ -184,7 +184,17 @@ class NotificationService
 
             // Subscribe each previous worker
             foreach ($previousWorkers as $userId) {
-                $this->subscribeUser($interactionId, $userId, 'manual');
+                // Check if user is already manually subscribed to preserve their original subscription
+                $existingManualSubscription = InteractionNotification::where('interaction_id', $interactionId)
+                    ->where('user_id', $userId)
+                    ->where('subscribed_by', 'manual')
+                    ->first();
+                
+                if (!$existingManualSubscription) {
+                    $this->subscribeUser($interactionId, $userId, 'manual');
+                } else {
+                    \Log::info("Preserved existing manual subscription for user {$userId} in interaction {$interactionId}");
+                }
             }
 
             \Log::info("Auto-subscribed {$previousWorkers->count()} previous workers for interaction {$interactionId}");
@@ -277,6 +287,43 @@ class NotificationService
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to clear subscriptions for completed case: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send immediate notification when user is subscribed to an interaction
+     */
+    public function sendImmediateSubscriptionNotification(int $interactionId, int $subscribedUserId, int $subscribedByUserId): bool
+    {
+        try {
+            $interaction = InteractionHistory::find($interactionId);
+            $subscribedUser = VmsUser::find($subscribedUserId);
+            $subscribedByUser = VmsUser::find($subscribedByUserId);
+
+            if (!$interaction || !$subscribedUser || !$subscribedByUser) {
+                \Log::error('Missing data for subscription notification');
+                return false;
+            }
+
+            // Don't notify if user subscribed themselves
+            if ($subscribedUserId === $subscribedByUserId) {
+                return true;
+            }
+
+            // Send notification to the newly subscribed user
+            $this->sendNotification(
+                $interactionId,
+                $subscribedByUserId, // triggered by the person who added the subscription
+                'subscription_added',
+                "You've been added to receive notifications for interaction #{$interactionId}: {$interaction->name_entered} - {$interaction->purpose} by {$subscribedByUser->name}"
+            );
+
+            \Log::info("Immediate subscription notification sent to user {$subscribedUser->name} for interaction {$interactionId}");
+
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Failed to send immediate subscription notification: ' . $e->getMessage());
             return false;
         }
     }

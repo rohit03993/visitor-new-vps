@@ -822,6 +822,9 @@ class StaffController extends Controller
             $request->meeting_with // Assignee
         );
 
+        // Handle additional notification settings from visitor form
+        $this->handleVisitorFormNotificationSettings($request, $interaction->interaction_id);
+
         // Send notification to assigned staff member - UNIFIED FIREBASE SYSTEM
         $assignedUser = VmsUser::find($request->meeting_with);
         if ($assignedUser) {
@@ -1763,6 +1766,17 @@ class StaffController extends Controller
                 
                 // Update file management with interaction attachment ID
                 $fileManagement->update(['interaction_id' => $interactionId]);
+                
+                // 🔔 SEND NOTIFICATION: Notify all subscribed users about file upload
+                $visitor = \App\Models\Visitor::find($interaction->visitor_id);
+                $visitorName = $visitor ? $visitor->name : 'Unknown Visitor';
+                
+                $this->notificationService->sendNotification(
+                    $interactionId,
+                    $user->user_id,
+                    'file_upload',
+                    "{$user->name} uploaded a file '{$originalName}' to interaction '{$visitorName} - {$interaction->purpose}'"
+                );
             }
             
             return response()->json([
@@ -1978,6 +1992,39 @@ class StaffController extends Controller
                 return 'Telephonic';
             default:
                 return 'In-Campus'; // Default fallback
+        }
+    }
+
+    /**
+     * Handle additional notification settings from visitor form
+     */
+    private function handleVisitorFormNotificationSettings($request, $interactionId)
+    {
+        try {
+            // Set privacy level if provided
+            if ($request->has('privacy_level')) {
+                $this->notificationService->setPrivacyLevel(
+                    $interactionId,
+                    $request->privacy_level
+                );
+            }
+
+            // Add additional subscribers if provided
+            if ($request->has('additional_subscribers') && is_array($request->additional_subscribers)) {
+                foreach ($request->additional_subscribers as $userId) {
+                    $this->notificationService->subscribeUser(
+                        $interactionId,
+                        $userId,
+                        'manual'
+                    );
+                }
+            }
+
+            \Log::info("Notification settings applied for interaction {$interactionId}: Privacy={$request->privacy_level}, Additional subscribers=" . count($request->additional_subscribers ?? []));
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to apply visitor form notification settings: ' . $e->getMessage());
+            // Don't throw error - notification settings are optional
         }
     }
 
