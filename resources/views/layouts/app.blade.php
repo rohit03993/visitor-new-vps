@@ -844,8 +844,8 @@ console.log('🌍 Hostname:', window.location.hostname);
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <a class="dropdown-item {{ request()->routeIs('staff.change-password') ? 'active' : '' }}" href="{{ route('staff.change-password') }}" onclick="closeSidebar()">
-                                            <i class="fas fa-key me-2"></i> Change Password
-                                        </a>
+                                <i class="fas fa-key me-2"></i> Change Password
+                            </a>
                                     </li>
                                 </ul>
                             </div>
