@@ -52,6 +52,7 @@ class InteractionNotificationController extends Controller
                     'subscribed_by' => $sub->subscribed_by,
                     'is_current_assignee' => $sub->user->user_id === $interaction->meeting_with,
                     'is_admin' => $sub->user->role === 'admin',
+                    'can_view_remarks' => $sub->can_view_remarks ?? true,
                 ];
             })->values()->toArray(),
             'available_staff' => $allStaff->filter(function ($staff) use ($subscribedUserIds) {
@@ -178,6 +179,43 @@ class InteractionNotificationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update privacy level: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Toggle remark viewing permission for a user
+     */
+    public function setRemarkPermission(Request $request): JsonResponse
+    {
+        $request->validate([
+            'interaction_id' => 'required|integer',
+            'user_id' => 'required|integer',
+            'can_view_remarks' => 'required|boolean'
+        ]);
+
+        try {
+            $success = $this->notificationService->setRemarkPermission(
+                $request->interaction_id,
+                $request->user_id,
+                $request->can_view_remarks
+            );
+
+            if ($success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Remark permission updated successfully'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update remark permission'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update remark permission: ' . $e->getMessage()
             ], 500);
         }
     }

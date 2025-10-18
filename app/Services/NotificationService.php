@@ -56,12 +56,13 @@ class NotificationService
                     'subscribed_at' => now()
                 ]);
             } else {
-                // Create new subscription
+                // Create new subscription with default can_view_remarks=true
                 InteractionNotification::create([
                     'interaction_id' => $interactionId,
                     'user_id' => $userId,
                     'subscribed_by' => $subscribedBy,
                     'is_active' => true,
+                    'can_view_remarks' => true, // ✅ Default: Users can view remarks
                     'subscribed_at' => now()
                 ]);
             }
@@ -115,6 +116,39 @@ class NotificationService
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to set privacy level: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Toggle remark viewing permission for a user on an interaction
+     * 
+     * @param int $interactionId
+     * @param int $userId
+     * @param bool $canView
+     * @return bool
+     */
+    public function setRemarkPermission(int $interactionId, int $userId, bool $canView): bool
+    {
+        try {
+            // Check if subscription exists
+            $subscription = InteractionNotification::where('interaction_id', $interactionId)
+                ->where('user_id', $userId)
+                ->first();
+            
+            if (!$subscription) {
+                \Log::warning("Cannot set remark permission: User {$userId} not subscribed to interaction {$interactionId}");
+                return false;
+            }
+            
+            // Update permission
+            $subscription->update(['can_view_remarks' => $canView]);
+            
+            \Log::info("Updated remark permission for user {$userId} on interaction {$interactionId}: can_view_remarks=" . ($canView ? 'true' : 'false'));
+            
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Failed to set remark permission: ' . $e->getMessage());
             return false;
         }
     }

@@ -16,11 +16,13 @@ class InteractionNotification extends Model
         'subscribed_by',
         'privacy_level',
         'is_active',
+        'can_view_remarks',
         'subscribed_at'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'can_view_remarks' => 'boolean',
         'subscribed_at' => 'datetime'
     ];
 

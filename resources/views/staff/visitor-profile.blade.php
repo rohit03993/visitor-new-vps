@@ -322,6 +322,17 @@
                                                     <div class="mt-3">
                                                         @if($interaction->remarks->count() > 0)
                                                             @foreach($interaction->remarks as $remark)
+                                                                @php
+                                                                    // ✅ PERMISSION CHECK: Check if user can view this remark
+                                                                    $canViewThisRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                                                                        $interaction->interaction_id, 
+                                                                        auth()->user()->user_id, 
+                                                                        $remark->added_by
+                                                                    );
+                                                                    $displayRemarkText = $canViewThisRemark 
+                                                                        ? $remark->remark_text 
+                                                                        : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
+                                                                @endphp
                                                                 <div class="alert alert-light mb-2">
                                                                     <small class="text-muted">
                                                                         {{ \App\Helpers\DateTimeHelper::formatIndianDateTime($remark->created_at, 'M d, Y g:iA') }}
@@ -330,7 +341,7 @@
                                                                         @endif
                                                                         by {{ $remark->addedBy?->name ?? 'Unknown' }}
                                                                     </small><br>
-                                                                    {{ $remark->remark_text }}
+                                                                    {{ $displayRemarkText }}
                                                                     <!-- DEBUG: interaction_mode = {{ $remark->interaction_mode ?? 'NULL' }} -->
                                                                     @if($remark->interaction_mode)
                                                                         <br><small class="text-success fw-bold"><i class="fas fa-map-marker-alt me-1"></i>{{ $remark->interaction_mode }}</small>
@@ -711,10 +722,18 @@
                                                                                 // ===== SIMPLE CONTENT DISTRIBUTION (NO TIMELINE) =====
                                                                                 
                                                                                 // LEFT PANEL: LAST MESSAGE from assigner/scheduler
-                                                                                if ($interaction->interaction_type === 'new') {
-                                                                                    // For new interactions, show initial notes as LAST MESSAGE
-                                                                                    $leftPanelMessage = $interaction->initial_notes ?: 'New interaction created';
-                                                                                    $leftPanelTimestamp = $interaction->created_at;
+                if ($interaction->interaction_type === 'new') {
+                    // For new interactions, show initial notes as LAST MESSAGE
+                    // ✅ PERMISSION CHECK: For initial notes in LEFT PANEL
+                    $canViewRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                        $interaction->interaction_id, 
+                        auth()->user()->user_id, 
+                        $interaction->created_by
+                    );
+                    $leftPanelMessage = $canViewRemark 
+                        ? ($interaction->initial_notes ?: 'New interaction created')
+                        : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
+                    $leftPanelTimestamp = $interaction->created_at;
                                                                                     // Convert interaction mode to display format
                                                                                     $leftPanelInteractionMode = match($interaction->mode) {
                                                                                         'in_campus' => 'In-Campus',
@@ -730,24 +749,41 @@
                                                                                                strpos($remark->remark_text, 'Completed & Transferred to') !== false;
                                                                                     });
                                                                                     
-                                                                                    if ($assignmentRemark) {
-                                                                                        // Extract notes from assignment message
-                                                                                        $remarkParts = explode("\n", $assignmentRemark->remark_text);
-                                                                                        foreach ($remarkParts as $part) {
-                                                                                            if (strpos($part, 'Notes:') !== false) {
-                                                                                                $leftPanelMessage = trim(str_replace('Notes:', '', $part));
-                                                                                                $leftPanelTimestamp = $assignmentRemark->created_at;
-                                                                                                $leftPanelInteractionMode = $assignmentRemark->interaction_mode;
-                                                                                                break;
-                                                                                            }
-                                                                                        }
-                                                                                        
-                                                                                        // If no "Notes:" found, show assignment details
-                                                                                        if (!isset($leftPanelMessage)) {
-                                                                                            $leftPanelMessage = 'Assignment details';
-                                                                                            $leftPanelTimestamp = $assignmentRemark->created_at;
-                                                                                            $leftPanelInteractionMode = $assignmentRemark->interaction_mode;
-                                                                                        }
+                    if ($assignmentRemark) {
+                        // Extract notes from assignment message
+                        $remarkParts = explode("\n", $assignmentRemark->remark_text);
+                        foreach ($remarkParts as $part) {
+                            if (strpos($part, 'Notes:') !== false) {
+                                $noteText = trim(str_replace('Notes:', '', $part));
+                                // ✅ PERMISSION CHECK: For assignment notes in LEFT PANEL
+                                $canViewRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                                    $interaction->interaction_id, 
+                                    auth()->user()->user_id, 
+                                    $assignmentRemark->added_by
+                                );
+                                $leftPanelMessage = $canViewRemark 
+                                    ? $noteText 
+                                    : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
+                                $leftPanelTimestamp = $assignmentRemark->created_at;
+                                $leftPanelInteractionMode = $assignmentRemark->interaction_mode;
+                                break;
+                            }
+                        }
+                        
+                        // If no "Notes:" found, show assignment details
+                        if (!isset($leftPanelMessage)) {
+                            // ✅ PERMISSION CHECK: For assignment details in LEFT PANEL
+                            $canViewRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                                $interaction->interaction_id, 
+                                auth()->user()->user_id, 
+                                $assignmentRemark->added_by
+                            );
+                            $leftPanelMessage = $canViewRemark 
+                                ? 'Assignment details' 
+                                : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
+                            $leftPanelTimestamp = $assignmentRemark->created_at;
+                            $leftPanelInteractionMode = $assignmentRemark->interaction_mode;
+                        }
                                                                                     } else {
                                                                                         // If no assignment remark found, try to find the latest work remark from previous interaction
                                                                                         $latestWorkRemark = $interaction->remarks->first(function($remark) {
@@ -758,7 +794,15 @@
                                                                                         });
                                                                                         
                                                                                         if ($latestWorkRemark) {
-                                                                                            $leftPanelMessage = $latestWorkRemark->remark_text;
+                                                                                            // ✅ PERMISSION CHECK: Use helper to check if user can view remark
+                                                                                            $canViewRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                                                                                                $interaction->interaction_id, 
+                                                                                                auth()->user()->user_id, 
+                                                                                                $latestWorkRemark->added_by
+                                                                                            );
+                                                                                            $leftPanelMessage = $canViewRemark 
+                                                                                                ? $latestWorkRemark->remark_text 
+                                                                                                : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
                                                                                             $leftPanelTimestamp = $latestWorkRemark->created_at;
                                                                                             $leftPanelInteractionMode = $latestWorkRemark->interaction_mode;
                                                                                             // DEBUG: Show what we found
@@ -788,8 +832,16 @@
                                                                                         continue; // Skip assignment remarks
                                                                                     }
                                                                                     
-                                                                                    // This is a work remark - show it
-                                                                                    $rightPanelMessage = $remark->remark_text;
+                                                                                    // This is a work remark - show it (with permission check)
+                                                                                    // ✅ PERMISSION CHECK: Use helper to check if user can view remark
+                                                                                    $canViewRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                                                                                        $interaction->interaction_id, 
+                                                                                        auth()->user()->user_id, 
+                                                                                        $remark->added_by
+                                                                                    );
+                                                                                    $rightPanelMessage = $canViewRemark 
+                                                                                        ? $remark->remark_text 
+                                                                                        : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
                                                                                     $rightPanelTimestamp = $remark->created_at;
                                                                                     $rightPanelInteractionMode = $remark->interaction_mode;
                                                                                     break; // Show the latest work remark
@@ -808,7 +860,16 @@
                                                                                             $remarkParts = explode("\n", $assignmentRemark->remark_text);
                                                                                             foreach ($remarkParts as $part) {
                                                                                                 if (strpos($part, 'Notes:') !== false) {
-                                                                                                    $rightPanelMessage = trim(str_replace('Notes:', '', $part));
+                                                                                                    $noteText = trim(str_replace('Notes:', '', $part));
+                                                                                                    // ✅ PERMISSION CHECK: For assignment notes
+                                                                                                    $canViewRemark = \App\Helpers\RemarkPermissionHelper::canViewRemarks(
+                                                                                                        $interaction->interaction_id, 
+                                                                                                        auth()->user()->user_id, 
+                                                                                                        $assignmentRemark->added_by
+                                                                                                    );
+                                                                                                    $rightPanelMessage = $canViewRemark 
+                                                                                                        ? $noteText 
+                                                                                                        : \App\Helpers\RemarkPermissionHelper::getMaskedRemarkText();
                                                                                                     $rightPanelTimestamp = $assignmentRemark->created_at;
                                                                                                     $rightPanelInteractionMode = $assignmentRemark->interaction_mode;
                                                                                                     break;
@@ -2314,6 +2375,9 @@ function submitFileUpload() {
                     <h6 class="fw-bold mb-3">
                         <i class="fas fa-users me-2"></i>Currently Subscribed
                     </h6>
+                    <small class="text-muted d-block mb-2">
+                        Control who can view full remark content. Toggle OFF to restrict access to metadata only.
+                    </small>
                     <div class="list-group" id="subscribedUsersList">
                         <!-- Dynamic content will be loaded here -->
                     </div>
@@ -2514,19 +2578,51 @@ function populateNotificationModal(data, interactionId) {
     
     data.subscribed_users.forEach(user => {
         const userItem = document.createElement('div');
-        userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        userItem.className = 'list-group-item';
         userItem.setAttribute('data-user-id', user.user_id);
+        userItem.setAttribute('data-can-view-remarks', user.can_view_remarks ? 'true' : 'false');
+        
+        // Build special user type label
+        let userTypeLabel = '';
+        if (user.is_admin) {
+            userTypeLabel = '<span class="badge bg-warning ms-2">Admin</span>';
+        } else if (user.is_current_assignee) {
+            userTypeLabel = '<span class="badge bg-success ms-2">Current Assignee</span>';
+        }
+        
+        // Determine if toggle should be disabled
+        const toggleDisabled = user.is_admin || user.is_current_assignee || !data.can_modify;
+        const toggleChecked = user.can_view_remarks ? 'checked' : '';
+        const toggleOpacity = toggleDisabled ? 'style="opacity: 0.6;"' : '';
+        
         userItem.innerHTML = `
-            <div>
-                <strong>${user.name}</strong>
-                <span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'} ms-2">${user.role}</span>
-                ${user.is_current_assignee ? '<span class="badge bg-success ms-1">Current Assignee</span>' : ''}
-                ${user.is_admin ? '<span class="badge bg-warning ms-1">Admin</span>' : ''}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="flex-grow-1">
+                    <strong>${user.name}</strong>
+                    <span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'} ms-2">${user.role}</span>
+                    ${userTypeLabel}
+                </div>
+                <button class="btn btn-sm btn-outline-danger" onclick="removeUserFromNotifications(${user.user_id})" 
+                        ${!data.can_modify ? 'disabled' : ''}>
+                    <i class="fas fa-times"></i> Remove
+                </button>
             </div>
-            <button class="btn btn-sm btn-outline-danger" onclick="removeUserFromNotifications(${user.user_id})" 
-                    ${!data.can_modify ? 'disabled' : ''}>
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="d-flex justify-content-between align-items-center mt-2">
+                <small class="text-muted">
+                    Can View Full Remarks
+                    ${toggleDisabled ? '<span class="text-success ms-1">(Always Enabled)</span>' : ''}
+                </small>
+                <div class="form-check form-switch" ${toggleOpacity}>
+                    <input class="form-check-input remark-permission-toggle" 
+                           type="checkbox" 
+                           role="switch"
+                           ${toggleChecked}
+                           ${toggleDisabled ? 'disabled' : ''}
+                           data-user-id="${user.user_id}"
+                           onchange="toggleRemarkPermission(${user.user_id}, this.checked)"
+                           style="cursor: ${toggleDisabled ? 'not-allowed' : 'pointer'}; width: 3rem; height: 1.5rem;">
+                </div>
+            </div>
         `;
         subscribedList.appendChild(userItem);
     });
@@ -2565,6 +2661,13 @@ function populateNotificationModal(data, interactionId) {
     // ✅ STORE ORIGINAL STATE: Save the original subscribed users for comparison
     const originalSubscribedUsers = data.subscribed_users.map(user => user.user_id);
     document.getElementById('notificationModal').setAttribute('data-original-subscribed', JSON.stringify(originalSubscribedUsers));
+    
+    // ✅ STORE ORIGINAL PERMISSIONS: Save the original permission states for comparison
+    const originalPermissions = {};
+    data.subscribed_users.forEach(user => {
+        originalPermissions[user.user_id] = user.can_view_remarks;
+    });
+    document.getElementById('notificationModal').setAttribute('data-original-permissions', JSON.stringify(originalPermissions));
 }
 
 function addUserToNotifications(userId) {
@@ -2590,16 +2693,52 @@ function addUserToNotifications(userId) {
     
     // Create new subscribed user item
     const userItem = document.createElement('div');
-    userItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+    userItem.className = 'list-group-item';
     userItem.setAttribute('data-user-id', userId);
+    userItem.setAttribute('data-can-view-remarks', 'true'); // Default to true for new users
+    
+    // Determine if toggle should be disabled (admin or current assignee)
+    const isAdmin = cleanRole === 'admin';
+    const isCurrentAssignee = false; // New users are not current assignees
+    const toggleDisabled = isAdmin || isCurrentAssignee;
+    const toggleChecked = 'checked'; // Default to checked
+    const toggleOpacity = toggleDisabled ? 'style="opacity: 0.6;"' : '';
+    
+    // Build special user type label
+    let userTypeLabel = '';
+    if (isAdmin) {
+        userTypeLabel = '<span class="badge bg-warning ms-2">Admin</span>';
+    } else if (isCurrentAssignee) {
+        userTypeLabel = '<span class="badge bg-success ms-2">Current Assignee</span>';
+    }
+    
     userItem.innerHTML = `
-        <div>
-            <strong>${name}</strong>
-            <span class="badge bg-${cleanRole === 'admin' ? 'danger' : 'primary'} ms-2">${cleanRole}</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>${name}</strong>
+                <span class="badge bg-${cleanRole === 'admin' ? 'danger' : 'primary'} ms-2">${cleanRole}</span>
+                ${userTypeLabel}
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeUserFromNotifications(${userId})">
+                <i class="fas fa-times"></i> Remove
+            </button>
         </div>
-        <button class="btn btn-sm btn-outline-danger" onclick="removeUserFromNotifications(${userId})">
-            <i class="fas fa-times"></i>
-        </button>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <small class="text-muted">
+                Can View Full Remarks
+                ${toggleDisabled ? '<span class="text-success ms-1">(Always Enabled)</span>' : ''}
+            </small>
+            <div class="form-check form-switch" ${toggleOpacity}>
+                <input class="form-check-input remark-permission-toggle" 
+                       type="checkbox" 
+                       role="switch"
+                       ${toggleChecked}
+                       ${toggleDisabled ? 'disabled' : ''}
+                       data-user-id="${userId}"
+                       onchange="toggleRemarkPermission(${userId}, this.checked)"
+                >
+            </div>
+        </div>
     `;
     
     // Add to subscribed list
@@ -2673,6 +2812,25 @@ function addSelectedStaffToNotifications() {
     console.log(`✅ Added ${selectedUserIds.length} staff members to notifications`);
 }
 
+/**
+ * Toggle remark viewing permission for a user (local state only - saves on "Save and Close")
+ */
+function toggleRemarkPermission(userId, newCanViewValue) {
+    console.log(`🔑 Toggling remark permission for user ${userId} to ${newCanViewValue} (will save on "Save and Close")`);
+    
+    // Update the data attribute to track the change
+    const userItem = document.querySelector(`#subscribedUsersList [data-user-id="${userId}"]`);
+    if (userItem) {
+        userItem.setAttribute('data-can-view-remarks', newCanViewValue ? 'true' : 'false');
+    }
+    
+    // Mark that changes are pending (for visual feedback)
+    const modal = document.getElementById('notificationModal');
+    modal.setAttribute('data-has-unsaved-changes', 'true');
+    
+    console.log('✅ Permission change tracked locally. Click "Save and Close" to save changes.');
+}
+
 function saveNotificationChanges() {
     const interactionId = document.getElementById('notificationModal').getAttribute('data-interaction-id');
     const privacyLevel = document.querySelector('input[name="privacy_level"]:checked').value;
@@ -2699,8 +2857,33 @@ function saveNotificationChanges() {
     console.log('Newly unsubscribed:', newlyUnsubscribedUsers);
     console.log('=== END DEBUG ===');
     
-    // ✅ ADDITIONAL DEBUG: Show alert if no changes detected
-    if (newlySubscribedUsers.length === 0 && newlyUnsubscribedUsers.length === 0) {
+    // ✅ FIX: Check for permission changes as well
+    const originalPermissions = JSON.parse(document.getElementById('notificationModal').getAttribute('data-original-permissions') || '{}');
+    const currentPermissions = {};
+    
+    // Get current permission states
+    currentSubscribedUsers.forEach(userId => {
+        const userItem = document.querySelector(`#subscribedUsersList [data-user-id="${userId}"]`);
+        if (userItem) {
+            currentPermissions[userId] = userItem.getAttribute('data-can-view-remarks') === 'true';
+        }
+    });
+    
+    // Check if permissions changed
+    let permissionsChanged = false;
+    for (const userId in currentPermissions) {
+        if (originalPermissions[userId] !== currentPermissions[userId]) {
+            permissionsChanged = true;
+            break;
+        }
+    }
+    
+    console.log('Original permissions:', originalPermissions);
+    console.log('Current permissions:', currentPermissions);
+    console.log('Permissions changed:', permissionsChanged);
+    
+    // ✅ FIX: Show alert only if NO changes at all (subscriptions + permissions)
+    if (newlySubscribedUsers.length === 0 && newlyUnsubscribedUsers.length === 0 && !permissionsChanged) {
         console.log('No changes detected - skipping API calls');
         alert('No changes detected. No notifications will be sent.');
         saveButton.innerHTML = originalText;
@@ -2765,6 +2948,30 @@ function saveNotificationChanges() {
             })
         );
     });
+    
+    // 🆕 4. Update remark viewing permissions for all subscribed users
+    currentSubscribedUsers.forEach(userId => {
+        const userItem = document.querySelector(`#subscribedUsersList [data-user-id="${userId}"]`);
+        if (userItem) {
+            const canViewRemarks = userItem.getAttribute('data-can-view-remarks') === 'true';
+            promises.push(
+                fetch('/staff/notifications/set-remark-permission', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        interaction_id: interactionId,
+                        user_id: userId,
+                        can_view_remarks: canViewRemarks
+                    })
+                })
+            );
+        }
+    });
+    
+    console.log(`📤 Sending ${promises.length} API requests (privacy: 1, subscriptions: ${newlySubscribedUsers.length + newlyUnsubscribedUsers.length}, permissions: ${currentSubscribedUsers.length})`);
     
     // Execute all API calls
     Promise.all(promises)

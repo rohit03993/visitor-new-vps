@@ -103,6 +103,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/visitor-profile/{visitorId}', [StaffController::class, 'showVisitorProfile'])->name('visitor-profile');
         Route::get('/interaction/{interactionId}/visitor-profile', [StaffController::class, 'showVisitorProfileByInteraction'])->name('visitor-profile-by-interaction');
         
+        // Test route for fresh permission system
+        Route::get('/test-fresh-permission', function () {
+            return view('staff.test-fresh-permission');
+        })->name('test-fresh-permission');
+        
         // Session Management Routes
         Route::post('/complete-session/{sessionId}', [StaffController::class, 'completeSession'])->name('complete-session');
         Route::get('/session/{sessionId}/modal', [StaffController::class, 'showCompleteSessionModal'])->name('session-modal');
@@ -138,6 +143,7 @@ Route::get('/interaction/{interactionId}/default-mode', [StaffController::class,
             Route::post('/subscribe', [App\Http\Controllers\InteractionNotificationController::class, 'subscribe'])->name('subscribe');
             Route::post('/unsubscribe', [App\Http\Controllers\InteractionNotificationController::class, 'unsubscribe'])->name('unsubscribe');
             Route::post('/set-privacy', [App\Http\Controllers\InteractionNotificationController::class, 'setPrivacy'])->name('set-privacy');
+            Route::post('/set-remark-permission', [App\Http\Controllers\InteractionNotificationController::class, 'setRemarkPermission'])->name('set-remark-permission');
         });
         
         // Test Notification Route (DEBUGGING)
