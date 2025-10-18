@@ -39,7 +39,7 @@ class AdminController extends Controller
 
         // Get all remarks with timestamps (cached for 5 minutes)
         $remarks = Cache::remember('admin_remarks_page_' . request()->get('page', 1), 300, function() {
-            return Remark::with(['interaction.visitor', 'addedBy', 'isEditableBy'])
+            return Remark::with(['interaction.visitor', 'addedBy'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
         });

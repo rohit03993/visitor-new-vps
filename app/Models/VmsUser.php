@@ -57,10 +57,6 @@ class VmsUser extends Authenticatable
         return $this->hasMany(Remark::class, 'added_by');
     }
 
-    public function editableRemarks()
-    {
-        return $this->hasMany(Remark::class, 'is_editable_by');
-    }
 
     public function createdAddresses()
     {

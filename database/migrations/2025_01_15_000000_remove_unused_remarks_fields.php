@@ -12,11 +12,19 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('remarks', function (Blueprint $table) {
-            // First drop the foreign key constraint
-            $table->dropForeign(['is_editable_by']);
-            
-            // Then drop the columns
-            $table->dropColumn(['is_editable_by', 'interaction_mode']);
+            // Only drop is_editable_by (interaction_mode is still in use!)
+            // Check if column exists before dropping
+            if (Schema::hasColumn('remarks', 'is_editable_by')) {
+                // Drop foreign key if it exists
+                try {
+                    $table->dropForeign(['is_editable_by']);
+                } catch (\Exception $e) {
+                    // Foreign key might not exist, that's okay
+                }
+                
+                // Drop the column
+                $table->dropColumn('is_editable_by');
+            }
         });
     }
 
@@ -26,9 +34,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('remarks', function (Blueprint $table) {
-            // Re-add the fields if rollback is needed
+            // Re-add is_editable_by if rollback is needed
             $table->unsignedBigInteger('is_editable_by')->nullable()->after('added_by_name');
-            $table->string('interaction_mode', 50)->nullable()->after('remark_text');
             
             // Re-add the foreign key constraint
             $table->foreign('is_editable_by')->references('user_id')->on('vms_users')->onDelete('set null');

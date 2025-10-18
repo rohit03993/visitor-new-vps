@@ -17,7 +17,6 @@ class Remark extends Model
         'outcome',
         'added_by',
         'added_by_name',
-        'is_editable_by',
     ];
 
     // Relationships
@@ -29,17 +28,6 @@ class Remark extends Model
     public function addedBy()
     {
         return $this->belongsTo(VmsUser::class, 'added_by');
-    }
-
-    public function isEditableBy()
-    {
-        return $this->belongsTo(VmsUser::class, 'is_editable_by');
-    }
-
-    // Helper methods
-    public function canBeEditedBy($user)
-    {
-        return $this->is_editable_by === $user->user_id;
     }
 
     public function isInitialRemark()
