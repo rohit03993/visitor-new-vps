@@ -11,10 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('branches', function (Blueprint $table) {
-            $table->unsignedBigInteger('created_by')->nullable()->after('address');
-            $table->foreign('created_by')->references('user_id')->on('vms_users')->onDelete('set null');
-        });
+        // Check if column doesn't exist before adding
+        if (!Schema::hasColumn('branches', 'created_by')) {
+            Schema::table('branches', function (Blueprint $table) {
+                $table->unsignedBigInteger('created_by')->nullable()->after('address');
+                $table->foreign('created_by')->references('user_id')->on('vms_users')->onDelete('set null');
+            });
+        }
     }
 
     /**
