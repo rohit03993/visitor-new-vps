@@ -11,21 +11,30 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('remarks', function (Blueprint $table) {
-            // Only drop is_editable_by (interaction_mode is still in use!)
-            // Check if column exists before dropping
-            if (Schema::hasColumn('remarks', 'is_editable_by')) {
-                // Drop foreign key if it exists
-                try {
-                    $table->dropForeign(['is_editable_by']);
-                } catch (\Exception $e) {
-                    // Foreign key might not exist, that's okay
-                }
-                
-                // Drop the column
-                $table->dropColumn('is_editable_by');
+        // Only drop is_editable_by (interaction_mode is still in use!)
+        // Check if column exists before dropping
+        if (Schema::hasColumn('remarks', 'is_editable_by')) {
+            // First, check and drop foreign key if it exists
+            $foreignKeys = \DB::select("
+                SELECT CONSTRAINT_NAME 
+                FROM information_schema.KEY_COLUMN_USAGE 
+                WHERE TABLE_SCHEMA = DATABASE() 
+                AND TABLE_NAME = 'remarks' 
+                AND COLUMN_NAME = 'is_editable_by'
+                AND REFERENCED_TABLE_NAME IS NOT NULL
+            ");
+            
+            if (!empty($foreignKeys)) {
+                Schema::table('remarks', function (Blueprint $table) use ($foreignKeys) {
+                    $table->dropForeign($foreignKeys[0]->CONSTRAINT_NAME);
+                });
             }
-        });
+            
+            // Then drop the column
+            Schema::table('remarks', function (Blueprint $table) {
+                $table->dropColumn('is_editable_by');
+            });
+        }
     }
 
     /**
