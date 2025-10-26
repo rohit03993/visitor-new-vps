@@ -42,13 +42,29 @@ class RemarkPermissionHelper
             return true;
         }
         
-        // Rule 3: Current assignee can always see remarks
+        // Get interaction
         $interaction = InteractionHistory::find($interactionId);
-        if ($interaction && $interaction->meeting_with === $userId) {
+        if (!$interaction) {
+            return false;
+        }
+        
+        // Rule 3: Current assignee can always see remarks
+        if ($interaction->meeting_with === $userId) {
             return true;
         }
         
-        // Rule 4: Check subscription permission
+        // Rule 4: Check if assigned to ANY interaction with same visitor + purpose
+        $isAssignedToPurpose = InteractionHistory::where('visitor_id', $interaction->visitor_id)
+            ->where('purpose', $interaction->purpose)
+            ->where('meeting_with', $userId)
+            ->where('is_completed', false) // Only active assignments
+            ->exists();
+        
+        if ($isAssignedToPurpose) {
+            return true; // ✅ FULL ACCESS if assigned to this visitor + purpose
+        }
+        
+        // Rule 5: Check subscription permission
         $subscription = InteractionNotification::where('interaction_id', $interactionId)
             ->where('user_id', $userId)
             ->where('is_active', true)
@@ -82,10 +98,26 @@ class RemarkPermissionHelper
             return ['can_view' => true, 'reason' => 'Admin'];
         }
         
-        // Check current assignee
+        // Get interaction
         $interaction = InteractionHistory::find($interactionId);
-        if ($interaction && $interaction->meeting_with === $userId) {
+        if (!$interaction) {
+            return ['can_view' => false, 'reason' => 'Interaction not found'];
+        }
+        
+        // Check current assignee
+        if ($interaction->meeting_with === $userId) {
             return ['can_view' => true, 'reason' => 'Current Assignee'];
+        }
+        
+        // Check if assigned to purpose
+        $isAssignedToPurpose = InteractionHistory::where('visitor_id', $interaction->visitor_id)
+            ->where('purpose', $interaction->purpose)
+            ->where('meeting_with', $userId)
+            ->where('is_completed', false)
+            ->exists();
+        
+        if ($isAssignedToPurpose) {
+            return ['can_view' => true, 'reason' => 'Assigned to Purpose'];
         }
         
         // Check subscription
