@@ -32,6 +32,29 @@ class AiSensyWhatsAppService
     public function sendHomeworkNotification($phoneNumber, $studentName, $homeworkTitle, $homeworkLink)
     {
         try {
+            // Validate configuration
+            if (empty($this->apiKey)) {
+                Log::error('WhatsApp API key not configured', [
+                    'phone' => $phoneNumber,
+                    'student' => $studentName,
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'WhatsApp API key not configured. Please set SENSY_API_KEY in .env file.',
+                ];
+            }
+
+            if (empty($this->apiUrl)) {
+                Log::error('WhatsApp API URL not configured', [
+                    'phone' => $phoneNumber,
+                    'student' => $studentName,
+                ]);
+                return [
+                    'success' => false,
+                    'message' => 'WhatsApp API URL not configured. Please set SENSY_API_URL in .env file.',
+                ];
+            }
+
             $payload = [
                 'apiKey' => $this->apiKey,
                 'campaignName' => $this->campaignName,
@@ -44,12 +67,21 @@ class AiSensyWhatsAppService
                 ],
             ];
 
-            // Add template ID if provided
+            // Add template ID if provided (optional - some APIs don't require it)
             if (!empty($this->templateId)) {
                 $payload['templateId'] = $this->templateId;
             }
 
-            $response = Http::post($this->apiUrl . '/campaign/t1/api/v2', $payload);
+            $endpoint = rtrim($this->apiUrl, '/') . '/campaign/t1/api/v2';
+            
+            Log::info('Sending WhatsApp notification', [
+                'endpoint' => $endpoint,
+                'phone' => $phoneNumber,
+                'student' => $studentName,
+                'has_template_id' => !empty($this->templateId),
+            ]);
+
+            $response = Http::post($endpoint, $payload);
 
             $responseData = $response->json();
 
