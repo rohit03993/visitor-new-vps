@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'student' => [
+            'driver' => 'session',
+            'provider' => 'students',
+        ],
     ],
 
     /*
@@ -63,6 +67,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\VmsUser::class,
+        ],
+        'students' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\HomeworkUser::class,
         ],
 
         // 'users' => [

@@ -43,4 +43,11 @@ return [
             : env('GOOGLE_REDIRECT_URI_PROD', 'https://motionagra.com/auth/google/callback'),
     ],
 
+    'sensy' => [
+        'api_key' => env('SENSY_API_KEY'),
+        'api_url' => env('SENSY_API_URL', 'https://backend.aisensy.com'),
+        'template_id' => env('SENSY_TEMPLATE_ID'),
+        'campaign_name' => env('SENSY_CAMPAIGN_NAME', 'Homework Notifications'),
+    ],
+
 ];

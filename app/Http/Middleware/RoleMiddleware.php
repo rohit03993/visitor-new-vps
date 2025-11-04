@@ -13,7 +13,7 @@ class RoleMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $role): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         if (!auth()->check()) {
             return redirect()->route('login');
@@ -21,7 +21,16 @@ class RoleMiddleware
 
         $user = auth()->user();
         
-        if ($user->role !== $role) {
+        // Handle comma-separated roles (e.g., 'admin,staff')
+        $allowedRoles = [];
+        foreach ($roles as $roleString) {
+            $allowedRoles = array_merge($allowedRoles, array_map('trim', explode(',', $roleString)));
+        }
+        
+        // Remove duplicates
+        $allowedRoles = array_unique($allowedRoles);
+        
+        if (!in_array($user->role, $allowedRoles)) {
             abort(403, 'Unauthorized access.');
         }
 
