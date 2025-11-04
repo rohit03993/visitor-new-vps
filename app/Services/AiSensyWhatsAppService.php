@@ -14,10 +14,15 @@ class AiSensyWhatsAppService
 
     public function __construct()
     {
-        $this->apiKey = config('services.sensy.api_key');
-        $this->apiUrl = config('services.sensy.api_url');
-        $this->campaignName = config('services.sensy.campaign_name', 'Homework Notifications');
-        $this->templateId = config('services.sensy.template_id');
+        // Check database settings first, fallback to config/env
+        $this->apiKey = \App\Models\Setting::get('whatsapp_api_key') 
+            ?: config('services.sensy.api_key');
+        $this->apiUrl = \App\Models\Setting::get('whatsapp_api_url') 
+            ?: config('services.sensy.api_url');
+        $this->campaignName = \App\Models\Setting::get('whatsapp_campaign_name') 
+            ?: config('services.sensy.campaign_name', 'Homework Notifications');
+        $this->templateId = \App\Models\Setting::get('whatsapp_template_id') 
+            ?: config('services.sensy.template_id');
     }
 
     /**

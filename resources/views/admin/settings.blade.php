@@ -65,6 +65,118 @@
 
                 <hr class="my-4">
 
+                <!-- Server Settings Section -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">
+                            <i class="fas fa-server me-2 text-primary"></i>Server Settings
+                        </h6>
+                        <p class="text-muted mb-3">Configure AiSensy WhatsApp API settings for homework notifications. These settings will override .env file values.</p>
+                        
+                        <form action="{{ route('admin.whatsapp-settings') }}" method="POST" id="serverSettingsForm">
+                            @csrf
+                            
+                            <!-- Password Verification -->
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="admin_password" class="form-label-paytm">
+                                        Admin Password <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="password" 
+                                           class="form-control-paytm" 
+                                           id="admin_password" 
+                                           name="admin_password" 
+                                           required 
+                                           placeholder="Enter admin password to save changes">
+                                    <div class="form-text">Password required to modify server settings</div>
+                                    @error('admin_password')
+                                        <div class="text-danger small">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="whatsapp_api_key" class="form-label-paytm">
+                                        API Key <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control-paytm" 
+                                           id="whatsapp_api_key" 
+                                           name="api_key" 
+                                           value="{{ old('api_key', $whatsappSettings['api_key'] ?? '') }}" 
+                                           placeholder="Enter your AiSensy API Key">
+                                    <div class="form-text">Get this from your AiSensy dashboard</div>
+                                    @error('api_key')
+                                        <div class="text-danger small">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="whatsapp_api_url" class="form-label-paytm">
+                                        API URL
+                                    </label>
+                                    <input type="url" 
+                                           class="form-control-paytm" 
+                                           id="whatsapp_api_url" 
+                                           name="api_url" 
+                                           value="{{ old('api_url', $whatsappSettings['api_url'] ?? 'https://backend.aisensy.com') }}" 
+                                           placeholder="https://backend.aisensy.com">
+                                    <div class="form-text">Default: https://backend.aisensy.com</div>
+                                    @error('api_url')
+                                        <div class="text-danger small">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="whatsapp_template_id" class="form-label-paytm">
+                                        Template ID <small class="text-muted">(Optional)</small>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control-paytm" 
+                                           id="whatsapp_template_id" 
+                                           name="template_id" 
+                                           value="{{ old('template_id', $whatsappSettings['template_id'] ?? '') }}" 
+                                           placeholder="Enter template ID (if required)">
+                                    <div class="form-text">Only if your API requires a template ID</div>
+                                    @error('template_id')
+                                        <div class="text-danger small">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="whatsapp_campaign_name" class="form-label-paytm">
+                                        Campaign Name
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control-paytm" 
+                                           id="whatsapp_campaign_name" 
+                                           name="campaign_name" 
+                                           value="{{ old('campaign_name', $whatsappSettings['campaign_name'] ?? 'Homework Notifications') }}" 
+                                           placeholder="Homework Notifications">
+                                    <div class="form-text">Name for your WhatsApp campaign</div>
+                                    @error('campaign_name')
+                                        <div class="text-danger small">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-paytm-primary">
+                                <i class="fas fa-save me-2"></i>Save WhatsApp Settings
+                            </button>
+                        </form>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> These settings take priority over .env file values. Leave fields empty to use .env values.
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
                 <!-- Information -->
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i>

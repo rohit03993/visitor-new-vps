@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
         // App Settings Routes
         Route::get('/settings', [AdminController::class, 'settings'])->name('settings');
         Route::post('/upload-logo', [AdminController::class, 'uploadLogo'])->name('upload-logo');
+        Route::post('/whatsapp-settings', [AdminController::class, 'saveWhatsAppSettings'])->name('whatsapp-settings');
     });
 
 

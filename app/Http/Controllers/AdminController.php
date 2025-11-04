@@ -1423,13 +1423,27 @@ class AdminController extends Controller
         if (!\Schema::hasTable('settings')) {
             return view('admin.settings', [
                 'currentLogo' => 'images/logos/default-logo.svg',
-                'tableNotExists' => true
+                'tableNotExists' => true,
+                'whatsappSettings' => [
+                    'api_key' => config('services.sensy.api_key', ''),
+                    'api_url' => config('services.sensy.api_url', 'https://backend.aisensy.com'),
+                    'template_id' => config('services.sensy.template_id', ''),
+                    'campaign_name' => config('services.sensy.campaign_name', 'Homework Notifications'),
+                ]
             ]);
         }
 
         $currentLogo = Setting::get('app_logo', 'images/logos/default-logo.svg');
         
-        return view('admin.settings', compact('currentLogo'));
+        // Get WhatsApp settings from database, fallback to config
+        $whatsappSettings = [
+            'api_key' => Setting::get('whatsapp_api_key', config('services.sensy.api_key', '')),
+            'api_url' => Setting::get('whatsapp_api_url', config('services.sensy.api_url', 'https://backend.aisensy.com')),
+            'template_id' => Setting::get('whatsapp_template_id', config('services.sensy.template_id', '')),
+            'campaign_name' => Setting::get('whatsapp_campaign_name', config('services.sensy.campaign_name', 'Homework Notifications')),
+        ];
+        
+        return view('admin.settings', compact('currentLogo', 'whatsappSettings'));
     }
 
     /**
@@ -1464,6 +1478,54 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             \Log::error('Logo upload error: ' . $e->getMessage());
             return back()->with('error', 'Failed to upload logo: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Save WhatsApp settings
+     */
+    public function saveWhatsAppSettings(Request $request)
+    {
+        // Check if settings table exists
+        if (!\Schema::hasTable('settings')) {
+            return back()->with('error', 'Settings table not found. Please run: php artisan migrate');
+        }
+
+        $request->validate([
+            'admin_password' => 'required|string',
+            'api_key' => 'nullable|string|max:500',
+            'api_url' => 'nullable|url|max:255',
+            'template_id' => 'nullable|string|max:100',
+            'campaign_name' => 'nullable|string|max:100',
+        ]);
+
+        // Verify admin password
+        $correctPassword = '@Rohitpal95#';
+        if ($request->admin_password !== $correctPassword) {
+            return back()->withErrors(['admin_password' => 'Invalid admin password. Access denied.'])
+                ->withInput($request->except('admin_password'));
+        }
+
+        try {
+            // Save WhatsApp settings
+            if ($request->has('api_key')) {
+                Setting::set('whatsapp_api_key', $request->api_key ?? '');
+            }
+            if ($request->has('api_url')) {
+                Setting::set('whatsapp_api_url', $request->api_url ?? '');
+            }
+            if ($request->has('template_id')) {
+                Setting::set('whatsapp_template_id', $request->template_id ?? '');
+            }
+            if ($request->has('campaign_name')) {
+                Setting::set('whatsapp_campaign_name', $request->campaign_name ?? 'Homework Notifications');
+            }
+
+            return redirect()->route('admin.settings')
+                ->with('success', 'Server settings saved successfully!');
+        } catch (\Exception $e) {
+            \Log::error('WhatsApp settings save error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to save server settings: ' . $e->getMessage());
         }
     }
 
