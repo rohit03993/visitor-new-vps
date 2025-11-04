@@ -66,6 +66,16 @@
                 <hr class="my-4">
 
                 <!-- Server Settings Section -->
+                @php
+                    // Ensure whatsappSettings variable exists with defaults
+                    $whatsappSettings = $whatsappSettings ?? [
+                        'api_key' => '',
+                        'api_url' => 'https://backend.aisensy.com',
+                        'template_id' => '',
+                        'campaign_name' => 'Homework Notifications',
+                    ];
+                @endphp
+                
                 <div class="row mb-4">
                     <div class="col-12">
                         <h6 class="mb-3">
@@ -106,7 +116,7 @@
                                            class="form-control-paytm" 
                                            id="whatsapp_api_key" 
                                            name="api_key" 
-                                           value="{{ old('api_key', $whatsappSettings['api_key'] ?? '') }}" 
+                                           value="{{ old('api_key', isset($whatsappSettings['api_key']) ? $whatsappSettings['api_key'] : '') }}" 
                                            placeholder="Enter your AiSensy API Key">
                                     <div class="form-text">Get this from your AiSensy dashboard</div>
                                     @error('api_key')
@@ -122,7 +132,7 @@
                                            class="form-control-paytm" 
                                            id="whatsapp_api_url" 
                                            name="api_url" 
-                                           value="{{ old('api_url', $whatsappSettings['api_url'] ?? 'https://backend.aisensy.com') }}" 
+                                           value="{{ old('api_url', isset($whatsappSettings['api_url']) ? $whatsappSettings['api_url'] : 'https://backend.aisensy.com') }}" 
                                            placeholder="https://backend.aisensy.com">
                                     <div class="form-text">Default: https://backend.aisensy.com</div>
                                     @error('api_url')
@@ -138,7 +148,7 @@
                                            class="form-control-paytm" 
                                            id="whatsapp_template_id" 
                                            name="template_id" 
-                                           value="{{ old('template_id', $whatsappSettings['template_id'] ?? '') }}" 
+                                           value="{{ old('template_id', isset($whatsappSettings['template_id']) ? $whatsappSettings['template_id'] : '') }}" 
                                            placeholder="Enter template ID (if required)">
                                     <div class="form-text">Only if your API requires a template ID</div>
                                     @error('template_id')
@@ -154,7 +164,7 @@
                                            class="form-control-paytm" 
                                            id="whatsapp_campaign_name" 
                                            name="campaign_name" 
-                                           value="{{ old('campaign_name', $whatsappSettings['campaign_name'] ?? 'Homework Notifications') }}" 
+                                           value="{{ old('campaign_name', isset($whatsappSettings['campaign_name']) ? $whatsappSettings['campaign_name'] : 'Homework Notifications') }}" 
                                            placeholder="Homework Notifications">
                                     <div class="form-text">Name for your WhatsApp campaign</div>
                                     @error('campaign_name')

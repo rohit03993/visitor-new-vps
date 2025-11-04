@@ -18,6 +18,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
 
 class AdminController extends Controller
@@ -1426,19 +1427,31 @@ class AdminController extends Controller
             try {
                 $tableExists = Schema::hasTable('settings');
             } catch (\Exception $e) {
-                \Log::warning('Could not check settings table: ' . $e->getMessage());
+                Log::warning('Could not check settings table: ' . $e->getMessage());
             }
 
             if (!$tableExists) {
+                // Safe config access with defaults
+                $whatsappSettings = [
+                    'api_key' => '',
+                    'api_url' => 'https://backend.aisensy.com',
+                    'template_id' => '',
+                    'campaign_name' => 'Homework Notifications',
+                ];
+                
+                try {
+                    $whatsappSettings['api_key'] = config('services.sensy.api_key', '');
+                    $whatsappSettings['api_url'] = config('services.sensy.api_url', 'https://backend.aisensy.com');
+                    $whatsappSettings['template_id'] = config('services.sensy.template_id', '');
+                    $whatsappSettings['campaign_name'] = config('services.sensy.campaign_name', 'Homework Notifications');
+                } catch (\Exception $e) {
+                    // Use defaults if config fails
+                }
+                
                 return view('admin.settings', [
                     'currentLogo' => 'images/logos/default-logo.svg',
                     'tableNotExists' => true,
-                    'whatsappSettings' => [
-                        'api_key' => config('services.sensy.api_key', ''),
-                        'api_url' => config('services.sensy.api_url', 'https://backend.aisensy.com'),
-                        'template_id' => config('services.sensy.template_id', ''),
-                        'campaign_name' => config('services.sensy.campaign_name', 'Homework Notifications'),
-                    ]
+                    'whatsappSettings' => $whatsappSettings
                 ]);
             }
 
@@ -1447,7 +1460,7 @@ class AdminController extends Controller
             try {
                 $currentLogo = Setting::get('app_logo', 'images/logos/default-logo.svg');
             } catch (\Exception $e) {
-                \Log::warning('Could not get logo setting: ' . $e->getMessage());
+                Log::warning('Could not get logo setting: ' . $e->getMessage());
             }
             
             // Get WhatsApp settings from database, fallback to config (with error handling)
@@ -1459,36 +1472,63 @@ class AdminController extends Controller
             ];
             
             try {
+                $dbApiKey = Setting::get('whatsapp_api_key');
+                $dbApiUrl = Setting::get('whatsapp_api_url');
+                $dbTemplateId = Setting::get('whatsapp_template_id');
+                $dbCampaignName = Setting::get('whatsapp_campaign_name');
+                
+                // Get config values with try-catch for each
+                $configApiKey = '';
+                $configApiUrl = 'https://backend.aisensy.com';
+                $configTemplateId = '';
+                $configCampaignName = 'Homework Notifications';
+                
+                try {
+                    $configApiKey = config('services.sensy.api_key', '');
+                } catch (\Exception $e) {}
+                
+                try {
+                    $configApiUrl = config('services.sensy.api_url', 'https://backend.aisensy.com');
+                } catch (\Exception $e) {}
+                
+                try {
+                    $configTemplateId = config('services.sensy.template_id', '');
+                } catch (\Exception $e) {}
+                
+                try {
+                    $configCampaignName = config('services.sensy.campaign_name', 'Homework Notifications');
+                } catch (\Exception $e) {}
+                
                 $whatsappSettings = [
-                    'api_key' => Setting::get('whatsapp_api_key') ?: config('services.sensy.api_key', ''),
-                    'api_url' => Setting::get('whatsapp_api_url') ?: config('services.sensy.api_url', 'https://backend.aisensy.com'),
-                    'template_id' => Setting::get('whatsapp_template_id') ?: config('services.sensy.template_id', ''),
-                    'campaign_name' => Setting::get('whatsapp_campaign_name') ?: config('services.sensy.campaign_name', 'Homework Notifications'),
+                    'api_key' => $dbApiKey ?: $configApiKey,
+                    'api_url' => $dbApiUrl ?: $configApiUrl,
+                    'template_id' => $dbTemplateId ?: $configTemplateId,
+                    'campaign_name' => $dbCampaignName ?: $configCampaignName,
                 ];
             } catch (\Exception $e) {
-                \Log::warning('Could not get WhatsApp settings from database, using config: ' . $e->getMessage());
-                // Fallback to config only
+                Log::warning('Could not get WhatsApp settings from database, using defaults: ' . $e->getMessage());
+                // Fallback to defaults only
                 $whatsappSettings = [
-                    'api_key' => config('services.sensy.api_key', ''),
-                    'api_url' => config('services.sensy.api_url', 'https://backend.aisensy.com'),
-                    'template_id' => config('services.sensy.template_id', ''),
-                    'campaign_name' => config('services.sensy.campaign_name', 'Homework Notifications'),
+                    'api_key' => '',
+                    'api_url' => 'https://backend.aisensy.com',
+                    'template_id' => '',
+                    'campaign_name' => 'Homework Notifications',
                 ];
             }
             
             return view('admin.settings', compact('currentLogo', 'whatsappSettings'));
         } catch (\Exception $e) {
-            \Log::error('Settings page error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Settings page error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             
             // Return with default values if everything fails
             return view('admin.settings', [
                 'currentLogo' => 'images/logos/default-logo.svg',
                 'whatsappSettings' => [
-                    'api_key' => config('services.sensy.api_key', ''),
-                    'api_url' => config('services.sensy.api_url', 'https://backend.aisensy.com'),
-                    'template_id' => config('services.sensy.template_id', ''),
-                    'campaign_name' => config('services.sensy.campaign_name', 'Homework Notifications'),
+                    'api_key' => '',
+                    'api_url' => 'https://backend.aisensy.com',
+                    'template_id' => '',
+                    'campaign_name' => 'Homework Notifications',
                 ]
             ]);
         }
