@@ -786,9 +786,11 @@ console.log('🌍 Hostname:', window.location.hostname);
                             <a class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}" onclick="closeSidebar()">
                                 <i class="fas fa-tachometer-alt me-2"></i> Dashboard
                             </a>
-                            <a class="nav-link {{ request()->is('homework*') ? 'active' : '' }}" href="{{ route('homework.dashboard') }}" onclick="closeSidebar()">
-                                <i class="fas fa-book me-2"></i> Homework
-                            </a>
+                            @if(auth()->user()->canAccessHomework())
+                                <a class="nav-link {{ request()->is('homework*') ? 'active' : '' }}" href="{{ route('homework.dashboard') }}" onclick="closeSidebar()">
+                                    <i class="fas fa-book me-2"></i> Homework
+                                </a>
+                            @endif
                             <a class="nav-link {{ request()->routeIs('admin.search-mobile') ? 'active' : '' }}" href="{{ route('admin.search-mobile') }}" onclick="closeSidebar()">
                                 <i class="fas fa-search me-2"></i> Search Log
                             </a>
@@ -826,9 +828,11 @@ console.log('🌍 Hostname:', window.location.hostname);
                             <a class="nav-link {{ request()->routeIs('staff.visitor-search') ? 'active' : '' }}" href="{{ route('staff.visitor-search') }}" onclick="closeSidebar()">
                                 <i class="fas fa-search me-2"></i> Search Log
                             </a>
-                            <a class="nav-link {{ request()->is('homework*') ? 'active' : '' }}" href="{{ route('homework.dashboard') }}" onclick="closeSidebar()">
-                                <i class="fas fa-book me-2"></i> Homework
-                            </a>
+                            @if(auth()->user()->canAccessHomework())
+                                <a class="nav-link {{ request()->is('homework*') ? 'active' : '' }}" href="{{ route('homework.dashboard') }}" onclick="closeSidebar()">
+                                    <i class="fas fa-book me-2"></i> Homework
+                                </a>
+                            @endif
                             <a class="nav-link {{ request()->routeIs('staff.assigned-to-me') ? 'active' : '' }}" href="{{ route('staff.assigned-to-me') }}" onclick="closeSidebar()">
                                 <i class="fas fa-user-check me-2"></i> Assigned Logs
                             </a>

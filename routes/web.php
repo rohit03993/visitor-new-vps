@@ -264,13 +264,13 @@ Route::prefix('homework')->name('homework.')->middleware(['homework.auth'])->gro
 Route::prefix('homework')->name('homework.')->middleware(['homework.auth'])->group(function () {
     // Homework CRUD
     Route::get('/homework', [App\Http\Controllers\Homework\HomeworkController::class, 'index'])->name('homework.index');
-    Route::get('/homework/create', [App\Http\Controllers\Homework\HomeworkController::class, 'create'])->middleware('role:admin,staff')->name('homework.create');
-    Route::post('/homework', [App\Http\Controllers\Homework\HomeworkController::class, 'store'])->middleware('role:admin,staff')->name('homework.store');
+    Route::get('/homework/create', [App\Http\Controllers\Homework\HomeworkController::class, 'create'])->middleware(['role:admin,staff', 'check.homework.access'])->name('homework.create');
+    Route::post('/homework', [App\Http\Controllers\Homework\HomeworkController::class, 'store'])->middleware(['role:admin,staff', 'check.homework.access'])->name('homework.store');
     Route::get('/homework/{homework}', [App\Http\Controllers\Homework\HomeworkController::class, 'show'])->name('homework.show');
-    Route::get('/homework/{homework}/stats', [App\Http\Controllers\Homework\HomeworkController::class, 'studentStats'])->middleware('role:admin,staff')->name('homework.stats');
-    Route::get('/homework/{homework}/edit', [App\Http\Controllers\Homework\HomeworkController::class, 'edit'])->middleware('role:admin,staff')->name('homework.edit');
-    Route::patch('/homework/{homework}', [App\Http\Controllers\Homework\HomeworkController::class, 'update'])->middleware('role:admin,staff')->name('homework.update');
-    Route::delete('/homework/{homework}', [App\Http\Controllers\Homework\HomeworkController::class, 'destroy'])->middleware('role:admin,staff')->name('homework.destroy');
+    Route::get('/homework/{homework}/stats', [App\Http\Controllers\Homework\HomeworkController::class, 'studentStats'])->middleware(['role:admin,staff', 'check.homework.access'])->name('homework.stats');
+    Route::get('/homework/{homework}/edit', [App\Http\Controllers\Homework\HomeworkController::class, 'edit'])->middleware(['role:admin,staff', 'check.homework.access'])->name('homework.edit');
+    Route::patch('/homework/{homework}', [App\Http\Controllers\Homework\HomeworkController::class, 'update'])->middleware(['role:admin,staff', 'check.homework.access'])->name('homework.update');
+    Route::delete('/homework/{homework}', [App\Http\Controllers\Homework\HomeworkController::class, 'destroy'])->middleware(['role:admin,staff', 'check.homework.access'])->name('homework.destroy');
     Route::get('/homework/{homework}/download', [App\Http\Controllers\Homework\HomeworkController::class, 'download'])->name('homework.download');
     
     // Notification Routes (students only)
@@ -282,11 +282,11 @@ Route::prefix('homework')->name('homework.')->middleware(['homework.auth'])->gro
     Route::get('/student/profile', [App\Http\Controllers\Homework\StudentProfileController::class, 'show'])->name('student.profile');
     Route::post('/student/profile/password', [App\Http\Controllers\Homework\StudentProfileController::class, 'updatePassword'])->name('student.profile.password');
     
-    // Reports Routes (Admin and Staff only)
-    Route::get('/reports', [App\Http\Controllers\Homework\ReportsController::class, 'index'])->middleware('role:admin,staff')->name('reports.index');
+    // Reports Routes (Admin and Staff only, but staff needs permission)
+    Route::get('/reports', [App\Http\Controllers\Homework\ReportsController::class, 'index'])->middleware(['role:admin,staff', 'check.homework.access'])->name('reports.index');
     
-    // Admin Routes (Admin and Staff can access)
-    Route::prefix('admin')->name('admin.')->middleware('role:admin,staff')->group(function () {
+    // Admin Routes (Admin and Staff can access, but staff needs permission)
+    Route::prefix('admin')->name('admin.')->middleware(['role:admin,staff', 'check.homework.access'])->group(function () {
         Route::resource('users', App\Http\Controllers\Homework\Admin\UserController::class);
         Route::get('users-bulk-upload/template', [App\Http\Controllers\Homework\Admin\UserController::class, 'downloadTemplate'])->name('users.template');
         Route::get('users-bulk-upload', [App\Http\Controllers\Homework\Admin\UserController::class, 'showBulkUpload'])->name('users.bulk-upload');

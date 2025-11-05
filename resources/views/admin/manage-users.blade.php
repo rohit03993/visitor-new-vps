@@ -75,12 +75,21 @@
                                             @else
                                                 <span class="badge bg-warning">Basic Access</span>
                                             @endif
+                                            @if($user->isStaff())
+                                                <div class="mt-1">
+                                                    @if($user->can_access_homework)
+                                                        <span class="badge bg-purple me-1"><i class="fas fa-book me-1"></i>Homework Access</span>
+                                                    @else
+                                                        <span class="badge bg-secondary me-1"><i class="fas fa-book me-1"></i>No Homework</span>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         </td>
                                         <td>{{ $user->created_at->format('M d, Y') }}</td>
                                         <td>{{ $user->updated_at->format('M d, Y') }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-outline-primary" 
-                                                    onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}')">
+                                                    onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}', {{ $user->can_access_homework ? 'true' : 'false' }})">
                                                 <i class="fas fa-edit me-1"></i>Edit
                                             </button>
                                             @if($user->user_id != auth()->id())
@@ -176,7 +185,7 @@
                                     <!-- Action Buttons -->
                                     <div class="d-flex justify-content-end gap-2">
                                         <button class="btn btn-outline-primary btn-sm" 
-                                                onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}')">
+                                                onclick="editUser({{ $user->user_id }}, '{{ $user->name }}', '{{ $user->username }}', '{{ $user->role }}', '{{ $user->branch_id }}', '{{ $user->mobile_number }}', {{ $user->can_access_homework ? 'true' : 'false' }})">
                                             <i class="fas fa-edit me-1"></i>Edit
                                         </button>
                                         @if($user->user_id != auth()->id())
@@ -258,6 +267,15 @@
                         <label for="mobile_number" class="form-label">Mobile Number</label>
                         <input type="text" class="form-control" id="mobile_number" name="mobile_number" placeholder="10-digit mobile number">
                     </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="can_access_homework" name="can_access_homework" value="1">
+                            <label class="form-check-label" for="can_access_homework">
+                                <i class="fas fa-book me-1"></i> Allow Homework Section Access
+                                <small class="text-muted d-block">(For staff users only - allows access to homework management)</small>
+                            </label>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -302,7 +320,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit_role" class="form-label">Role *</label>
-                        <select class="form-select" id="edit_role" name="role" required>
+                        <select class="form-select" id="edit_role" name="role" required onchange="toggleHomeworkPermission()">
                             <option value="admin">Admin</option>
                             <option value="staff">Staff</option>
                         </select>
@@ -319,6 +337,15 @@
                     <div class="mb-3">
                         <label for="edit_mobile_number" class="form-label">Mobile Number</label>
                         <input type="text" class="form-control" id="edit_mobile_number" name="mobile_number" placeholder="10-digit mobile number">
+                    </div>
+                    <div class="mb-3" id="homeworkPermissionSection">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_can_access_homework" name="can_access_homework" value="1">
+                            <label class="form-check-label" for="edit_can_access_homework">
+                                <i class="fas fa-book me-1"></i> Allow Homework Section Access
+                                <small class="text-muted d-block">(For staff users only - allows access to homework management)</small>
+                            </label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -544,7 +571,7 @@
 
 @section('scripts')
 <script>
-function editUser(userId, name, username, role, branchId, mobileNumber) {
+function editUser(userId, name, username, role, branchId, mobileNumber, canAccessHomework = false) {
     document.getElementById('edit_name').value = name;
     document.getElementById('edit_username').value = username;
     document.getElementById('edit_role').value = role;
@@ -552,6 +579,18 @@ function editUser(userId, name, username, role, branchId, mobileNumber) {
     document.getElementById('edit_mobile_number').value = mobileNumber || '';
     document.getElementById('edit_password').value = ''; // Clear password field
     document.getElementById('editUserForm').action = '/admin/users/' + userId;
+    
+    // Set homework permission checkbox
+    document.getElementById('edit_can_access_homework').checked = canAccessHomework;
+    
+    // Show/hide homework permission section based on role
+    const homeworkSection = document.getElementById('homeworkPermissionSection');
+    if (role === 'staff') {
+        homeworkSection.style.display = 'block';
+    } else {
+        homeworkSection.style.display = 'none';
+        document.getElementById('edit_can_access_homework').checked = false; // Admin always has access
+    }
     
     // Store the current user ID for the show password functionality
     document.getElementById('showCurrentPassword').setAttribute('data-user-id', userId);
@@ -561,6 +600,47 @@ function editUser(userId, name, username, role, branchId, mobileNumber) {
 }
 
 
+
+function toggleHomeworkPermission() {
+    const role = document.getElementById('edit_role').value;
+    const homeworkSection = document.getElementById('homeworkPermissionSection');
+    const homeworkCheckbox = document.getElementById('edit_can_access_homework');
+    
+    if (role === 'staff') {
+        homeworkSection.style.display = 'block';
+    } else {
+        homeworkSection.style.display = 'none';
+        homeworkCheckbox.checked = false; // Admin always has access, so uncheck
+    }
+}
+
+// Also toggle for create modal
+document.getElementById('role')?.addEventListener('change', function() {
+    const role = this.value;
+    const homeworkCheckbox = document.getElementById('can_access_homework');
+    const homeworkDiv = homeworkCheckbox?.closest('.mb-3');
+    
+    if (role === 'staff' && homeworkDiv) {
+        homeworkDiv.style.display = 'block';
+    } else if (homeworkDiv) {
+        homeworkDiv.style.display = 'none';
+        if (homeworkCheckbox) homeworkCheckbox.checked = false;
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const createRole = document.getElementById('role');
+    if (createRole) {
+        const initialRole = createRole.value;
+        const homeworkCheckbox = document.getElementById('can_access_homework');
+        const homeworkDiv = homeworkCheckbox?.closest('.mb-3');
+        
+        if (initialRole !== 'staff' && homeworkDiv) {
+            homeworkDiv.style.display = 'none';
+        }
+    }
+});
 
 function deactivateUser(userId, userName, userRole) {
     // Store user data for deactivation

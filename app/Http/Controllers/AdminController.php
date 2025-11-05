@@ -208,6 +208,7 @@ class AdminController extends Controller
             'branch_id' => 'required|exists:branches,branch_id',
             'can_view_remarks' => 'boolean',
             'can_download_excel' => 'boolean',
+            'can_access_homework' => 'boolean',
         ]);
 
         VmsUser::create([
@@ -220,6 +221,7 @@ class AdminController extends Controller
             'branch_id' => $request->branch_id,
             'can_view_remarks' => $request->boolean('can_view_remarks'),
             'can_download_excel' => $request->boolean('can_download_excel'),
+            'can_access_homework' => $request->boolean('can_access_homework'),
         ]);
 
         return redirect()->route('admin.manage-users')
@@ -239,6 +241,7 @@ class AdminController extends Controller
             'branch_id' => 'required|exists:branches,branch_id',
             'can_view_remarks' => 'boolean',
             'can_download_excel' => 'boolean',
+            'can_access_homework' => 'boolean',
         ]);
 
         $updateData = [
@@ -249,6 +252,7 @@ class AdminController extends Controller
             'branch_id' => $request->branch_id,
             'can_view_remarks' => $request->boolean('can_view_remarks'),
             'can_download_excel' => $request->boolean('can_download_excel'),
+            'can_access_homework' => $request->boolean('can_access_homework'),
         ];
 
         // Only update password if provided

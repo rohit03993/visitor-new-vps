@@ -23,6 +23,7 @@ class VmsUser extends Authenticatable
         'mobile_number',
         'can_view_remarks',
         'can_download_excel',
+        'can_access_homework',
         'is_active',
     ];
 
@@ -94,6 +95,15 @@ class VmsUser extends Authenticatable
     public function canDownloadExcel()
     {
         return $this->isAdmin() || $this->can_download_excel;
+    }
+
+    /**
+     * Check if user can access homework section
+     * Admin always has access, staff needs explicit permission
+     */
+    public function canAccessHomework()
+    {
+        return $this->isAdmin() || ($this->isStaff() && $this->can_access_homework);
     }
 
     // Branch-specific permission methods

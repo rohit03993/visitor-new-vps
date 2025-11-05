@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'homework.auth' => \App\Http\Middleware\HomeworkAuth::class,
+            'check.homework.access' => \App\Http\Middleware\CheckHomeworkAccess::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
