@@ -41,6 +41,12 @@
             </label>
         </div>
 
+        <div class="flex items-center justify-between mt-4">
+            <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('homework.register') }}">
+                {{ __('New student? Register here') }}
+            </a>
+        </div>
+
         <div class="flex items-center justify-end mt-4">
             <x-primary-button class="ms-3">
                 {{ __('Log in') }}

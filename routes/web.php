@@ -248,6 +248,10 @@ Route::prefix('homework')->name('homework.')->group(function () {
     Route::get('/login', [App\Http\Controllers\Homework\StudentAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [App\Http\Controllers\Homework\StudentAuthController::class, 'login'])->name('student.login');
     Route::post('/logout', [App\Http\Controllers\Homework\StudentAuthController::class, 'logout'])->name('student.logout');
+    
+    // Student Registration Routes
+    Route::get('/register', [App\Http\Controllers\Homework\StudentAuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [App\Http\Controllers\Homework\StudentAuthController::class, 'register'])->name('student.register');
 });
 
 // Dashboard Route (accessible by both staff and students)

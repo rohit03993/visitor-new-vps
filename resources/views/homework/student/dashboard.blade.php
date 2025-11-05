@@ -20,6 +20,38 @@
 
     <div class="py-4 sm:py-6">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Registration Success Message -->
+            @if(session('registration_success'))
+                <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow-sm">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <h3 class="text-sm font-semibold text-green-800 mb-2">
+                                {{ session('registration_success.message') }}
+                            </h3>
+                            <div class="text-sm text-green-700 space-y-1">
+                                <p><strong>Username (Roll Number):</strong> <span class="font-mono bg-green-100 px-2 py-1 rounded">{{ session('registration_success.roll_number') }}</span></p>
+                                <p><strong>Default Password:</strong> <span class="font-mono bg-green-100 px-2 py-1 rounded">{{ session('registration_success.password') }}</span></p>
+                                <p class="mt-2 text-xs text-green-600">
+                                    <strong>Important:</strong> Please save these credentials. You can update your password from your profile page.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            <button type="button" onclick="this.parentElement.parentElement.parentElement.remove()" class="inline-flex text-green-500 hover:text-green-700">
+                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if($classes->isEmpty())
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900 text-center">
