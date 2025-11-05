@@ -295,4 +295,9 @@ Route::prefix('homework')->name('homework.')->middleware(['homework.auth'])->gro
         Route::get('classes/{class}/assign-students', [App\Http\Controllers\Homework\Admin\ClassController::class, 'assignStudents'])->name('classes.assign-students');
         Route::post('classes/{class}/assign-students', [App\Http\Controllers\Homework\Admin\ClassController::class, 'storeStudents'])->name('classes.store-students');
     });
+    
+    // Admin-only routes (sensitive operations like data export)
+    Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
+        Route::get('users-export-all', [App\Http\Controllers\Homework\Admin\UserController::class, 'exportAllStudents'])->name('users.export-all');
+    });
 });

@@ -384,5 +384,99 @@ class UserController extends Controller
             ->with($errors ? 'warning' : 'success', $message)
             ->with('bulk_upload_errors', $errors);
     }
+
+    /**
+     * Export all students data to CSV
+     * This is a critical data backup feature - exports ALL student data
+     * ADMIN ONLY - For data security and backup purposes
+     */
+    public function exportAllStudents()
+    {
+        // Double-check: Only admin can access this
+        $user = auth()->guard('web')->user();
+        if (!$user || !$user->isAdmin()) {
+            abort(403, 'Unauthorized. Only administrators can export all student data.');
+        }
+        // Get all students with their relationships
+        $students = HomeworkUser::with(['schoolClasses', 'phoneNumbers'])
+            ->where('role', 'student')
+            ->orderBy('id')
+            ->get();
+        
+        // Get all classes for dynamic columns
+        $allClasses = SchoolClass::orderBy('name')->get();
+        
+        $filename = 'students_backup_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+        
+        $callback = function() use ($students, $allClasses) {
+            $file = fopen('php://output', 'w');
+            
+            // Write BOM for Excel UTF-8 support
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Build header row
+            $headers = [
+                'ID',
+                'Name',
+                'Roll Number',
+                'Mobile Number',
+                'Additional Phone 1',
+                'Additional Phone 2',
+                'Additional Phone 3',
+                'Additional Phone 4',
+                'Password (Plain Text)',
+                'Registration Date',
+                'Last Updated',
+            ];
+            
+            // Add class columns dynamically
+            foreach ($allClasses as $class) {
+                $headers[] = 'Class: ' . $class->name;
+            }
+            
+            fputcsv($file, $headers);
+            
+            // Write student data
+            foreach ($students as $student) {
+                // Get all phone numbers
+                $phoneNumbers = collect([$student->mobile_number])
+                    ->merge($student->phoneNumbers->pluck('phone_number'))
+                    ->filter()
+                    ->values();
+                
+                // Build row data
+                $row = [
+                    $student->id,
+                    $student->name ?? '',
+                    $student->roll_number ?? '',
+                    $phoneNumbers->get(0) ?? '', // Primary mobile
+                    $phoneNumbers->get(1) ?? '', // Additional phone 1
+                    $phoneNumbers->get(2) ?? '', // Additional phone 2
+                    $phoneNumbers->get(3) ?? '', // Additional phone 3
+                    $phoneNumbers->get(4) ?? '', // Additional phone 4
+                    $student->password_plain ?? '', // Plain text password for backup
+                    $student->created_at ? $student->created_at->format('Y-m-d H:i:s') : '',
+                    $student->updated_at ? $student->updated_at->format('Y-m-d H:i:s') : '',
+                ];
+                
+                // Add class enrollment status (YES/NO for each class)
+                $studentClassIds = $student->schoolClasses->pluck('id')->toArray();
+                foreach ($allClasses as $class) {
+                    $row[] = in_array($class->id, $studentClassIds) ? 'YES' : 'NO';
+                }
+                
+                fputcsv($file, $row);
+            }
+            
+            fclose($file);
+        };
+        
+        return response()->stream($callback, 200, $headers);
+    }
 }
 

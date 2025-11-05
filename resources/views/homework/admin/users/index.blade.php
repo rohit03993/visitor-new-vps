@@ -4,7 +4,17 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('User Management') }}
             </h2>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
+                @auth('web')
+                    @if(auth()->guard('web')->user()->isAdmin())
+                        <a href="{{ route('homework.admin.users.export-all') }}" class="inline-flex items-center px-4 py-2 rounded-lg transition shadow-md hover:shadow-lg font-semibold border-2" title="Download all student data as backup (Admin Only)" style="display: inline-flex !important; visibility: visible !important; opacity: 1 !important; background-color: #7c3aed !important; color: #ffffff !important; border-color: #6d28d9 !important;">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #ffffff !important;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <span style="color: #ffffff !important; font-weight: 600;">Download All Data</span>
+                        </a>
+                    @endif
+                @endauth
                 <a href="{{ route('homework.admin.users.bulk-upload') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                     <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
