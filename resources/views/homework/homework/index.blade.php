@@ -103,7 +103,8 @@
                                             </a>
                                             @php
                                                 $currentStaff = Auth::guard('web')->user();
-                                                $canEdit = $currentStaff && ($currentStaff->isAdmin() || ($currentStaff->isStaff() && $item->teacher_id === $currentStaff->user_id));
+                                                // Admin and Staff can edit/delete all homework (matching controller logic)
+                                                $canEdit = $currentStaff && ($currentStaff->isAdmin() || $currentStaff->isStaff());
                                             @endphp
                                             @if($canEdit)
                                                 <a href="{{ route('homework.homework.edit', $item) }}" class="text-green-600 hover:text-green-900 mr-3">

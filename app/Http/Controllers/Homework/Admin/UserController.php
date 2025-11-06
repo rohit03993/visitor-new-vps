@@ -169,6 +169,32 @@ class UserController extends Controller
 
     public function destroy(HomeworkUser $user)
     {
+        // SAFETY CHECK: Prevent deletion if student has class enrollments or homework data
+        $classCount = $user->schoolClasses()->count();
+        $homeworkViewsCount = $user->homeworkViews()->count();
+        $notificationsCount = $user->homeworkNotifications()->count();
+        
+        if ($classCount > 0 || $homeworkViewsCount > 0 || $notificationsCount > 0) {
+            $message = 'Cannot delete student. ';
+            $reasons = [];
+            
+            if ($classCount > 0) {
+                $reasons[] = "Student is enrolled in {$classCount} class(es)";
+            }
+            if ($homeworkViewsCount > 0) {
+                $reasons[] = "Student has viewed {$homeworkViewsCount} homework assignment(s)";
+            }
+            if ($notificationsCount > 0) {
+                $reasons[] = "Student has {$notificationsCount} notification(s)";
+            }
+            
+            $message .= implode(', ', $reasons) . '.';
+            $message .= ' Please remove student from all classes first.';
+            
+            return redirect()->route('homework.admin.users.index')
+                ->with('error', $message);
+        }
+        
         $user->delete();
 
         return redirect()->route('homework.admin.users.index')->with('success', 'Student deleted successfully!');

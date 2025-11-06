@@ -58,6 +58,27 @@ class ClassController extends Controller
 
     public function destroy(SchoolClass $class)
     {
+        // SAFETY CHECK: Prevent deletion if class has students or homework
+        $studentCount = $class->students()->count();
+        $homeworkCount = $class->homework()->count();
+        
+        if ($studentCount > 0 || $homeworkCount > 0) {
+            $message = 'Cannot delete class. ';
+            $reasons = [];
+            
+            if ($studentCount > 0) {
+                $reasons[] = "It has {$studentCount} student(s) enrolled";
+            }
+            if ($homeworkCount > 0) {
+                $reasons[] = "It has {$homeworkCount} homework assignment(s)";
+            }
+            
+            $message .= implode(' and ', $reasons) . '.';
+            
+            return redirect()->route('homework.admin.classes.index')
+                ->with('error', $message);
+        }
+        
         $class->delete();
         return redirect()->route('homework.admin.classes.index')->with('success', 'Class deleted successfully!');
     }
