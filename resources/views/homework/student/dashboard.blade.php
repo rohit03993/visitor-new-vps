@@ -52,6 +52,29 @@
                 </div>
             @endif
 
+            <!-- Coming Soon: Request Extra Class -->
+            <div class="mb-6">
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border border-dashed border-blue-300">
+                    <div class="p-5 sm:p-6 flex items-start gap-4">
+                        <div class="flex-shrink-0">
+                            <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.598 1M12 4v1m0 14v1m8-8h-1m-14 0H4m13.657 5.657l-.707.707m-8.485 0l-.707-.707m10.606-10.606l-.707.707m-8.485 0l-.707-.707" />
+                                </svg>
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold text-blue-700 uppercase tracking-wide">Coming Soon</p>
+                            <h3 class="mt-1 text-xl font-bold text-gray-900">Request Extra Class</h3>
+                            <p class="mt-2 text-sm text-gray-600">
+                                We are building a new option that lets you ask your teachers for additional classes when you need extra help.
+                                Stay tuned—this feature will appear here shortly!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @if($classes->isEmpty())
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 text-gray-900 text-center">
